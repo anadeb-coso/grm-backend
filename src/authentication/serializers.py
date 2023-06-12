@@ -7,6 +7,7 @@ from rest_framework import serializers
 from authentication import ADL, MAJOR
 from authentication.utils import get_validation_code
 from client import get_db
+from authentication.models import User
 
 
 class CredentialSerializer(serializers.Serializer):
@@ -75,13 +76,19 @@ class RegisterSerializer(serializers.Serializer):
         'invalid': _('Invalid data. Expected a dictionary, but got {datatype}.'),
         'credentials': _('Unable to register with provided credentials.'),
         'duplicated_email': _('A user with that email is already registered.'),
-        'wrong_validation_code': _('Unable to register with provided validation code.')
+        'wrong_validation_code': _('Unable to register with provided validation code.'),
+        'not_found_email': _('A user with that email has not been found registered.')
 
     }
 
     def validate(self, attrs):
         email = attrs.get('email', '').lower()
         password = attrs.get('password')
+        try:
+            user = User.objects.get(email=self.email)
+        except User.DoesNotExist as exc:
+            raise serializers.ValidationError(self.default_error_messages.get('not_found_email'))
+        
         try:
             validators.validate_password(password=password)
         except ValidationError as e:
@@ -131,6 +138,9 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError(self.default_error_messages.get('wrong_validation_code'))
         doc['representative']['password'] = make_password(password)
         doc.save()
+
+        user.password = doc['representative']['password']
+        user.save()
 
         attrs['doc_id'] = doc['_id'] if '_id' in doc else None
         return attrs

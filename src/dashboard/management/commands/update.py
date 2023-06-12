@@ -9,12 +9,14 @@ from client import (
 )
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
         eadl_db = get_db()
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
 
         # docs_to_delete = [d for d in eadl_db if 'type' in d and d['type'] == 'commune']
         # communes_deleted = len(bulk_delete(eadl_db, docs_to_delete))
@@ -25,7 +27,7 @@ class Command(BaseCommand):
         docs_to_update = []
         for doc in docs:
             if 'name' not in doc or not doc['name']:
-                doc['name'] = get_administrative_region_name(eadl_db, doc['administrative_region'])
+                doc['name'] = get_administrative_region_name(adl_db, doc['administrative_region'])
                 docs_to_update.append(doc)
         docs_updated = len(bulk_update(eadl_db, docs_to_update))
 

@@ -15,10 +15,27 @@
     </thead>
     <tbody>
     {% for issue in issues %}
-        <tr>
+        <tr 
+        style="
+        {% if issue.status.id == 1 %}
+        color: red; font-weight: bold;
+        {% elif issue.status.id == 2 %}
+        color: purple;
+        {% elif issue.status.id == 3 %}
+        color: green;
+        {% elif issue.status.id == 4 %}
+        color: red;
+        {% endif %}
+        "
+        
+        >
             <td>
                 <a href="{% url 'dashboard:grm:issue_detail' issue.auto_increment_id %}">
-                    {{ issue.internal_code }}
+                    {% if issue.internal_code %}
+                        {{ issue.internal_code }}
+                    {% else %}
+                        {{ issue.tracking_code }}
+                    {% endif %}
                 </a>
             </td>
             <td>{{ issue.tracking_code }}</td>

@@ -42,7 +42,7 @@
         <div class="card">
             <div class="card-body login-card-body">
                 <p class="login-box-msg">
-                    {% translate "Log in to start your session" %}
+                    {% translate "Code confirmation" %}
                 </p>
 
                 <form method="post">
@@ -51,10 +51,10 @@
                         <!-- /.col -->
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary btn-block">
-                                {% translate "Log in" %}
+                                {% translate "Confirm" %}
                             </button>
                             <br />
-                            <p>{% translate "No I don't have an account" %}. <a href="{% url 'dashboard:authentication:register' %}"> {% translate "Create an account" %} <a/></p>
+                            <p>{% translate "I have an account" %}. <a href="{% url 'dashboard:authentication:login' %}"> {% translate "Log in" %} <a/></p>
                         </div>
                         <!-- /.col -->
                     </div>

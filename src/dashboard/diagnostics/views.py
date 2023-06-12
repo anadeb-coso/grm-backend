@@ -11,6 +11,7 @@ from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, PageMixin
 from grm.utils import get_administrative_level_descendants, get_base_administrative_id
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 
 
 class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
@@ -34,7 +35,7 @@ class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
 class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
     def get(self, request, *args, **kwargs):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
-        eadl_db = get_db()
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
 
         start_date = self.request.GET.get('start_date')
         end_date = self.request.GET.get('end_date')
@@ -63,7 +64,7 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             selector["issue_type.id"] = int(issue_type)
 
         if region:
-            filter_regions = get_administrative_level_descendants(eadl_db, region, []) + [region]
+            filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
             selector["administrative_region.administrative_id"] = {
                 "$in": filter_regions
             }
@@ -93,7 +94,7 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
                 stats[k]['issues'] = stats[k]['count']
 
         for doc in issues:
-            region_key = get_base_administrative_id(eadl_db, doc['administrative_region']['administrative_id'], region)
+            region_key = get_base_administrative_id(adl_db, doc['administrative_region']['administrative_id'], region)
             fill_count(region_key, region_stats)
 
             status_key = doc['status']['id']
@@ -117,7 +118,7 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
                 "$in": regions
             }
         }
-        administrative_level_docs = eadl_db.get_query_result(selector)
+        administrative_level_docs = adl_db.get_query_result(selector)
         without_administrative_level_docs = True
         for doc in administrative_level_docs:
             without_administrative_level_docs = False

@@ -5,11 +5,13 @@ import shortuuid as uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save, post_delete
 
 from grm.utils import (
     belongs_to_region, get_parent_administrative_level, get_related_region_with_specific_level,
-    sort_dictionary_list_by_field
+    sort_dictionary_list_by_field, belongs_to_region_using_mis
 )
+from authentication.utils import create_or_update_adl_user_adl, delete_adl_user_adl
 
 
 def photo_path(instance, filename):
@@ -74,14 +76,15 @@ class GovernmentWorker(models.Model):
     def name(self):
         return self.user.name
 
-    def has_read_permission_for_issue(self, eadl_db, issue):
+    def has_read_permission_for_issue(self, adl_db, issue):
         try:
             issue_administrative_id = issue['administrative_region']['administrative_id']
             if issue_administrative_id != self.administrative_id:
                 issue_department_id = issue['category']['assigned_department']
                 if self.department != issue_department_id:
                     return False
-            belongs = belongs_to_region(eadl_db, issue_administrative_id, self.administrative_id)
+            # belongs = belongs_to_region(adl_db, issue_administrative_id, self.administrative_id)
+            belongs = belongs_to_region_using_mis(adl_db, issue_administrative_id, self.administrative_id)
             return belongs
         except Exception:
             return False
@@ -95,7 +98,7 @@ def get_government_worker_choices(empty_choice=True):
     return choices
 
 
-def get_assignee(grm_db, eadl_db, issue_doc, errors=None):
+def get_assignee(grm_db, eadl_db, adl_db, issue_doc, errors=None):
     try:
         doc_category = grm_db.get_query_result({
             "id": issue_doc['category']['id'],
@@ -125,7 +128,7 @@ def get_assignee(grm_db, eadl_db, issue_doc, errors=None):
 
         if not administrative_id:
             try:
-                doc_administrative_level = eadl_db.get_query_result({
+                doc_administrative_level = adl_db.get_query_result({
                     "administrative_id": issue_doc['administrative_region']['administrative_id'],
                     "type": 'administrative_level'
                 })[0][0]
@@ -135,7 +138,7 @@ def get_assignee(grm_db, eadl_db, issue_doc, errors=None):
                     errors.append(error)
                 raise
             level = issue_doc['category']['administrative_level']
-            related_region = get_related_region_with_specific_level(eadl_db, doc_administrative_level, level)
+            related_region = get_related_region_with_specific_level(adl_db, doc_administrative_level, level)
             administrative_id = related_region['administrative_id']
 
         related_workers = set(
@@ -206,9 +209,9 @@ def get_assignee(grm_db, eadl_db, issue_doc, errors=None):
     return assignee
 
 
-def get_assignee_to_escalate(eadl_db, department_id, administrative_id):
+def get_assignee_to_escalate(adl_db, department_id, administrative_id):
     try:
-        parent = get_parent_administrative_level(eadl_db, administrative_id)
+        parent = get_parent_administrative_level(adl_db, administrative_id)
     except Exception:
         raise
 
@@ -221,7 +224,7 @@ def get_assignee_to_escalate(eadl_db, department_id, administrative_id):
         }
         return assignee
     elif parent:
-        return get_assignee_to_escalate(eadl_db, department_id, administrative_id)
+        return get_assignee_to_escalate(adl_db, department_id, administrative_id)
 
 
 def anonymize_issue_data(issue_doc):
@@ -249,3 +252,24 @@ def anonymize_issue_data(issue_doc):
         }
     else:
         Cdata.objects.filter(key=key).delete()
+
+
+
+
+def create_or_update_user(sender, instance, **kwargs):
+    # if kwargs['created']:
+    print(kwargs['created'])
+    try:
+        create_or_update_adl_user_adl(instance, False if kwargs['created'] else True)
+    except Exception as exc:
+        print(exc)
+
+def delete_user(sender, instance, **kwargs):
+    try:
+        delete_adl_user_adl(instance)
+    except Exception as exc:
+        print(exc)
+
+
+post_delete.connect(delete_user, sender=User)
+post_save.connect(create_or_update_user, sender=User)

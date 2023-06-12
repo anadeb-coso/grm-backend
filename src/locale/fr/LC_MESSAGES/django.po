@@ -785,8 +785,8 @@ msgid "Days Open"
 msgstr "Jours d'ouverture"
 
 #: dashboard/templates/grm/issue_status_buttons.html:15
-msgid "Accept Issue"
-msgstr "Accepter la plainte"
+msgid "Open Issue"
+msgstr "Ouvrir la plainte"
 
 #: dashboard/templates/grm/issue_status_buttons.html:29
 msgid "Record Resolution"
@@ -1013,3 +1013,67 @@ msgstr "Français"
 #: grm/settings.py:133
 msgid "Kinyarwanda"
 msgstr "Kinyarwanda"
+
+#: dashboard/grm/views.py
+msgid "You don't have permission to request this request."
+msgstr "Vous n'avez pas la permission pour démander cette requete."
+
+#: dashboard/grm/views.py
+msgid "Enter a comment"
+msgstr "Indiquez un commentaire"
+
+#: dashboard/templates/authentication/login.html
+msgid "No I don't have an account"
+msgstr "Non je n'ai pas de compte"
+
+#: dashboard/templates/authentication/login.html
+msgid "Create an account"
+msgstr "Créer un compte"
+
+#: dashboard/templates/authentication/register.html
+msgid "Register your account"
+msgstr "Enregistrer votre compte"
+
+#: dashboard/templates/authentication/register.html
+msgid "Sign Up"
+msgstr "S'inscrire"
+
+#: dashboard/authentication/forms.py
+msgid "Please enter the correct %(email)s sent to you by your supervisor"
+msgstr "Veuillez entrer un %(email)s correct que votre superviseur vous a envoyé"
+
+#: dashboard/templates/authentication/register.html
+msgid "I have an account"
+msgstr "J'ai un compte"
+
+#: dashboard/templates/authentication/register.html
+msgid "Confirm"
+msgstr "Confirmer"
+
+#: dashboard/authentication/forms.py
+msgid "Code"
+msgstr "Code"
+
+#: dashboard/authentication/forms.py
+msgid "Password invalidate"
+msgstr "Mot de passe invalide"
+
+#: attachments/serializers.py
+msgid "A user with that email has not been found registered."
+msgstr "Utilisateur avec cet email n'a pas été trouvé enregistré."
+
+#: attachments/serializers.py
+msgid "Code confirmation"
+msgstr "Confirmation du code"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Other"
+msgstr "Autre"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "For"
+msgstr "Pour"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Me"
+msgstr "Moi"

@@ -78,7 +78,13 @@
                                 </label>
                             </div>
                             <div class="col-9 text-regular-family">
-                                {% if doc.assignee.id != user.id and doc.citizen_type == 1 %}
+                                {% if user.is_superuser or user|has_group:'Admin' %}
+                                    <div id="citizen">
+                                        *****
+                                        <i class="fas fa-eye pull-right link show-data"
+                                           title={% translate "Show sensitive data" %}></i>
+                                    </div>
+                                {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
                                     {% translate 'Confidential' %}
                                 {% else %}
                                     <div id="citizen">
@@ -98,7 +104,9 @@
                                 </label>
                             </div>
                             <div class="col-9 text-regular-family">
-                                {% if doc.assignee.id != user.id and doc.citizen_type == 1 %}
+                                {% if user.is_superuser or user|has_group:'Admin' %}
+                                    {{ doc.citizen_age_group.name }}
+                                {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
                                     {% translate 'Confidential' %}
                                 {% else %}
                                     {{ doc.citizen_age_group.name }}
@@ -113,7 +121,9 @@
                             </label>
                         </div>
                         <div class="col-9 text-regular-family">
-                            {% if doc.assignee.id != user.id and doc.citizen_type == 1 %}
+                            {% if user.is_superuser or user|has_group:'Admin' %}
+                                {% get_administrative_region_name doc.administrative_region.administrative_id %}
+                            {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
                                 {% translate 'Confidential' %}
                             {% else %}
                                 {% get_administrative_region_name doc.administrative_region.administrative_id %}
@@ -255,11 +265,23 @@
                 success: function (response) {
                     showPopupMessage(response.msg);
                 },
-                error: function (data) {
-                    alert(error_server_message + "Error " + data.status);
-                }
+                error: function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        }
             });
         });
+
+        class OpenStatusFormAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                loadStatusButtons();
+            }
+        }
+
+        let open_reason_form_ajax = new OpenStatusFormAjaxSubmit();
 
         class ResearchResultFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
@@ -294,7 +316,7 @@
                     $('.btn-status').prop("disabled", true);
                 {% endif %}
 
-                accept_issue.on('click', function () {
+                {% comment %} accept_issue.on('click', function () {
                     $.ajax({
                         type: "POST",
                         url: "{% url 'dashboard:grm:submit_issue_open_status' doc.auto_increment_id %}",
@@ -302,11 +324,22 @@
                             showPopupMessage(response.msg);
                             loadStatusButtons();
                         },
-                        error: function (data) {
-                            alert(error_server_message + "Error " + data.status)
+                        error: function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
                         }
                     });
+                }); {% endcomment %}
+                
+                accept_issue.on('click', function () {
+                    let url = "{% url 'dashboard:grm:submit_issue_open_status' doc.auto_increment_id %}";
+                    open_reason_form_ajax.load_form('#open_reason_form', status_change_modal, url);
                 });
+
+
 
                 record_resolution.on('click', function () {
                     let url = "{% url 'dashboard:grm:submit_issue_research_result' doc.auto_increment_id %}";
@@ -359,9 +392,13 @@
                 url: $(this).data('url'),
                 type: 'POST'
             })
-                .fail(function (data) {
-                    alert(error_server_message + "Error " + data.status);
-                })
+                .fail(function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        })
                 .done(function (data) {
                     loadAttachments();
                     showPopupMessage(data.msg);
@@ -397,9 +434,13 @@
                     comment.val('');
                     add_comment.prop('disabled', true);
                 },
-                error: function (data) {
-                    alert(error_server_message + "Error " + data.status);
-                }
+                error: function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        }
             });
         });
 
@@ -427,13 +468,18 @@
                     showPopupMessage(response.msg);
                     let data = response.data;
                     if (data && data.citizen) {
+                        console.log(data);
                         $("#citizen").html(data.citizen);
                     }
                     $('#checkPasswordModal').modal('hide')
                 },
-                error: function (data) {
-                    alert(error_server_message + "Error " + data.status);
-                }
+                error: function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        }
             });
         });
 

@@ -1,10 +1,12 @@
 import csv
 import time
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from client import bulk_update, get_db
 
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 
 class Command(BaseCommand):
     help = 'Loads administrative levels from csv file to CouchDB'
@@ -13,10 +15,10 @@ class Command(BaseCommand):
         parser.add_argument('file_path', type=str, help='Absolute path to csv file')
 
     def handle(self, *args, **kwargs):
-        eadl_db = get_db()
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
 
         try:
-            country_administrative_id = eadl_db.get_query_result(
+            country_administrative_id = adl_db.get_query_result(
                 {
                     "type": 'administrative_level',
                     "parent_id": None,
@@ -48,7 +50,7 @@ class Command(BaseCommand):
                         continue
 
                     for administrative_level, name in list(doc_data.items())[2:]:
-                        administrative_level_doc = eadl_db.get_query_result(
+                        administrative_level_doc = adl_db.get_query_result(
                             {
                                 "type": 'administrative_level',
                                 "name": name,
@@ -77,12 +79,12 @@ class Command(BaseCommand):
                                 "parent_id": current_parent_id,
                             }
 
-                            eadl_db.create_document(doc)
+                            adl_db.create_document(doc)
                             created += 1
 
                         current_parent_id = doc['administrative_id']
 
-                updated = len(bulk_update(eadl_db, docs_to_update))
+                updated = len(bulk_update(adl_db, docs_to_update))
 
             self.stdout.write(self.style.SUCCESS(f'Successfully created {created} administrative levels'))
             self.stdout.write(self.style.SUCCESS(f'Successfully updated {updated} administrative levels'))

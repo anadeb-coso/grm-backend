@@ -22,6 +22,8 @@ from django.urls import path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from django.conf.urls.i18n import i18n_patterns
+from .views import set_language
 
 handler400 = 'dashboard.authentication.views.handler400'
 handler403 = 'dashboard.authentication.views.handler403'
@@ -29,11 +31,12 @@ handler404 = 'dashboard.authentication.views.handler404'
 handler500 = 'dashboard.authentication.views.handler500'
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('set-language/', set_language, name='set_language'),
+    # path('admin/', admin.site.urls),
     path('attachments/', include('attachments.urls')),
     path('authentication/', include('authentication.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
-    path('', include('dashboard.urls')),
+    # path('', include('dashboard.urls')),
 ]
 
 schema_view = get_schema_view(
@@ -53,3 +56,8 @@ if settings.DEBUG:
     urlpatterns += [
         path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     ]
+
+urlpatterns += i18n_patterns(
+    path('admin/', admin.site.urls),
+    path('', include('dashboard.urls')),
+)

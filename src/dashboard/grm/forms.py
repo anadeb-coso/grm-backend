@@ -13,6 +13,7 @@ from grm.utils import (
 )
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 MAX_LENGTH = 65000
 
 
@@ -147,11 +148,11 @@ class NewIssueLocationForm(forms.Form):
         doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
 
-        eadl_db = get_db()
-        label = get_administrative_regions_by_level(eadl_db)[0]['administrative_level'].title()
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+        label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()
         self.fields['administrative_region'].label = label
 
-        administrative_region_choices = get_administrative_region_choices(eadl_db)
+        administrative_region_choices = get_administrative_region_choices(adl_db)
         self.fields['administrative_region'].widget.choices = administrative_region_choices
         self.fields['administrative_region'].choices = administrative_region_choices
         self.fields['administrative_region'].widget.attrs['class'] = "region"
@@ -162,7 +163,7 @@ class NewIssueLocationForm(forms.Form):
         if 'administrative_region' in document and document['administrative_region']:
             administrative_id = document['administrative_region']['administrative_id']
             self.fields['administrative_region_value'].initial = administrative_id
-            self.fields['administrative_region'].initial = get_base_administrative_id(eadl_db, administrative_id)
+            self.fields['administrative_region'].initial = get_base_administrative_id(adl_db, administrative_id)
 
 
 class NewIssueConfirmForm(NewIssueLocationForm, NewIssueDetailsForm, NewIssuePersonForm, NewIssueContactForm):
@@ -198,10 +199,10 @@ class SearchIssueForm(forms.Form):
         self.fields['type'].widget.choices = get_issue_type_choices(grm_db)
         self.fields['status'].widget.choices = get_issue_status_choices(grm_db)
 
-        eadl_db = get_db()
-        label = get_administrative_regions_by_level(eadl_db)[0]['administrative_level'].title()
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+        label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()
         self.fields['administrative_region'].label = label
-        self.fields['administrative_region'].widget.choices = get_administrative_region_choices(eadl_db)
+        self.fields['administrative_region'].widget.choices = get_administrative_region_choices(adl_db)
         self.fields['administrative_region'].widget.attrs['class'] = "region"
 
 
@@ -217,12 +218,26 @@ class IssueDetailsForm(forms.Form):
         self.fields['assignee'].widget.choices = get_government_worker_choices(False)
 
         document = grm_db[doc_id]
-        self.fields['assignee'].initial = document['assignee']['id']
+        if type(document['assignee']) == dict:
+            self.fields['assignee'].initial = document['assignee']['id']
 
 
 class IssueCommentForm(forms.Form):
     comment = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Add comment')}))
+
+
+class IssueOpenStatusForm(forms.Form):
+    open_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        document = grm_db[doc_id]
+        self.fields['open_reason'].initial = document['open_reason'] if 'open_reason' in document else ''
 
 
 class IssueResearchResultForm(forms.Form):

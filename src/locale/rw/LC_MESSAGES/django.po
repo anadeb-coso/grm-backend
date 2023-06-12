@@ -747,7 +747,7 @@ msgid "Days Open"
 msgstr ""
 
 #: dashboard/templates/grm/issue_status_buttons.html:15
-msgid "Accept Issue"
+msgid "Open Issue"
 msgstr ""
 
 #: dashboard/templates/grm/issue_status_buttons.html:29
@@ -974,4 +974,64 @@ msgstr ""
 
 #: grm/settings.py:133
 msgid "Kinyarwanda"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "You don't have permission to request this request."
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Enter a comment"
+msgstr ""
+
+#: dashboard/templates/authentication/login.html
+msgid "No I don't have an account"
+msgstr ""
+
+#: dashboard/templates/authentication/login.html
+msgid "Create an account"
+msgstr ""
+
+#: dashboard/templates/authentication/register.html
+msgid "Register your account"
+msgstr ""
+
+#: dashboard/templates/authentication/register.html
+msgid "Sign Up"
+msgstr ""
+
+#: dashboard/authentication/forms.py
+msgid "Please enter the correct %(email)s sent to you by your supervisor"
+msgstr ""
+
+#: dashboard/templates/authentication/register.html
+msgid "I have an account"
+msgstr ""
+
+#: dashboard/templates/authentication/register.html
+msgid "Confirm"
+msgstr ""
+
+#: dashboard/authentication/forms.py
+msgid "Code"
+msgstr ""
+
+#: dashboard/authentication/forms.py
+msgid "Password invalidate"
+msgstr ""
+
+#: attachments/serializers.py
+msgid "A user with that email has not been found registered."
+msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Other"
+msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "For"
+msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Me"
 msgstr ""

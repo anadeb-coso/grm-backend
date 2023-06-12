@@ -19,15 +19,18 @@ from dashboard.forms.forms import FileForm
 from dashboard.grm import CHOICE_CONTACT
 from dashboard.grm.forms import (
     IssueCommentForm, IssueDetailsForm, IssueRejectReasonForm, IssueResearchResultForm, MAX_LENGTH, NewIssueConfirmForm,
-    NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm
+    NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm, IssueOpenStatusForm
 )
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from grm.utils import (
     get_administrative_level_descendants, get_auto_increment_id, get_child_administrative_regions,
-    get_parent_administrative_level
+    get_parent_administrative_level, get_administrative_level_descendants_using_mis
 )
+from dashboard.grm.functions import get_issue_status_stories
+
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 COUCHDB_GRM_ATTACHMENT_DATABASE = settings.COUCHDB_GRM_ATTACHMENT_DATABASE
 
 
@@ -72,6 +75,7 @@ class IssueMixin:
     doc = None
     grm_db = None
     eadl_db = None
+    adl_db = None
     max_attachments = 20
     permissions = ('read', 'write')
     has_permission = True
@@ -86,7 +90,9 @@ class IssueMixin:
         user = self.request.user
 
         if self.doc["confirmed"]:
-            if 'read_only_by_reporter' in self.permissions and self.doc['reporter']['id'] != user.id:
+            if user.groups.filter(name="Admin").exists() or user.is_superuser:
+                self.has_permission = True
+            elif 'read_only_by_reporter' in self.permissions and self.doc['reporter']['id'] != user.id:
                 self.has_permission = False
             else:
                 is_assigned = 'assignee' in self.doc and self.doc['assignee']
@@ -99,7 +105,7 @@ class IssueMixin:
                             if self.doc['reporter']['id'] != user.id:
                                 self.has_permission = False
                         else:
-                            if not user.governmentworker.has_read_permission_for_issue(self.eadl_db, self.doc):
+                            if not user.governmentworker.has_read_permission_for_issue(self.adl_db, self.doc):
                                 self.has_permission = False
                             if 'write' not in self.permissions:
                                 self.has_permission = False
@@ -107,6 +113,7 @@ class IssueMixin:
     def dispatch(self, request, *args, **kwargs):
         self.grm_db = get_db(COUCHDB_GRM_DATABASE)
         self.eadl_db = get_db()
+        self.adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         docs = self.get_query_result(**kwargs)
         try:
             self.doc = self.grm_db[docs[0][0]['_id']]
@@ -124,11 +131,17 @@ class IssueMixin:
         context['doc'] = self.doc
         context['max_attachments'] = self.max_attachments
         context['choice_contact'] = CHOICE_CONTACT
-        permission_to_edit = True
         user = self.request.user
         is_assigned = 'assignee' in self.doc and self.doc['assignee']
-        if hasattr(user, 'governmentworker') and is_assigned and self.doc['assignee']['id'] != user.id:
+        if user.groups.filter(name="Admin").exists() or user.is_superuser:
+            permission_to_edit = True
+        elif is_assigned and self.doc['assignee']['id'] == user.id:
+            permission_to_edit = True
+        elif hasattr(user, 'governmentworker') and is_assigned and self.doc['assignee']['id'] != user.id:
             permission_to_edit = False
+        else:
+            permission_to_edit = False
+
         context['permission_to_edit'] = permission_to_edit
         return context
 
@@ -343,7 +356,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
     def set_location_fields(self, data):
 
         try:
-            doc_administrative_level = self.eadl_db.get_query_result({
+            doc_administrative_level = self.adl_db.get_query_result({
                 "administrative_id": data['administrative_region_value'],
                 "type": 'administrative_level'
             })[0][0]
@@ -358,7 +371,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
     def set_assignee(self):
 
         try:
-            assignee = get_assignee(self.grm_db, self.eadl_db, self.doc)
+            assignee = get_assignee(self.grm_db, self.eadl_db, self.adl_db, self.doc)
         except Exception:
             raise Http404
 
@@ -482,7 +495,7 @@ class NewIssueConfirmFormView(PageMixin, NewIssueMixin):
 
         try:
             doc_status = self.grm_db.get_query_result({
-                "open_status": True,
+                "initial_status": True,
                 "type": 'issue_status'
             })[0][0]
         except Exception:
@@ -537,7 +550,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
-        eadl_db = get_db()
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         index = int(self.request.GET.get('index'))
         offset = int(self.request.GET.get('offset'))
         start_date = self.request.GET.get('start_date')
@@ -547,24 +560,31 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         category = self.request.GET.get('category')
         issue_type = self.request.GET.get('type')
         status = self.request.GET.get('status')
-
-        selector = {
-            "type": "issue",
-            "confirmed": True,
-            "auto_increment_id": {"$ne": ""},
-        }
         user = self.request.user
-        if hasattr(user, 'governmentworker'):
-            parent_id = user.governmentworker.administrative_id
-            descendants = get_administrative_level_descendants(eadl_db, parent_id, [])
-            allowed_regions = descendants + [parent_id]
-            selector["$or"] = [
-                {"assignee.id": user.id},
-                {"$and": [
-                    {"category.assigned_department": user.governmentworker.department},
-                    {"administrative_region.administrative_id": {"$in": allowed_regions}},
-                ]}
-            ]
+
+        if user.groups.filter(name="Admin").exists() or user.is_superuser:
+            selector = {
+                "type": "issue",
+            }
+        else:
+            selector = {
+                "type": "issue",
+                "confirmed": True,
+                "auto_increment_id": {"$ne": ""},
+            }
+            
+            if hasattr(user, 'governmentworker'):
+                parent_id = user.governmentworker.administrative_id
+                # descendants = get_administrative_level_descendants(adl_db, parent_id, [])
+                descendants = get_administrative_level_descendants_using_mis(adl_db, parent_id, [])
+                allowed_regions = descendants + [parent_id]
+                selector["$or"] = [
+                    {"assignee.id": user.id},
+                    {"$and": [
+                        {"category.assigned_department": user.governmentworker.department},
+                        {"administrative_region.administrative_id": {"$in": allowed_regions}},
+                    ]}
+                ]
 
         date_range = {}
         if start_date:
@@ -586,6 +606,11 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             selector["issue_type.id"] = int(issue_type)
         if status:
             selector["status.id"] = int(status)
+        # _query_result = grm_db.get_query_result(selector)[:]
+        # _ = _query_result
+        # for elt in _query_governmentworker:
+        #     if elt not in _query_result:
+        #         _.append(elt)
         return grm_db.get_query_result(selector)[index:index + offset]
 
 
@@ -604,7 +629,7 @@ class IssueCommentsContextMixin:
         context['colors'] = ['warning', 'mediumslateblue', 'gray', 'mediumpurple', 'plum', 'primary', 'danger']
         comments = self.doc['comments'] if 'comments' in self.doc else list()
         users = {c['id'] for c in comments} | {
-            self.doc['assignee']['id'], self.doc_department['head']['id']}
+            (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']}
         indexed_users = {}
         for index, user_id in enumerate(users):
             indexed_users[user_id] = index
@@ -639,14 +664,14 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
     def get_query_result(self, **kwargs):
         return self.grm_db.get_query_result({
             "auto_increment_id": kwargs['issue'],
-            "confirmed": True,
-            "type": 'issue'
+            # # "confirmed": True,
+            # # "type": 'issue'
         })
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.request.user.id
-        context['enable_add_comment'] = user_id == self.doc['assignee']['id'] or user_id == self.doc_department[
+        context['enable_add_comment'] = user_id == (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0) or user_id == self.doc_department[
             'head']['id']
         context['comment_form'] = IssueCommentForm()
         try:
@@ -741,29 +766,38 @@ class IssueStatusButtonsTemplateView(IssueMixin, AJAXRequestMixin, LoginRequired
         return context
 
 
-class SubmitIssueOpenStatusView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+class SubmitIssueOpenStatusView(AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
+                                        IssueFormMixin):
+    form_class = IssueOpenStatusForm
+    id_form = "open_reason_form"
+    title = _('Enter a comment')
+    submit_button = _('Save')
     permissions = ('read',)
 
     def check_permissions(self):
         super().check_permissions()
-        try:
-            doc_status = self.grm_db.get_query_result({
-                "id": self.doc["status"]["id"],
-                "type": 'issue_status'
-            })[0][0]
-        except Exception:
-            self.has_permission = False
-            return
+        # try:
+        #     doc_status = self.grm_db.get_query_result({
+        #         "id": self.doc["status"]["id"],
+        #         "type": 'issue_status'
+        #     })[0][0]
+        # except Exception:
+        #     self.has_permission = False
+        #     return
 
-        open_status = doc_status['open_status'] if 'open_status' in doc_status else False
-        initial_status = doc_status['initial_status'] if 'initial_status' in doc_status else False
-        rejected_status = doc_status['rejected_status'] if 'rejected_status' in doc_status else False
-        if open_status or not initial_status or rejected_status:
-            self.has_permission = False
+        # open_status = doc_status['open_status'] if 'open_status' in doc_status else False
+        # initial_status = doc_status['initial_status'] if 'initial_status' in doc_status else False
+        # rejected_status = doc_status['rejected_status'] if 'rejected_status' in doc_status else False
+        # if open_status or not initial_status or rejected_status:
+        #     self.has_permission = False
 
-    def post(self, request, *args, **kwargs):
-        self.doc['research_result'] = ""
-        self.doc['reject_reason'] = ""
+    def form_valid(self, form):
+        # self.doc['research_result'] = ""
+        # self.doc['reject_reason'] = ""
+        data = form.cleaned_data
+        self.doc['open_reason'] = data["open_reason"]
+        self.doc['_comment'] = data["open_reason"]
+        
         try:
             doc_status = self.grm_db.get_query_result({
                 "open_status": True,
@@ -775,6 +809,8 @@ class SubmitIssueOpenStatusView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin
             "name": doc_status['name'],
             "id": doc_status['id']
         }
+        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+        del self.doc['_comment']
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -792,24 +828,25 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
 
     def check_permissions(self):
         super().check_permissions()
-        try:
-            doc_status = self.grm_db.get_query_result({
-                "id": self.doc["status"]["id"],
-                "type": 'issue_status'
-            })[0][0]
-        except Exception:
-            self.has_permission = False
-            return
+        # try:
+        #     doc_status = self.grm_db.get_query_result({
+        #         "id": self.doc["status"]["id"],
+        #         "type": 'issue_status'
+        #     })[0][0]
+        # except Exception:
+        #     self.has_permission = False
+        #     return
 
-        open_status = doc_status['open_status'] if 'open_status' in doc_status else False
-        final_status = doc_status['final_status'] if 'final_status' in doc_status else False
-        if final_status or not open_status:
-            self.has_permission = False
+        # open_status = doc_status['open_status'] if 'open_status' in doc_status else False
+        # final_status = doc_status['final_status'] if 'final_status' in doc_status else False
+        # if final_status or not open_status:
+        #     self.has_permission = False
 
     def form_valid(self, form):
         data = form.cleaned_data
         self.doc['research_result'] = data["research_result"]
-        self.doc['reject_reason'] = ""
+        self.doc['_comment'] = data["research_result"]
+        # self.doc['reject_reason'] = ""
         try:
             doc_status = self.grm_db.get_query_result({
                 "final_status": True,
@@ -821,6 +858,8 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
             "name": doc_status['name'],
             "id": doc_status['id']
         }
+        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+        del self.doc['_comment']
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -839,24 +878,25 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
 
     def check_permissions(self):
         super().check_permissions()
-        try:
-            doc_status = self.grm_db.get_query_result({
-                "id": self.doc["status"]["id"],
-                "type": 'issue_status'
-            })[0][0]
-        except Exception:
-            self.has_permission = False
-            return
+        # try:
+        #     doc_status = self.grm_db.get_query_result({
+        #         "id": self.doc["status"]["id"],
+        #         "type": 'issue_status'
+        #     })[0][0]
+        # except Exception:
+        #     self.has_permission = False
+        #     return
 
-        initial_status = doc_status['initial_status'] if 'initial_status' in doc_status else False
-        rejected_status = doc_status['rejected_status'] if 'rejected_status' in doc_status else False
-        if rejected_status or not initial_status:
-            self.has_permission = False
+        # initial_status = doc_status['initial_status'] if 'initial_status' in doc_status else False
+        # rejected_status = doc_status['rejected_status'] if 'rejected_status' in doc_status else False
+        # if rejected_status or not initial_status:
+        #     self.has_permission = False
 
     def form_valid(self, form):
         data = form.cleaned_data
         self.doc['reject_reason'] = data["reject_reason"]
-        self.doc['research_result'] = ""
+        self.doc['_comment'] = data["reject_reason"]
+        # self.doc['research_result'] = ""
         try:
             doc_status = self.grm_db.get_query_result({
                 "rejected_status": True,
@@ -868,6 +908,8 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
             "name": doc_status['name'],
             "id": doc_status['id']
         }
+        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+        del self.doc['_comment']
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -880,10 +922,10 @@ class GetChoicesForNextAdministrativeLevelView(AJAXRequestMixin, LoginRequiredMi
     def get(self, request, *args, **kwargs):
         parent_id = request.GET.get('parent_id')
         exclude_lower_level = request.GET.get('exclude_lower_level', None)
-        eadl_db = get_db()
-        data = get_child_administrative_regions(eadl_db, parent_id)
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+        data = get_child_administrative_regions(adl_db, parent_id)
 
-        if data and exclude_lower_level and not get_child_administrative_regions(eadl_db, data[0]['administrative_id']):
+        if data and exclude_lower_level and not get_child_administrative_regions(adl_db, data[0]['administrative_id']):
             data = []
 
         return self.render_to_json_response(data, safe=False)
@@ -894,10 +936,10 @@ class GetAncestorAdministrativeLevelsView(AJAXRequestMixin, LoginRequiredMixin, 
         administrative_id = request.GET.get('administrative_id', None)
         ancestors = []
         if administrative_id:
-            eadl_db = get_db()
+            adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
             has_parent = True
             while has_parent:
-                parent = get_parent_administrative_level(eadl_db, administrative_id)
+                parent = get_parent_administrative_level(adl_db, administrative_id)
                 if parent:
                     administrative_id = parent['administrative_id']
                     ancestors.insert(0, administrative_id)

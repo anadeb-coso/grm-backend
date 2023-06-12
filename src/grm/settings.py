@@ -50,6 +50,7 @@ CREATED_APPS = [
     'attachments',
     'authentication',
     'dashboard',
+    'administrativelevels',
 ]
 
 THIRD_PARTY_APPS = [
@@ -95,8 +96,10 @@ WSGI_APPLICATION = 'grm.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+EXTERNAL_DATABASE_NAME = 'mis'
 DATABASES = {
-    'default': env.db(default='sqlite:///grm.db')
+    'default': env.db(default='sqlite:///grm.db'),
+    EXTERNAL_DATABASE_NAME: env.db('LEGACY_DATABASE_URL')
 }
 
 # Password validation
@@ -115,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
-LANGUAGE_CODE = env('LANGUAGE_CODE', default='en-us')
+LANGUAGE_CODE = env('LANGUAGE_CODE', default='en')
 
 TIME_ZONE = 'UTC'
 
@@ -128,7 +131,7 @@ USE_TZ = True
 OTHER_LANGUAGES = env('OTHER_LANGUAGES', list, default=[])
 
 LANGUAGES = (
-    ('en-us', _('English')),
+    ('en', _('English')),
     ('fr', _('French')),
     ('rw', _('Kinyarwanda')),
 )
@@ -190,6 +193,8 @@ LOGOUT_REDIRECT_URL = '/'
 
 # CouchDB
 COUCHDB_DATABASE = env('COUCHDB_DATABASE')
+
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = env('COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL')
 
 COUCHDB_ATTACHMENT_DATABASE = env('COUCHDB_ATTACHMENT_DATABASE')
 

@@ -10,6 +10,7 @@ from grm.utils import get_auto_increment_id
 from sms_client import send_sms
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 
 
 @app.task
@@ -151,7 +152,8 @@ def check_issues():
         if 'assignee' not in issue_doc or not issue_doc['assignee']:
             try:
                 eadl_db = get_db()
-                assignee = get_assignee(grm_db, eadl_db, issue_doc, result['errors'])
+                adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+                assignee = get_assignee(grm_db, eadl_db, adl_db, issue_doc, result['errors'])
                 issue_doc['assignee'] = assignee
                 if assignee:
                     assignee_updated = True
@@ -203,8 +205,8 @@ def escalate_issues():
             })[0][0]
             department_id = doc_category['assigned_department']['id']
             administrative_id = issue_doc['administrative_region']['administrative_id']
-            eadl_db = get_db()
-            assignee = get_assignee_to_escalate(eadl_db, department_id, administrative_id)
+            adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+            assignee = get_assignee_to_escalate(adl_db, department_id, administrative_id)
             if assignee:
                 issue_doc['assignee'] = assignee
                 issue_doc['escalate_flag'] = False

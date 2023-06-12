@@ -1,0 +1,10 @@
+{
+  "_id": "_design/communes",
+  "views": {
+    "total_count": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if(doc.type === 'administrative_level' && doc.parent_id === null) {\n    emit(doc._id, 1);\n  }\n}"
+    }
+  },
+  "language": "javascript"
+}

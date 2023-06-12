@@ -16,7 +16,7 @@ click-repl==0.2.0
 cloudant==2.14.0
 coreapi==2.3.3
 coreschema==0.0.4
-cryptocode==0.1
+cryptocode
 distlib==0.3.1
 dj-database-url==0.5.0
 Django==3.2
@@ -42,6 +42,7 @@ Jinja2==2.11.2
 kombu==5.2.2
 MarkupSafe==1.1.1
 mccabe==0.6.1
+mysqlclient==2.1.1
 nodeenv==1.5.0
 packaging==20.8
 parameterized==0.8.1

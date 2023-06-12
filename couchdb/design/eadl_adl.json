@@ -1,0 +1,9 @@
+{
+  "_id": "_design/eadl",
+  "views": {
+  },
+  "filters": {
+    "by_user_email": "function (doc, req) {\n return doc._id === '_design/eadl' || (doc.representative && doc.representative.email === req.query.email); \n}"
+  },
+  "language": "javascript"
+}

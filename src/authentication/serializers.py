@@ -85,7 +85,7 @@ class RegisterSerializer(serializers.Serializer):
         email = attrs.get('email', '').lower()
         password = attrs.get('password')
         try:
-            user = User.objects.get(email=self.email)
+            user = User.objects.get(email=email)
         except User.DoesNotExist as exc:
             raise serializers.ValidationError(self.default_error_messages.get('not_found_email'))
         

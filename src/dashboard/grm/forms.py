@@ -226,6 +226,9 @@ class IssueCommentForm(forms.Form):
     comment = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Add comment')}))
 
+class IssueReasonCommentForm(forms.Form):
+    reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(
+        attrs={'rows': '3', 'placeholder': _('Add comment')}))
 
 class IssueOpenStatusForm(forms.Form):
     open_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))

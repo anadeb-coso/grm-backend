@@ -19,7 +19,8 @@ from dashboard.forms.forms import FileForm
 from dashboard.grm import CHOICE_CONTACT
 from dashboard.grm.forms import (
     IssueCommentForm, IssueDetailsForm, IssueRejectReasonForm, IssueResearchResultForm, MAX_LENGTH, NewIssueConfirmForm,
-    NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm, IssueOpenStatusForm
+    NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm, 
+    IssueOpenStatusForm, IssueReasonCommentForm
 )
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from grm.utils import (
@@ -32,6 +33,31 @@ from dashboard.grm.functions import get_issue_status_stories
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 COUCHDB_GRM_ATTACHMENT_DATABASE = settings.COUCHDB_GRM_ATTACHMENT_DATABASE
+
+
+
+class IssueCommentsContextMixin:
+    doc_department = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            self.doc_department = self.grm_db.get_query_result({
+                "id": self.doc['category']['assigned_department'],
+                "type": 'issue_department'
+            })[0][0]
+        except Exception:
+            raise Http404
+        context['colors'] = ['warning', 'mediumslateblue', 'gray', 'mediumpurple', 'plum', 'primary', 'danger']
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+        users = {r['user_id'] for r in reasons} | {c['id'] for c in comments} | {
+            (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']}
+        indexed_users = {}
+        for index, user_id in enumerate(users):
+            indexed_users[user_id] = index
+        context['indexed_users'] = indexed_users
+        return context
 
 
 class DashboardTemplateView(PageMixin, LoginRequiredMixin, generic.TemplateView):
@@ -156,7 +182,11 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
     def form_valid(self, form):
         data = form.cleaned_data
         attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
-        if len(attachments) < self.max_attachments:
+
+        reason = self.request.GET.get('reason', '')
+        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+
+        if len(attachments) < self.max_attachments or reason:
             response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
             if response['ok']:
                 attachment = {
@@ -167,8 +197,17 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
                     "uploaded": True,
                     "bd_id": response['id'],
                 }
-                attachments.append(attachment)
-                self.doc['attachments'] = attachments
+                
+                if reason:
+                    attachment["type"] = "file"
+                    attachment["user_id"] = self.request.user.id
+                    attachment["user_name"] = self.request.user.name
+                    reasons.insert(0, attachment)
+                    self.doc['reasons'] = reasons
+                else:
+                    attachments.append(attachment)
+                    self.doc['attachments'] = attachments
+
                 self.doc.save()
                 msg = _("The attachment was successfully uploaded.")
                 messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -190,7 +229,7 @@ class IssueAttachmentDeleteView(IssueMixin, AJAXRequestMixin, ModalFormMixin, Lo
 
     def delete(self, request, *args, **kwargs):
         if 'attachments' in self.doc:
-            attachments = self.doc['attachments']
+            attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
             grm_attachment_db = get_db(COUCHDB_GRM_ATTACHMENT_DATABASE)
             for attachment in attachments:
                 if attachment['id'] == kwargs['attachment']:
@@ -200,7 +239,21 @@ class IssueAttachmentDeleteView(IssueMixin, AJAXRequestMixin, ModalFormMixin, Lo
                         pass
                     attachments.remove(attachment)
                     break
-            self.doc.save()
+            
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+            for reason in reasons:
+                if reason['id'] == kwargs['attachment']:
+                    try:
+                        grm_attachment_db[reason['bd_id']].delete()
+                    except Exception:
+                        pass
+                    reasons.remove(reason)
+                    break
+
+            try:
+                self.doc.save()
+            except:
+                pass
             msg = _("The attachment was successfully deleted.")
             messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
             context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
@@ -209,17 +262,22 @@ class IssueAttachmentDeleteView(IssueMixin, AJAXRequestMixin, ModalFormMixin, Lo
             raise Http404
 
 
-class IssueAttachmentListView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
+class IssueAttachmentListView(IssueMixin, IssueCommentsContextMixin, AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
     template_name = 'grm/issue_attachments.html'
     context_object_name = 'attachments'
 
     def get_queryset(self):
-        return self.doc['attachments'] if 'attachments' in self.doc else list()
+        # return self.doc['attachments'] if 'attachments' in self.doc else list()
+        attr = self.request.GET.get('attr', 'attachments')
+        if attr != 'attachments': 
+            self.context_object_name = attr
+        return self.doc[attr] if attr in self.doc else list()
 
     def dispatch(self, request, *args, **kwargs):
         column = self.request.GET.get('column', '')
         if column:
-            self.template_name = 'grm/issue_attachments_column1.html'
+            # self.template_name = 'grm/issue_attachments_column1.html'
+            self.template_name = 'grm/issue_attachments{}.html'.format(('_column'+column) if column else '')
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -614,28 +672,6 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         return grm_db.get_query_result(selector)[index:index + offset]
 
 
-class IssueCommentsContextMixin:
-    doc_department = None
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        try:
-            self.doc_department = self.grm_db.get_query_result({
-                "id": self.doc['category']['assigned_department'],
-                "type": 'issue_department'
-            })[0][0]
-        except Exception:
-            raise Http404
-        context['colors'] = ['warning', 'mediumslateblue', 'gray', 'mediumpurple', 'plum', 'primary', 'danger']
-        comments = self.doc['comments'] if 'comments' in self.doc else list()
-        users = {c['id'] for c in comments} | {
-            (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']}
-        indexed_users = {}
-        for index, user_id in enumerate(users):
-            indexed_users[user_id] = index
-        context['indexed_users'] = indexed_users
-        return context
-
 
 class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, LoginRequiredMixin, generic.FormView):
     form_class = IssueDetailsForm
@@ -674,6 +710,7 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         context['enable_add_comment'] = user_id == (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0) or user_id == self.doc_department[
             'head']['id']
         context['comment_form'] = IssueCommentForm()
+        context['reason_comment_form'] = IssueReasonCommentForm()
         try:
             doc_status = self.grm_db.get_query_result({
                 "id": self.doc['status']['id'],
@@ -715,20 +752,39 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
         except Exception:
             raise Http404
         user_id = request.user.id
-        if user_id != self.doc['assignee']['id'] and user_id != doc_department['head']['id']:
+        if self.doc['assignee'] and user_id != self.doc['assignee']['id'] and user_id != doc_department['head']['id']:
             raise PermissionDenied()
 
-        comment = request.POST.get('comment').strip()[:MAX_LENGTH]
+        reason = self.request.GET.get('reason', '')
+        
+        # comment = request.POST.get('comment').strip()[:MAX_LENGTH]
+        comment = request.POST.get('comment').strip()
+
+        if not reason:
+            comment[:MAX_LENGTH]
+
         if comment:
             comments = self.doc['comments'] if 'comments' in self.doc else list()
-            comment_obj = {
-                "name": request.user.name,
-                "id": user_id,
-                "comment": comment,
-                "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            }
-            comments.insert(0, comment_obj)
-            self.doc['comments'] = comments
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+            if reason:
+                comment_obj = {
+                    "user_name": request.user.name,
+                    "user_id": user_id,
+                    "comment": comment,
+                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                    "type": "comment"
+                }
+                reasons.insert(0, comment_obj)
+                self.doc['reasons'] = reasons
+            else:
+                comment_obj = {
+                    "name": request.user.name,
+                    "id": user_id,
+                    "comment": comment,
+                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                }
+                comments.insert(0, comment_obj)
+                self.doc['comments'] = comments
             self.doc.save()
             msg = _("The comment was sent successfully.")
             messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')

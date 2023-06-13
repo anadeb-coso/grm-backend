@@ -1,0 +1,93 @@
+{% load static i18n custom_tags %}
+
+{% if reasons %}
+    {% comment %} <div class="form-group row">
+        <div class="col-12">
+            <label class="label-align">
+                {% translate 'Attachments' %}
+            </label>
+            <small class="form-text text-muted mt-0">
+                {% blocktranslate %}
+                    Allowed to upload up to {{ max_attachments }} attachments
+                {% endblocktranslate %}
+            </small>
+        </div>
+    </div> {% endcomment %}
+    <div class="row">
+        <div class="col-12">
+            {% for reason in reasons %}
+            
+                {% comment %} {% if reason.type == "file" %}
+                <div class="row">
+                    <div class="col-6 border-bottom">
+                        <div class="d-inline-block padding-6-0">
+                            <a href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm"
+                            target="_blank">
+                                <i class="fas fa-paperclip mr-2"></i>
+                                {{ reason.name }}
+                            </a>
+                        </div>
+                        <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
+                        data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id reason.id %}">
+                            <i class="far fa-trash-alt text-danger"></i>
+                        </a>
+                    </div>
+                </div>
+                {% else %} {% endcomment %}
+                    <div class="row">
+                        <div class="col-6">
+                            {% with indexed_users|get:reason.user_id as color_index %}
+                                <div class="circle-icon float-left mr-2 navbar-{{ colors|next_in_circular_list:color_index }}">
+                                    <div class="center-32 pt-1 text-white text-bold-family">
+                                        {% get_initials reason.user_name %}
+                                    </div>
+                                </div>
+                            {% endwith %}
+                            <div class="text-bold-family">
+                                {{ reason.user_name }}
+                            </div>
+                            <div class="text-regular-family">
+                                {{ reason.due_at|string_to_date|date:'j-F-Y' }}
+                            </div>
+                        </div>
+                        <div class="col-6 text-right lh15 mt-3 text-regular-family">
+                            {% get_hour reason.due_at %}
+                        </div>
+                    </div>
+                    <div class="row border-bottom mt-2 mb-3">
+                        <div class="col-10 mb-2 text-regular-family mb-3">
+                            {% if reason.type == "file" %}
+                                    <a href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm"
+                                    target="_blank">
+                                        <i class="fas fa-paperclip mr-2"></i>
+                                        {{ reason.name }}
+                                    </a>
+                                <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
+                                data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id reason.id %}">
+                                    <i class="far fa-trash-alt text-danger"></i>
+                                </a>
+                            {% else %}
+                                {{ reason.comment }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+            {% empty %}
+            <div class="row">
+                <div class="col-12 text-center">
+                    {% translate 'No reasons found' %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+{% comment %} <div class="row mt-4">
+    <div class="col-12">
+        <a class="btn btn-primary btn-sm fs12 rounded-xl {% if not permission_to_edit %}
+        disabled{% endif %}"
+           id="add_attachment_reason">
+            <i class="fa fa-file-o"></i>
+        </a>
+    </div>
+</div> {% endcomment %}

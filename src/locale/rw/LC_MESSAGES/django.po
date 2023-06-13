@@ -1035,3 +1035,15 @@ msgstr ""
 #: dashboard/templates/grm/issue_list.html
 msgid "Me"
 msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Closing reasons"
+msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "No reasons found"
+msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Comments"
+msgstr ""

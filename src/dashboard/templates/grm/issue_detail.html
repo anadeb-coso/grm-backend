@@ -25,6 +25,70 @@
                             <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                         </div>
                     </div>
+                    <hr />
+                    <div class="card-header border-0">
+                        <div class="card-title">
+                            <div class="pt-1 fs20 lh25 text-bold-family">
+                                {% translate 'Closing reasons' %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overlay-wrapper" style="border: 2px solid black; padding: 11px; border-style: dashed;">
+
+                        <div id="attachments-reason"></div>
+
+                        <div class="card mh-750">
+                            
+                            <div class="card-header">
+                                {% if enable_add_comment and permission_to_edit %}
+                                    <div class="row mb-3">
+                                        <div class="col-1">
+                                            {% with indexed_users|get:user.id as color_index %}
+                                                <div class="circle-icon navbar-{{ colors|next_in_circular_list:color_index }}
+                                                text-white text-bold-family">
+                                                    <div class="center-32 pt-1">
+                                                        {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        </div>
+                                        <div class="col-9">
+                                            {% bootstrap_form reason_comment_form %}
+                                        </div>
+                                        <div class="col-2">
+                                            <button class="btn btn-primary btn-sm fs12 rounded-xl" disabled id="add_comment_reason">
+                                                {% translate "Save" %}
+                                            </button>
+                                            <br /><br />
+                                            
+                                            <a class="btn btn-primary btn-sm fs12 rounded-xl {% if not permission_to_edit %}
+                                                disabled{% endif %}"
+                                                id="add_attachment_reason">
+                                                    <i class="fa fa-file-o"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% comment %} <div class="card-body overflow-y-auto">
+                                <div class="overlay-wrapper">
+                                    <div id="comments_reason">
+                                        {% include 'grm/issue_comments.html' with comments=doc.comments colors=colors indexed_users=indexed_users %}
+                                    </div>
+                                    <div class="overlay" id="load-comments-spin-reason">
+                                        <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+                        </div>
+
+
+
+                        
+                        <div class="overlay" id="load-attachments-spin-reason">
+                            <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -160,7 +224,8 @@
                 <div class="card-header border-0">
                     <div class="card-title">
                         <div class="pt-1 fs20 lh25 text-bold-family">
-                            {% translate 'Steps Taken' %}
+                            {% comment %} {% translate 'Steps Taken' %} {% endcomment %}
+                            {% translate 'Comments' %}
                         </div>
                     </div>
                 </div>
@@ -239,6 +304,44 @@
         </div>
     </div>
 
+
+
+
+    <div id="fileFormModalReason" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
+    <div id="statusChangeModalFormReason" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
+
+    <div class="modal fade modal-confirmation" id="checkPasswordModalReason">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title mx-auto">
+                        <img src="{% static 'images/password-required.png' %}" height="254">
+                    </h5>
+                    <button type="button" class="border-0 bg-transparent" data-dismiss="modal"
+                            aria-label="Close">
+                        <div class="circle-icon bg-primary">
+                            <div class="center-27">
+                                <i class="fas fa-times"></i>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-primary text-center fs17 lh19 text-bold mb-4"
+                         style="padding: 0 45px 0 45px;">
+                        {% translate "Please enter your password to show sensitive data" %}
+                    </div>
+                    {% bootstrap_form password_confirm_form %}
+                </div>
+                <div class="modal-footer border-0">
+                    <button id="check-password-reason" type="submit" class="btn btn-lg btn-primary text-right">
+                        {% translate "Check password" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock modals %}
 
 {% block javascript %}
@@ -247,6 +350,7 @@
     <script src="{% static 'js/formAjaxSubmit.js' %}"></script>
     <script type="text/javascript">
         let load_attachments_spin = $('#load-attachments-spin');
+        let load_attachments_spin_reason = $('#load-attachments-spin-reason');
         let load_status_buttons_spin = $('#load-status-buttons-spin');
         let status_change_modal = $('#statusChangeModalForm');
         let assignee = $('#id_assignee');
@@ -354,6 +458,8 @@
             });
         }
 
+        //Attachments
+
         class FileFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadAttachments();
@@ -366,7 +472,7 @@
         function loadAttachments() {
             load_attachments_spin.show();
             $('#attachments').load(
-                "{% url 'dashboard:grm:issue_attachments' doc.auto_increment_id %}?column=1", function (
+                "{% url 'dashboard:grm:issue_attachments' doc.auto_increment_id %}?column=1&attr=attachments", function (
                     response, status, xhr) {
                     if (status === "error") {
                         alert(error_server_message + "Error " + response.status);
@@ -387,7 +493,7 @@
                 '<i class="fas fa-chevron-circle-down text-primary" style="margin-top:12px;"></i>');
         });
 
-        $(document).on('click', '.delete-attachment', function () {
+        {% comment %} $(document).on('click', '.delete-attachment', function () {
             $.ajax({
                 url: $(this).data('url'),
                 type: 'POST'
@@ -403,8 +509,65 @@
                     loadAttachments();
                     showPopupMessage(data.msg);
                 })
+        }); {% endcomment %}
+
+
+        //Reason - Attachments
+        class FileFormReasonAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                reasonLoadAttachments();
+            }
+        }
+
+        let file_form_ajax_reason = new FileFormReasonAjaxSubmit();
+        let file_form_modal_reason = $('#fileFormModalReason');
+
+        function reasonLoadAttachments() {
+            load_attachments_spin_reason.show();
+            $('#attachments-reason').load(
+                "{% url 'dashboard:grm:issue_attachments' doc.auto_increment_id %}?column=2&attr=reasons", function (
+                    response, status, xhr) {
+                    if (status === "error") {
+                        alert(error_server_message + "Error " + response.status);
+                    }
+                    load_attachments_spin_reason.hide();
+                    $('#add_attachment_reason').click(function () {
+                        let url = "{% url 'dashboard:grm:upload_issue_attachment' doc.auto_increment_id %}?reason=1";
+                        file_form_ajax_reason.load_form('#form', file_form_modal_reason, url, false, true);
+                    });
+                });
+        }
+
+        $(document).ready(function () {
+            reasonLoadAttachments();
+            loadStatusButtons();
+            $('b[role="presentation"]').hide();
+            $('.select2-selection__arrow').append(
+                '<i class="fas fa-chevron-circle-down text-primary" style="margin-top:12px;"></i>');
         });
 
+        $(document).on('click', '.delete-attachment', function () {
+            $.ajax({
+                url: $(this).data('url'),
+                type: 'POST'
+            })
+                .fail(function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        })
+                .done(function (data) {
+                    loadAttachments();
+                    reasonLoadAttachments();
+                    showPopupMessage(data.msg);
+                })
+        });
+        //End Attachemnts
+
+
+        //Comments
         let add_comment = $('#add_comment');
         let load_comments_spin = $('#load-comments-spin');
         load_comments_spin.hide();
@@ -451,6 +614,59 @@
                 add_comment.prop('disabled', true);
             }
         });
+
+        //Reason comments
+        let add_comment_reason = $('#add_comment_reason');
+        let load_comments_spin_reason = $('#load-comments-spin-reason');
+        load_comments_spin_reason.hide();
+        let comment_reason = $('#id_reason');
+
+        {% comment %} function reasonLoadComments() {
+            load_comments_spin_reason.show();
+            $('#comments_reason').load("{% url 'dashboard:grm:issue_comments' doc.auto_increment_id %}", function (
+                response, status, xhr) {
+                if (status === "error") {
+                    alert(error_server_message + "Error " + response.status);
+                }
+                load_comments_spin_reason.hide();
+            });
+        } {% endcomment %}
+
+        add_comment_reason.click(function () {
+            $.ajax({
+                type: "POST",
+                url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}?reason=1",
+                data: {
+                    "comment": comment_reason.val(),
+                },
+                success: function (response) {
+                    showPopupMessage(response.msg);
+                    reasonLoadAttachments();
+                    comment_reason.val('');
+                    add_comment_reason.prop('disabled', true);
+                },
+                error: function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        }
+            });
+        });
+
+        comment_reason.on('keyup', function () {
+            if ($(this).val().trim()) {
+                add_comment_reason.prop('disabled', false);
+            } else {
+                add_comment_reason.prop('disabled', true);
+            }
+        });
+        //End Comments
+
+
+
+
 
         $(".show-data").click(function () {
             $('#checkPasswordModal').modal('show');

@@ -1077,3 +1077,15 @@ msgstr "Pour"
 #: dashboard/templates/grm/issue_list.html
 msgid "Me"
 msgstr "Moi"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Closing reasons"
+msgstr "Raisons de clôture"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "No reasons found"
+msgstr "Aucune raison n'a été trouvée"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Comments"
+msgstr "Commentaires"

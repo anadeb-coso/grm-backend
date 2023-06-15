@@ -16,8 +16,8 @@
         </label>
     </div>
     <div class="col-4">
-        <button type="button" class="{% if not user.is_superuser and not user|has_group:'Admin' %}btn-status {% elif doc_status.open_status %}btn-status {% endif %}
-         btn btn-primary pull-right" id="accept_issue" {% if not user.is_superuser and not user|has_group:'Admin' %}disabled{% elif doc_status.open_status %}disabled{% endif %}>
+        <button type="button" class="{% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.open_status %}btn-status {% endif %}
+         btn btn-primary pull-right" id="accept_issue" {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.open_status %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
@@ -30,8 +30,8 @@
     </div>
     <div class="col-4">
         <button type="button" class="
-        {% if not user.is_superuser and not user|has_group:'Admin' %}btn-status {% elif doc_status.rejected_status or not doc_status.open_status %}btn-status {% endif %} btn btn-primary pull-right" id="record_resolution"
-                {% if not user.is_superuser and not user|has_group:'Admin' %}disabled{% elif doc_status.rejected_status or not doc_status.open_status %}disabled{% endif %}>
+        {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or not doc_status.open_status %}btn-status {% endif %} btn btn-primary pull-right" id="record_resolution"
+                {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or not doc_status.open_status %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
@@ -43,8 +43,8 @@
         </label>
     </div>
     <div class="col-4">
-        <button type="button" class="{% if not user.is_superuser and not user|has_group:'Admin' %}btn-status {% elif doc_status.final_status %}btn-status {% endif %}btn btn-primary pull-right" id="reject_issue"
-                {% if not user.is_superuser and not user|has_group:'Admin' %}disabled{% elif doc_status.final_status %}disabled{% endif %}>
+        <button type="button" class="{% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.final_status %}btn-status {% endif %}btn btn-primary pull-right" id="reject_issue"
+                {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.final_status %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>

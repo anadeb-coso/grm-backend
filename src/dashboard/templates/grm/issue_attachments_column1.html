@@ -25,16 +25,19 @@
                                 {{ attachment.name }}
                             </a>
                         </div>
+                        {% if user.id == doc.assignee.id %}
                         <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
                            data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id attachment.id %}">
                             <i class="far fa-trash-alt text-danger"></i>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
         </div>
     </div>
 {% endif %}
+{% if user.id == doc.assignee.id %}
 <div {% if attachments|length == max_attachments %}style="cursor: not-allowed;"{% endif %} class="row mt-4">
     <div class="col-12">
         <a class="btn btn-primary btn-sm fs12 rounded-xl {% if attachments|length == max_attachments or not permission_to_edit %}
@@ -44,3 +47,4 @@
         </a>
     </div>
 </div>
+{% endif %}

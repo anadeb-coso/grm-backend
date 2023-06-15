@@ -6,12 +6,12 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="row issues-filter">
+                    <div class="row">
                         <div class="col-4 text-left">
                             <div class="fs28 lh35 text-primary text-bold-family mb-4">
                                 {% translate 'Search Results' %}<br>
                             </div>
-                            <div class="row mr-5">
+                            <div class="row mr-5 issues-filter">
                                 <div class="col-12">
                                     {% bootstrap_field form.start_date layout='horizontal' %}
                                     {% bootstrap_field form.end_date layout='horizontal' %}
@@ -19,20 +19,33 @@
                             </div>
                         </div>
                         <div class="col-8 border-left">
-                            <div class="row">
+                            <div class="row issues-filter">
                                 <div class="col-2">
                                     <label class="label-align">{% translate 'Filter by' %}</label>
                                 </div>
                                 <div class="col-5">
                                     {% bootstrap_field form.code show_label=False %}
-                                    {% if not user.governmentworker %}
+                                    {% comment %} {% if not user.governmentworker %}
                                         {% bootstrap_field form.assigned_to show_label=False %}
-                                    {% endif %}
+                                    {% endif %} {% endcomment %}
                                     {% bootstrap_field form.category show_label=False %}
                                 </div>
                                 <div class="col-5">
                                     {% bootstrap_field form.type show_label=False %}
                                     {% bootstrap_field form.status show_label=False %}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2">
+                                    
+                                </div>
+                                <div class="col-5 regions-filter border-left">
+                                    {% bootstrap_field form.administrative_region layout='horizontal' %}
+                                </div>
+                                <div class="col-5 issues-filter">
+                                    {% bootstrap_field form.other show_label=False %}
+                                    {% bootstrap_field form.assigned_to show_label=False %}
+                                    {% bootstrap_field form.reported_by show_label=False %}
                                 </div>
                             </div>
                         </div>
@@ -83,8 +96,13 @@
         let category = $('#id_category');
         let type = $('#id_type');
         let status = $('#id_status');
+        let other = $('#id_other');
+        let administrative_region = $('#id_administrative_region');
+        let reported_by = $('#id_reported_by');
+        let current_region_id;
 
         function loadIssues() {
+            console.log(current_region_id);
             spin.show();
             $.ajax({
                 type: "GET",
@@ -99,6 +117,9 @@
                     category: category.val(),
                     type: type.val(),
                     status: status.val(),
+                    other: other.val(),
+                    region: current_region_id,
+                    reported_by: reported_by.val()
                 },
                 success: function (response) {
                     spin.hide();
@@ -197,16 +218,42 @@
             loadIssues();
         });
 
+
+
+
+        function changeRegionTrigger(url, placeholder) {
+            $(document).on("change", ".region", function () {
+                let current_input_value = $(this).val();
+                if (current_input_value) {
+                    current_region_id = current_input_value;
+                } else {
+                    current_region_id = $("select.region").eq(-2).val();
+                }
+                loadNextLevelRegions($(this), url, placeholder);
+                loadIssues()
+            });
+        }
+
+        let get_choices_url = '{% url 'dashboard:grm:get_choices_for_next_administrative_level' %}';
+        let choice_placeholder = "{% translate 'Click to select location' %}";
+        changeRegionTrigger(get_choices_url, choice_placeholder);
+
+
+
         $("#clear_all_filters").on("click", function () {
             $('.issues-filter input').val('');
             $('.issues-filter select').val(null).trigger('change.select2');
+            $('.regions-filter select').val(null).trigger('change.select2');
             loadIssues();
+            current_region_id = null;
+            loadNextLevelRegions($("#id_administrative_region"), '', '');
         });
 
     </script>
 {% endblock %}
 
 {% block select2 %}
+<script src="{% static 'js/dynamicRegionSelector.js' %}"></script>
     <script type="text/javascript">
         $("#id_assigned_to").select2({
             placeholder: "{% translate 'Assigned to' %}",
@@ -222,6 +269,18 @@
         });
         $("#id_status").select2({
             placeholder: "{% translate 'Status' %}",
+            allowClear: true,
+        });
+        $("#id_administrative_region").select2({
+            placeholder: "{% translate 'administrative level' %}",
+            allowClear: true,
+        });
+        $("#id_other").select2({
+            placeholder: "{% translate 'Escalated' %}",
+            allowClear: true,
+        });
+        $("#id_reported_by").select2({
+            placeholder: "{% translate 'Reported by' %}",
             allowClear: true,
         });
 

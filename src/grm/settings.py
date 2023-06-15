@@ -133,7 +133,7 @@ OTHER_LANGUAGES = env('OTHER_LANGUAGES', list, default=[])
 LANGUAGES = (
     ('en', _('English')),
     ('fr', _('French')),
-    ('rw', _('Kinyarwanda')),
+    # ('rw', _('Kinyarwanda')),
 )
 LANGUAGES = [lang for lang in LANGUAGES if lang[0] in OTHER_LANGUAGES or lang[0] == LANGUAGE_CODE]
 

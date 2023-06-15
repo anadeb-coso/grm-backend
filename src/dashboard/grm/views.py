@@ -25,10 +25,11 @@ from dashboard.grm.forms import (
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from grm.utils import (
     get_administrative_level_descendants, get_auto_increment_id, get_child_administrative_regions,
-    get_parent_administrative_level, get_administrative_level_descendants_using_mis
+    get_parent_administrative_level, get_administrative_level_descendants_using_mis, 
+    get_child_administrative_regions_using_mis
 )
 from dashboard.grm.functions import get_issue_status_stories
-
+from dashboard.tasks import check_issues, send_sms_message, escalate_issues
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -52,7 +53,8 @@ class IssueCommentsContextMixin:
         comments = self.doc['comments'] if 'comments' in self.doc else list()
         reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
         users = {r['user_id'] for r in reasons} | {c['id'] for c in comments} | {
-            (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']}
+            (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']} | {
+                self.request.user.id}
         indexed_users = {}
         for index, user_id in enumerate(users):
             indexed_users[user_id] = index
@@ -116,7 +118,7 @@ class IssueMixin:
         user = self.request.user
 
         if self.doc["confirmed"]:
-            if user.groups.filter(name="Admin").exists() or user.is_superuser:
+            if user.groups.filter(name__in=["Admin", "Assignee"]).exists() or user.is_superuser:
                 self.has_permission = True
             elif 'read_only_by_reporter' in self.permissions and self.doc['reporter']['id'] != user.id:
                 self.has_permission = False
@@ -159,14 +161,20 @@ class IssueMixin:
         context['choice_contact'] = CHOICE_CONTACT
         user = self.request.user
         is_assigned = 'assignee' in self.doc and self.doc['assignee']
+        permission_to_edit = False
         if user.groups.filter(name="Admin").exists() or user.is_superuser:
             permission_to_edit = True
-        elif is_assigned and self.doc['assignee']['id'] == user.id:
-            permission_to_edit = True
-        elif hasattr(user, 'governmentworker') and is_assigned and self.doc['assignee']['id'] != user.id:
-            permission_to_edit = False
-        else:
-            permission_to_edit = False
+        elif hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
+            parent_id = user.governmentworker.administrative_id
+            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [])
+            allowed_regions = descendants + [parent_id]
+            if self.doc["administrative_region"]["administrative_id"] in allowed_regions:
+                permission_to_edit = True
+        # elif is_assigned and self.doc['assignee']['id'] == user.id:
+        #     permission_to_edit = True
+        # elif hasattr(user, 'governmentworker') and is_assigned and self.doc['assignee']['id'] != user.id:
+        #     permission_to_edit = False
+          
 
         context['permission_to_edit'] = permission_to_edit
         return context
@@ -565,6 +573,8 @@ class NewIssueConfirmFormView(PageMixin, NewIssueMixin):
 
         self.doc['created_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc['confirmed'] = True
+        self.doc['source'] = "web"
+        self.doc['comments'] = []
         anonymize_issue_data(self.doc)
         self.doc.save()
         return HttpResponseRedirect(reverse('dashboard:grm:new_issue_step_6', kwargs={'issue': self.kwargs['issue']}))
@@ -600,6 +610,12 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
             'title': title
         }
     ]
+    
+    def dispatch(self, request, *args, **kwargs):
+        check_issues()
+        escalate_issues()
+        send_sms_message()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
@@ -618,6 +634,9 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         category = self.request.GET.get('category')
         issue_type = self.request.GET.get('type')
         status = self.request.GET.get('status')
+        other = self.request.GET.get('other')
+        region = self.request.GET.get('region')
+        reported_by = self.request.GET.get('reported_by')
         user = self.request.user
 
         if user.groups.filter(name="Admin").exists() or user.is_superuser:
@@ -664,6 +683,20 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             selector["issue_type.id"] = int(issue_type)
         if status:
             selector["status.id"] = int(status)
+        if other:
+            if other == "Escalate":
+                selector["escalation_reasons"] = {"$exists": True}
+        print(reported_by)
+        if reported_by:
+            print(reported_by)
+            selector["reporter.id"] = int(reported_by)
+
+        if region:
+            # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
+            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, []) + [region]
+            selector["administrative_region.administrative_id"] = {
+                "$in": filter_regions
+            }
         # _query_result = grm_db.get_query_result(selector)[:]
         # _ = _query_result
         # for elt in _query_governmentworker:
@@ -707,8 +740,18 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.request.user.id
+        user = self.request.user
+
         context['enable_add_comment'] = user_id == (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0) or user_id == self.doc_department[
-            'head']['id']
+            'head']['id'] or user.groups.filter(name="Admin").exists() or user.is_superuser
+
+        if not context['enable_add_comment'] and hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
+            parent_id = user.governmentworker.administrative_id
+            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [])
+            allowed_regions = descendants + [parent_id]
+            if self.doc["administrative_region"]["administrative_id"] in allowed_regions:
+                context['enable_add_comment'] = True
+
         context['comment_form'] = IssueCommentForm()
         context['reason_comment_form'] = IssueReasonCommentForm()
         try:
@@ -865,6 +908,7 @@ class SubmitIssueOpenStatusView(AJAXRequestMixin, ModalFormMixin, LoginRequiredM
             "name": doc_status['name'],
             "id": doc_status['id']
         }
+        self.doc['open_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
         del self.doc['_comment']
         self.doc.save()
@@ -914,6 +958,7 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
             "name": doc_status['name'],
             "id": doc_status['id']
         }
+        self.doc['resolution_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
         del self.doc['_comment']
         self.doc.save()
@@ -964,6 +1009,7 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
             "name": doc_status['name'],
             "id": doc_status['id']
         }
+        self.doc['reject_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
         del self.doc['_comment']
         self.doc.save()
@@ -979,9 +1025,11 @@ class GetChoicesForNextAdministrativeLevelView(AJAXRequestMixin, LoginRequiredMi
         parent_id = request.GET.get('parent_id')
         exclude_lower_level = request.GET.get('exclude_lower_level', None)
         adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-        data = get_child_administrative_regions(adl_db, parent_id)
+        # data = get_child_administrative_regions(adl_db, parent_id)
+        data = get_child_administrative_regions_using_mis(adl_db, parent_id)
 
-        if data and exclude_lower_level and not get_child_administrative_regions(adl_db, data[0]['administrative_id']):
+        # if data and exclude_lower_level and not get_child_administrative_regions(adl_db, data[0]['administrative_id']):
+        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id']):
             data = []
 
         return self.render_to_json_response(data, safe=False)

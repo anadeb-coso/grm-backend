@@ -184,6 +184,8 @@ class SearchIssueForm(forms.Form):
     type = forms.ChoiceField()
     status = forms.ChoiceField()
     administrative_region = forms.ChoiceField()
+    other = forms.ChoiceField()
+    reported_by = forms.ChoiceField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -198,6 +200,8 @@ class SearchIssueForm(forms.Form):
         self.fields['category'].widget.choices = get_issue_category_choices(grm_db)
         self.fields['type'].widget.choices = get_issue_type_choices(grm_db)
         self.fields['status'].widget.choices = get_issue_status_choices(grm_db)
+        self.fields['other'].widget.choices = [('', ''), ('Escalate', _('Escalated'))]
+        self.fields['reported_by'].widget.choices = get_government_worker_choices()
 
         adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()

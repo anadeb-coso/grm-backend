@@ -8,7 +8,7 @@ from django.views import generic
 from client import get_db
 from dashboard.grm.forms import SearchIssueForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, PageMixin
-from grm.utils import get_administrative_level_descendants, get_base_administrative_id
+from grm.utils import get_administrative_level_descendants, get_base_administrative_id, get_administrative_level_descendants_using_mis
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -64,7 +64,8 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             selector["issue_type.id"] = int(issue_type)
 
         if region:
-            filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
+            # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
+            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, []) + [region]
             selector["administrative_region.administrative_id"] = {
                 "$in": filter_regions
             }

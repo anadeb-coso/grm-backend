@@ -37,6 +37,7 @@ urlpatterns = [
     path('authentication/', include('authentication.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     # path('', include('dashboard.urls')),
+    path('administrative-levels/', include('administrativelevels.urls')),
 ]
 
 schema_view = get_schema_view(

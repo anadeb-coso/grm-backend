@@ -2,6 +2,8 @@ from datetime import datetime
 from operator import itemgetter
 
 from django.template.defaultfilters import date as _date
+from administrativelevels import models as administrativelevels_models
+from administrativelevels.serializers import AdministrativeLevelSerializer
 
 
 def sort_dictionary_list_by_field(list_to_be_sorted, field, reverse=False):
@@ -227,7 +229,6 @@ def get_auto_increment_id(grm_db):
 
 
 def get_administrative_level_descendants_using_mis(adl_db, parent_id, ids):
-    from administrativelevels import models as administrativelevels_models
     data = []
     if parent_id:
         if int(parent_id) == 1:
@@ -242,11 +243,29 @@ def get_administrative_level_descendants_using_mis(adl_db, parent_id, ids):
 
     return ids
 
+
+def get_child_administrative_regions_using_mis(adl_db, parent_id):
+    data_ser = []
+    if parent_id:
+        if int(parent_id) == 1:
+            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
+        else:
+            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id))
+    
+    for obj in data:
+        obj_ser = AdministrativeLevelSerializer(obj).data
+        obj_ser["administrative_id"] = obj.id
+        obj_ser["parent_id"] = obj.parent.id if obj.parent else None
+        obj_ser["administrative_level"] = obj.type
+        obj_ser["type"] = "administrative_level"
+        data_ser.append(obj_ser)
+    return data_ser
+
 def datetime_str(datetime_now = None):
     if not datetime_now:
         datetime_now = datetime.now()
         
-    month = str(datetime_now.month) if datetime_now.month > 9 else ("0"+str(datetime_now.month))
-    day = str(datetime_now.day) if datetime_now.day > 9 else ("0"+str(datetime_now.day))
-
-    return f"{str(datetime_now.year)}-{month}-{str(day)} {str(datetime_now.hour)}:{str(datetime_now.minute)}:{str(datetime_now.second)}"
+    # month = str(datetime_now.month) if datetime_now.month > 9 else ("0"+str(datetime_now.month))
+    # day = str(datetime_now.day) if datetime_now.day > 9 else ("0"+str(datetime_now.day))
+    # return f"{str(datetime_now.year)}-{month}-{str(day)} {str(datetime_now.hour)}:{str(datetime_now.minute)}:{str(datetime_now.second)}"
+    return datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')

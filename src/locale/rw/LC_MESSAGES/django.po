@@ -1047,3 +1047,79 @@ msgstr ""
 #: dashboard/templates/grm/issue_list.html
 msgid "Comments"
 msgstr ""
+
+#: dashboard/grm/forms.py
+msgid "Escalated"
+msgstr "Remontée"
+
+#: dashboard/grm/forms.py
+msgid "To Me"
+msgstr ""
+
+#: dashboard/grm/forms.py
+msgid "By Me"
+msgstr ""
+
+#: dashboard/grm/forms.py
+msgid "To Others"
+msgstr ""
+
+#: dashboard/grm/forms.py
+msgid "By Others"
+msgstr ""
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Reported by"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Principal Administrator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Administrator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "CDD Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Evaluator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Accountant"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Regional Coordinator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "National Coordinator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "General Manager"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Director"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Advisor"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Minister"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Backup Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "The issue was escalated"
+msgstr ""

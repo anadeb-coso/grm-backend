@@ -1089,3 +1089,79 @@ msgstr "Aucune raison n'a été trouvée"
 #: dashboard/templates/grm/issue_list.html
 msgid "Comments"
 msgstr "Commentaires"
+
+#: dashboard/grm/forms.py
+msgid "Escalated"
+msgstr "Remontée"
+
+#: dashboard/grm/forms.py
+msgid "To Me"
+msgstr "À moi"
+
+#: dashboard/grm/forms.py
+msgid "By Me"
+msgstr "Par Moi"
+
+#: dashboard/grm/forms.py
+msgid "To Others"
+msgstr "Aux Autres"
+
+#: dashboard/grm/forms.py
+msgid "By Others"
+msgstr "Par Autres"
+
+#: dashboard/templates/grm/issue_list.html
+msgid "Reported by"
+msgstr "Signalé par"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Principal Administrator"
+msgstr "Administrateur principal"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Administrator"
+msgstr "Administrateur"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "CDD Specialist"
+msgstr "Spécialiste DCC"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Evaluator"
+msgstr "Évaluateur"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Accountant"
+msgstr "Comptable"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Regional Coordinator"
+msgstr "Coordonnateur Regional"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "National Coordinator"
+msgstr "Coordonnateur National"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "General Manager"
+msgstr "Directeur(trice) Général(e)"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Director"
+msgstr "Directeur(trice)"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Advisor"
+msgstr "Conseillé"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Minister"
+msgstr "Ministre"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Backup Specialist"
+msgstr "Spécialistes Sauvegardes"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "The issue was escalated"
+msgstr "La plainte a été escaladée/remontée"

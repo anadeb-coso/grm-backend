@@ -911,6 +911,17 @@ class SubmitIssueOpenStatusView(AJAXRequestMixin, ModalFormMixin, LoginRequiredM
         self.doc['open_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
         del self.doc['_comment']
+
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        comment_obj = {
+            "name": self.request.user.name,
+            "id": self.request.user.id,
+            "comment": data["open_reason"],
+            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        comments.insert(0, comment_obj)
+        self.doc['comments'] = comments
+
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -961,6 +972,17 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
         self.doc['resolution_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
         del self.doc['_comment']
+
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        comment_obj = {
+            "name": self.request.user.name,
+            "id": self.request.user.id,
+            "comment": data["open_reason"],
+            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        comments.insert(0, comment_obj)
+        self.doc['comments'] = comments
+
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -1012,6 +1034,17 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
         self.doc['reject_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
         del self.doc['_comment']
+
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        comment_obj = {
+            "name": self.request.user.name,
+            "id": self.request.user.id,
+            "comment": data["open_reason"],
+            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        comments.insert(0, comment_obj)
+        self.doc['comments'] = comments
+        
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')

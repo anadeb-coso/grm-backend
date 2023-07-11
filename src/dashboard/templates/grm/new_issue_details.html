@@ -61,10 +61,10 @@
 
 {% block select2 %}
     <script type="text/javascript">
-        $("#id_issue_type").select2({
+        {% comment %} $("#id_issue_type").select2({
             placeholder: "{% translate 'Click to select the report' %}",
             allowClear: true
-        });
+        }); {% endcomment %}
         $("#id_category").select2({
             placeholder: "{% translate 'Click to select the type of grievance' %}",
             allowClear: true

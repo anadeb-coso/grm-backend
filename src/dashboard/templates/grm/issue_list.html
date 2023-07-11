@@ -9,7 +9,7 @@
         <th>{% translate 'Assigned to' %}</th>
         <th>{% translate 'Days Open' %}</th>
         <th>{% translate 'Category' %}</th>
-        <th>{% translate 'Type' %}</th>
+        {% comment %} <th>{% translate 'Type' %}</th> {% endcomment %}
         <th>{% translate 'Status' %}</th>
     </tr>
     </thead>
@@ -43,7 +43,7 @@
             <td>{{ issue.assignee.name }}</td>
             <td>{% get_days_until_today issue.created_date %}</td>
             <td>{{ issue.category.name }}</td>
-            <td>{{ issue.issue_type.name }}</td>
+            {% comment %} <td>{{ issue.issue_type.name }}</td> {% endcomment %}
             <td>{{ issue.status.name }}</td>
         </tr>
     {% empty %}
@@ -53,3 +53,13 @@
     {% endfor %}
     </tbody>
 </table>
+
+
+<script>
+    try{
+        total_issues = parseInt("{{ total_issues }}");
+        console.log(total_issues + " ======");
+    }catch(e){
+        console.log(e);
+    }
+</script>

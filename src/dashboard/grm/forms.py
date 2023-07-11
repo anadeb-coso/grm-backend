@@ -103,7 +103,7 @@ class NewIssueDetailsForm(forms.Form):
                                       help_text="Date when the issue was recorded on the GRM")
     issue_date = forms.DateTimeField(label=_('Date of issue'), input_formats=['%d/%m/%Y'],
                                      help_text="Date when the issue occurred")
-    issue_type = forms.ChoiceField(label=_('What are you reporting'))
+    # issue_type = forms.ChoiceField(label=_('What are you reporting'))
     category = forms.ChoiceField(label=_('Choose type of grievance'))
     description = forms.CharField(label=_('Briefly describe the issue'), max_length=2000, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Please describe the issue')}))
@@ -116,9 +116,9 @@ class NewIssueDetailsForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         grm_db = get_db(COUCHDB_GRM_DATABASE)
-        types = get_issue_type_choices(grm_db)
-        self.fields['issue_type'].widget.choices = types
-        self.fields['issue_type'].choices = types
+        # types = get_issue_type_choices(grm_db)
+        # self.fields['issue_type'].widget.choices = types
+        # self.fields['issue_type'].choices = types
         categories = get_issue_category_choices(grm_db)
         self.fields['category'].widget.choices = categories
         self.fields['category'].choices = categories
@@ -131,8 +131,8 @@ class NewIssueDetailsForm(forms.Form):
         document = grm_db[doc_id]
         if 'description' in document and document['description']:
             self.fields['description'].initial = document['description']
-        if 'issue_type' in document and document['issue_type']:
-            self.fields['issue_type'].initial = document['issue_type']['id']
+        # if 'issue_type' in document and document['issue_type']:
+        #     self.fields['issue_type'].initial = document['issue_type']['id']
         if 'category' in document and document['category']:
             self.fields['category'].initial = document['category']['id']
         if 'ongoing_issue' in document:
@@ -181,11 +181,12 @@ class SearchIssueForm(forms.Form):
     code = forms.CharField(label=_('ID Number / Access Code'))
     assigned_to = forms.ChoiceField()
     category = forms.ChoiceField()
-    type = forms.ChoiceField()
+    # type = forms.ChoiceField()
     status = forms.ChoiceField()
     administrative_region = forms.ChoiceField()
     other = forms.ChoiceField()
     reported_by = forms.ChoiceField()
+    publish = forms.ChoiceField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -198,10 +199,11 @@ class SearchIssueForm(forms.Form):
         self.fields['end_date'].widget.attrs['data-target'] = '#end_date'
         self.fields['assigned_to'].widget.choices = get_government_worker_choices()
         self.fields['category'].widget.choices = get_issue_category_choices(grm_db)
-        self.fields['type'].widget.choices = get_issue_type_choices(grm_db)
+        # self.fields['type'].widget.choices = get_issue_type_choices(grm_db)
         self.fields['status'].widget.choices = get_issue_status_choices(grm_db)
         self.fields['other'].widget.choices = [('', ''), ('Escalate', _('Escalated'))]
         self.fields['reported_by'].widget.choices = get_government_worker_choices()
+        self.fields['publish'].widget.choices = [('', ''), (True, _('Publish')), (False, _('Unpublish'))]
 
         adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()
@@ -219,7 +221,7 @@ class IssueDetailsForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         grm_db = get_db(COUCHDB_GRM_DATABASE)
-        self.fields['assignee'].widget.choices = get_government_worker_choices(False)
+        self.fields['assignee'].widget.choices = get_government_worker_choices(True)
 
         document = grm_db[doc_id]
         if type(document['assignee']) == dict:
@@ -258,6 +260,53 @@ class IssueResearchResultForm(forms.Form):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         document = grm_db[doc_id]
         self.fields['research_result'].initial = document['research_result'] if 'research_result' in document else ''
+
+class IssueSetUnresolvedForm(forms.Form):
+    unresolved_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        document = grm_db[doc_id]
+        self.fields['unresolved_reason'].initial = document['unresolved_reason'] if 'unresolved_reason' in document else ''
+
+class IssueIssueEscalateForm(forms.Form):
+    escalate_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        document = grm_db[doc_id]
+        self.fields['escalate_reason'].initial = document['escalate_reason'] if 'escalate_reason' in document else ''
+
+
+class IssueIssuePublishForm(forms.Form):
+    issue_description = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+    issue_password = forms.CharField(label='', max_length=7, min_length=7,widget=forms.TextInput(attrs={'placeholder': _('Password')}))
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        document = grm_db[doc_id]
+        self.fields['issue_description'].initial = document['description'] if 'description' in document else ''
+        self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view original description")+'</span>'
+
+class IssueIssueUnpublishForm(forms.Form):
+    
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
 
 
 class IssueRejectReasonForm(forms.Form):

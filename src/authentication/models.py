@@ -11,7 +11,8 @@ from grm.utils import (
     belongs_to_region, get_parent_administrative_level, get_related_region_with_specific_level,
     sort_dictionary_list_by_field, belongs_to_region_using_mis
 )
-from authentication.utils import create_or_update_adl_user_adl, delete_adl_user_adl
+from authentication.utils import (create_or_update_adl_user_adl, delete_adl_user_adl, 
+                                  set_user_government_worker_adl, delete_user_government_worker_adl)
 
 
 def photo_path(instance, filename):
@@ -84,7 +85,7 @@ class GovernmentWorker(models.Model):
                 if self.department != issue_department_id:
                     return False
             # belongs = belongs_to_region(adl_db, issue_administrative_id, self.administrative_id)
-            belongs = belongs_to_region_using_mis(adl_db, issue_administrative_id, self.administrative_id)
+            belongs = belongs_to_region_using_mis(adl_db, issue_administrative_id, self.administrative_id, self.user)
             return belongs
         except Exception:
             return False
@@ -214,17 +215,24 @@ def get_assignee_to_escalate(adl_db, department_id, administrative_id):
         parent = get_parent_administrative_level(adl_db, administrative_id)
     except Exception:
         raise
-
-    administrative_id = parent['administrative_id']
-    worker = GovernmentWorker.objects.filter(department=department_id, administrative_id=administrative_id).first()
-    if worker:
-        assignee = {
-            "id": worker.user.id,
-            "name": worker.name
-        }
-        return assignee
-    elif parent:
+    if parent:
+        print(parent)
+        print(parent['administrative_level'])
+        administrative_id = parent['administrative_id']
+        if parent['administrative_level'] != "Commune":
+            worker = GovernmentWorker.objects.filter(department=department_id, administrative_id=administrative_id).first()
+            if worker:
+                assignee = {
+                    "id": worker.user.id,
+                    "name": worker.name
+                }
+                return assignee, {
+                    "administrative_id": parent['administrative_id'],
+                    "name": parent['name'],
+                    "administrative_level": parent['administrative_level']
+                }
         return get_assignee_to_escalate(adl_db, department_id, administrative_id)
+    return None, None
 
 
 def anonymize_issue_data(issue_doc):
@@ -270,6 +278,21 @@ def delete_user(sender, instance, **kwargs):
     except Exception as exc:
         print(exc)
 
+def set_user_government_worker(sender, instance, **kwargs):
+    # if kwargs['created']:
+    try:
+        set_user_government_worker_adl(instance)
+    except Exception as exc:
+        print(exc)
+
+def delete_user_government_worker(sender, instance, **kwargs):
+    # if kwargs['created']:
+    try:
+        delete_user_government_worker_adl(instance)
+    except Exception as exc:
+        print(exc)
 
 post_delete.connect(delete_user, sender=User)
 post_save.connect(create_or_update_user, sender=User)
+post_save.connect(set_user_government_worker, sender=GovernmentWorker)
+post_delete.connect(delete_user_government_worker, sender=GovernmentWorker)

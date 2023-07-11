@@ -25,11 +25,12 @@
                             <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                         </div>
                     </div>
+                    {% if doc.category.id != 2 %}
                     <hr />
                     <div class="card-header border-0">
                         <div class="card-title">
                             <div class="pt-1 fs20 lh25 text-bold-family">
-                                {% translate 'Closing reasons' %}
+                                {% translate 'Decisions' %}
                             </div>
                         </div>
                     </div>
@@ -44,7 +45,7 @@
                         <div class="card mh-750">
                             
                             <div class="card-header">
-                                {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id %}
+                                {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id and not doc.escalate_flag %}
                                     <div class="row mb-3">
                                         <div class="col-1">
                                             {% with indexed_users|get:user.id as color_index %}
@@ -93,6 +94,7 @@
                             <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -128,6 +130,7 @@
                             {{ doc.created_date|string_to_date|date:'j - F - Y' }}
                         </div>
                     </div>
+                    {% if doc.citizen_type %}
                     <div class="row mr-2 mb-2">
                         <div class="col-3">
                             <label class="label-align">
@@ -138,6 +141,7 @@
                             {% get_citizen_type_alt_display doc.citizen_type %}
                         </div>
                     </div>
+                    {% endif %}
                     {% if doc.citizen %}
                         <div class="row mr-2 mb-2">
                             <div class="col-3">
@@ -146,7 +150,7 @@
                                 </label>
                             </div>
                             <div class="col-9 text-regular-family">
-                                {% if user.is_superuser or user|has_group:'Admin' %}
+                                {% if user|has_group:'Admin' %}
                                     <div id="citizen">
                                         *****
                                         <i class="fas fa-eye pull-right link show-data"
@@ -172,7 +176,7 @@
                                 </label>
                             </div>
                             <div class="col-9 text-regular-family">
-                                {% if user.is_superuser or user|has_group:'Admin' %}
+                                {% if user|has_group:'Admin' %}
                                     {{ doc.citizen_age_group.name }}
                                 {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
                                     {% translate 'Confidential' %}
@@ -189,7 +193,7 @@
                             </label>
                         </div>
                         <div class="col-9 text-regular-family">
-                            {% if user.is_superuser or user|has_group:'Admin' %}
+                            {% if user|has_group:'Admin' %}
                                 {% get_administrative_region_name doc.administrative_region.administrative_id %}
                             {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
                                 {% translate 'Confidential' %}
@@ -208,7 +212,7 @@
                             {{ doc.category.name }}
                         </div>
                     </div>
-                    <div class="row mr-2 mb-2">
+                    {% comment %} <div class="row mr-2 mb-2">
                         <div class="col-3">
                             <label class="label-align">
                                 {% translate 'Type' %}
@@ -217,7 +221,7 @@
                         <div class="col-9 text-regular-family">
                             {{ doc.issue_type.name }}
                         </div>
-                    </div>
+                    </div> {% endcomment %}
                     {% if doc.escalation_reasons %}
                         <hr />
                         {% translate "The issue was escalated" %}
@@ -245,7 +249,7 @@
                             </div>
                             <div class="row border-bottom mt-2 mb-3">
                                 <div class="col-10 mb-2 text-regular-family mb-3">
-                                    {{ escalation_reason.comment }}
+                                    {{ escalation_reason.comment|safe }}
                                 </div>
                             </div>
                         {% endfor %}
@@ -391,7 +395,10 @@
         let status_change_modal = $('#statusChangeModalForm');
         let assignee = $('#id_assignee');
 
-        {% if not permission_to_edit %}
+        {% if not user|has_group:'Admin' and not user|has_group:'Assignee' %}
+            //not permission_to_edit
+            assignee.prop("disabled", true);
+        {% elif doc.category.id == 2 %}
             assignee.prop("disabled", true);
         {% endif %}
 
@@ -420,7 +427,6 @@
                 loadStatusButtons();
             }
         }
-
         let open_reason_form_ajax = new OpenStatusFormAjaxSubmit();
 
         class ResearchResultFormAjaxSubmit extends FormAjaxSubmit {
@@ -428,15 +434,41 @@
                 loadStatusButtons();
             }
         }
-
         let research_result_form_ajax = new ResearchResultFormAjaxSubmit();
+
+        class UnresolveFormAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                loadStatusButtons();
+            }
+        }
+        let unresolved_reason_form_ajax = new UnresolveFormAjaxSubmit();
+
+        class EscalateFormAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                loadStatusButtons();
+            }
+        }
+        let escalate_reason_form_ajax = new EscalateFormAjaxSubmit();
+
+        class PublishFormAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                loadStatusButtons();
+            }
+        }
+        let issue_publish_form_ajax = new PublishFormAjaxSubmit();
+
+        class UnpublishFormAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                loadStatusButtons();
+            }
+        }
+        let issue_unpublish_form_ajax = new UnpublishFormAjaxSubmit();
 
         class RejectReasonFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
             }
         }
-
         let reject_reason_form_ajax = new RejectReasonFormAjaxSubmit();
 
 
@@ -451,6 +483,10 @@
                 let accept_issue = $("#accept_issue");
                 let record_resolution = $("#record_resolution");
                 let reject_issue = $("#reject_issue");
+                let set_unresolved = $("#set_unresolved");
+                let escalate_issue = $("#escalate_issue");
+                let publish_issue = $("#publish_issue");
+                let unpublish_issue = $("#unpublish_issue");
 
                 {% if not permission_to_edit %}
                     $('.btn-status').prop("disabled", true);
@@ -484,6 +520,26 @@
                 record_resolution.on('click', function () {
                     let url = "{% url 'dashboard:grm:submit_issue_research_result' doc.auto_increment_id %}";
                     research_result_form_ajax.load_form('#research_result_form', status_change_modal, url);
+                });
+
+                set_unresolved.on('click', function () {
+                    let url = "{% url 'dashboard:grm:submit_issue_set_unresolved' doc.auto_increment_id %}";
+                    unresolved_reason_form_ajax.load_form('#unresolved_reason_form', status_change_modal, url);
+                });
+
+                escalate_issue.on('click', function () {
+                    let url = "{% url 'dashboard:grm:submit_issue_escalate' doc.auto_increment_id %}";
+                    escalate_reason_form_ajax.load_form('#escalate_reason_form', status_change_modal, url);
+                });
+
+                publish_issue.on('click', function () {
+                    let url = "{% url 'dashboard:grm:submit_issue_publish' doc.auto_increment_id %}";
+                    issue_publish_form_ajax.load_form('#issue_publish_form', status_change_modal, url);
+                });
+
+                unpublish_issue.on('click', function () {
+                    let url = "{% url 'dashboard:grm:submit_issue_unpublish' doc.auto_increment_id %}";
+                    issue_unpublish_form_ajax.load_form('#issue_unpublish_form', status_change_modal, url);
                 });
 
                 reject_issue.on('click', function () {

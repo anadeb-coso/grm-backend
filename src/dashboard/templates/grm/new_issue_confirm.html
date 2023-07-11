@@ -82,7 +82,7 @@
                                         {% bootstrap_field form.issue_date show_label=False %}
                                     </div>
                                 </div>
-                                {% bootstrap_field form.issue_type layout='horizontal' %}
+                                {% comment %} {% bootstrap_field form.issue_type layout='horizontal' %} {% endcomment %}
                                 {% bootstrap_field form.category layout='horizontal' %}
                                 <div class="row">
                                     <div class="col-md-3">
@@ -159,10 +159,10 @@
             placeholder: "{{ empty_group_msg }}",
             allowClear: true
         });
-        $("#id_issue_type").select2({
+        {% comment %} $("#id_issue_type").select2({
             placeholder: "{% translate 'Click to select the report' %}",
             allowClear: true
-        });
+        }); {% endcomment %}
         $("#id_category").select2({
             placeholder: "{% translate 'Click to select the type of grievance' %}",
             allowClear: true
@@ -188,6 +188,7 @@
             load_attachments_spin.show();
             $('#attachments').load("{% url 'dashboard:grm:issue_attachments' doc.auto_increment_id %}", function (
                 response, status, xhr) {
+                    console.log(status);
                 if (status === "error") {
                     alert(error_server_message + "Error " + response.status);
                 }

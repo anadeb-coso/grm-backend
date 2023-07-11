@@ -1037,7 +1037,7 @@ msgid "Me"
 msgstr ""
 
 #: dashboard/templates/grm/issue_list.html
-msgid "Closing reasons"
+msgid "Decisions"
 msgstr ""
 
 #: dashboard/templates/grm/issue_list.html
@@ -1122,4 +1122,64 @@ msgstr ""
 
 #: .\dashboard\templatetags\custom_tags.py
 msgid "The issue was escalated"
+msgstr ""
+
+#: dashboard/templates/grm/issue_status_buttons.html
+msgid "Set to unresolved"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Please enter the reason for changing the status to unresolved for this issue"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Escalate Issue"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Please enter the reason of the escalate for this issue"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Issue rejected"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Issue escalated"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Unresolved Issue"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Issue resolved"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Issue opened"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "to"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Please edit the description before publish"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Publish"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Unpublish"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Password used to view original description"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Hide issue"
 msgstr ""

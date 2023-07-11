@@ -9,6 +9,36 @@
         {{ doc.status.name }}
     </div>
 </div>
+{% if user|has_group:'Admin' and not doc.publish %}
+<div class="row mb-2">
+    <div class="col-8">
+        <label class="label-align">
+            {% translate 'Publish' %}
+        </label>
+    </div>
+    <div class="col-4">
+        <button type="button" class="{% if doc.publish %}btn-status {% endif %}
+         btn btn-primary pull-right" id="publish_issue" {% if doc.publish %}disabled{% endif %}>
+            <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+        </button>
+    </div>
+</div>
+{% endif %}
+{% if user|has_group:'Admin' and doc.publish %}
+<div class="row mb-2">
+    <div class="col-8">
+        <label class="label-align">
+            {% translate 'Unpublish' %}
+        </label>
+    </div>
+    <div class="col-4">
+        <button type="button" class="{% if not doc.publish %}btn-status {% endif %}
+         btn btn-primary pull-right" id="unpublish_issue" {% if not doc.publish %}disabled{% endif %}>
+            <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+        </button>
+    </div>
+</div>
+{% endif %}
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
@@ -16,8 +46,8 @@
         </label>
     </div>
     <div class="col-4">
-        <button type="button" class="{% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.open_status %}btn-status {% endif %}
-         btn btn-primary pull-right" id="accept_issue" {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.open_status %}disabled{% endif %}>
+        <button type="button" class="{% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.open_status or doc.escalate_flag or doc.category.id == 2 %}btn-status {% endif %}
+         btn btn-primary pull-right" id="accept_issue" {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.open_status or doc.escalate_flag or doc.category.id == 2 %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
@@ -30,8 +60,8 @@
     </div>
     <div class="col-4">
         <button type="button" class="
-        {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or not doc_status.open_status %}btn-status {% endif %} btn btn-primary pull-right" id="record_resolution"
-                {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or not doc_status.open_status %}disabled{% endif %}>
+        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or not doc_status.open_status %}btn-status {% endif %} btn btn-primary pull-right" id="record_resolution"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or not doc_status.open_status %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
@@ -39,13 +69,41 @@
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
-            {% translate 'Reject Issue' %}
+            {% translate 'Set to unresolved' %}
         </label>
     </div>
     <div class="col-4">
-        <button type="button" class="{% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.final_status %}btn-status {% endif %}btn btn-primary pull-right" id="reject_issue"
-                {% if not user.is_superuser and not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.final_status %}disabled{% endif %}>
+        <button type="button" class="
+        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 %}btn-status {% endif %} btn btn-primary pull-right" id="set_unresolved"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
 </div>
+<div class="row mb-2">
+    <div class="col-8">
+        <label class="label-align">
+            {% translate "Escalate Issue" %}
+        </label>
+    </div>
+    <div class="col-4">
+        <button type="button" class="
+        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or not doc_status.unresolved_status or doc_status.final_status or doc.escalate_flag %}btn-status {% endif %} btn btn-primary pull-right" id="escalate_issue"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or not doc_status.unresolved_status or doc_status.final_status or doc.escalate_flag %}disabled{% endif %}>
+            <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+        </button>
+    </div>
+</div>
+{% comment %} <div class="row mb-2">
+    <div class="col-8">
+        <label class="label-align">
+            {% translate 'Reject Issue' %}
+        </label>
+    </div>
+    <div class="col-4">
+        <button type="button" class="{% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.final_status %}btn-status {% endif %}btn btn-primary pull-right" id="reject_issue"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.final_status %}disabled{% endif %}>
+            <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+        </button>
+    </div>
+</div> {% endcomment %}

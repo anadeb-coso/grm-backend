@@ -15,6 +15,7 @@
                                 <div class="col-12">
                                     {% bootstrap_field form.start_date layout='horizontal' %}
                                     {% bootstrap_field form.end_date layout='horizontal' %}
+                                    {% if publish_option %}{% bootstrap_field form.publish layout='horizontal' %}{% endif %}
                                 </div>
                             </div>
                         </div>
@@ -28,24 +29,15 @@
                                     {% comment %} {% if not user.governmentworker %}
                                         {% bootstrap_field form.assigned_to show_label=False %}
                                     {% endif %} {% endcomment %}
-                                    {% bootstrap_field form.category show_label=False %}
-                                </div>
-                                <div class="col-5">
-                                    {% bootstrap_field form.type show_label=False %}
-                                    {% bootstrap_field form.status show_label=False %}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-2">
-                                    
-                                </div>
-                                <div class="col-5 regions-filter border-left">
-                                    {% bootstrap_field form.administrative_region layout='horizontal' %}
-                                </div>
-                                <div class="col-5 issues-filter">
                                     {% bootstrap_field form.other show_label=False %}
                                     {% bootstrap_field form.assigned_to show_label=False %}
                                     {% bootstrap_field form.reported_by show_label=False %}
+                                </div>
+                                <div class="col-5">
+                                    {% comment %} {% bootstrap_field form.type show_label=False %} {% endcomment %}
+                                    {% bootstrap_field form.status show_label=False %}
+                                    {% bootstrap_field form.category show_label=False %}
+                                    {% bootstrap_field form.administrative_region layout='horizontal' %}
                                 </div>
                             </div>
                         </div>
@@ -87,7 +79,7 @@
         let previous = $('#previous');
         let next = $('#next');
         let issues = $('#issue-list');
-        let total_issues = 0;
+        var total_issues = 0;
         let current_page = $('#current-page');
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
@@ -99,6 +91,7 @@
         let other = $('#id_other');
         let administrative_region = $('#id_administrative_region');
         let reported_by = $('#id_reported_by');
+        {% if publish_option %}let publish = $('#id_publish');{% endif %}
         let current_region_id;
 
         function loadIssues() {
@@ -119,9 +112,11 @@
                     status: status.val(),
                     other: other.val(),
                     region: current_region_id,
+                    {% if publish_option %}publish: publish.val(),{% endif %}
                     reported_by: reported_by.val()
                 },
                 success: function (response) {
+                    issues.html(response);
                     spin.hide();
                     if (index - offset >= 0) {
                         previous.show();
@@ -133,7 +128,6 @@
                     } else {
                         next.hide();
                     }
-                    issues.html(response);
                     if (response.trim()) {
                         current_page.html(Math.floor(index / offset) + 1 + " / " + Math.ceil(total_issues / offset));
                     } else {
@@ -162,6 +156,8 @@
             });
         }
 
+        setTotalIssues();
+
         previous.click(function () {
             index -= offset;
             loadIssues();
@@ -171,8 +167,6 @@
             index += offset;
             loadIssues();
         });
-
-        setTotalIssues();
 
         let dp1 = '<div class="input-group-prepend" data-target="#{id}" data-toggle="datetimepicker">' +
             '<div class="input-group-text"><i class="fa fa-calendar text-primary"></i></div></div>';
@@ -230,7 +224,7 @@
                     current_region_id = $("select.region").eq(-2).val();
                 }
                 loadNextLevelRegions($(this), url, placeholder);
-                loadIssues()
+                if(current_region_id) loadIssues();
             });
         }
 
@@ -283,6 +277,12 @@
             placeholder: "{% translate 'Reported by' %}",
             allowClear: true,
         });
+        {% if publish_option %}
+        $("#id_publish").select2({
+            placeholder: "{% translate 'Publish' %}",
+            allowClear: true,
+        });
+        {% endif %}
 
         $('b[role="presentation"]').hide();
         $('.select2-selection__arrow').append(

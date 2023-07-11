@@ -14,3 +14,4 @@
         - Advisor               : Advisor
         - Minister              : Minister
         - Assignee              : Assignee
+        - Viewer                : Viewer

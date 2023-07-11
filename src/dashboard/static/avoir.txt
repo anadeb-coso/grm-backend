@@ -1,0 +1,32 @@
+Avoir uniquement les categories à choisir et enlever les type issue (plainte, suggestions, questions,...)
+Afficher les villages que l'utilisateur occupe sur le mobile au niveau de la location pour qu'il puisse selectionner
+//Organes chargés pour la résolution de la plainte
+
+//Avec les sauvegardes
+// cat 4 7
+Avoir la possibilité de publier les plaintes apres un administrateur avec que les autres ne voient ces plaintes
+
+//2e Seance
+Rémonter des plaintes : Comité Villageois de gestion de Plaintes => comité cantonal => Comité regional/Prefectoral => Comité Nationale
+Voir que les plaintes de sa zone
+Mettre une action "Non resolue" sur les plaintes
+#Mettre les actions "eligible" et "non eligible" sur les plaintes
+Enlever la partie "Rejeter"
+Crypter les données concernant les violences et corruption
+
+============
+Have only categories to choose from and remove issue types (complaints, suggestions, questions,...)
+Display the villages that the user occupies on the mobile in the location so that he can select them.
+//Organizations responsible for resolving complaints
+
+//With backups
+// cat 4 7
+Ability to publish complaints after an administrator, without others seeing them
+
+//2nd session
+Resolving complaints : Comité Villageois de gestion de Plaintes => comité cantonal => Comité regional/Prefectoral => Comité Nationale
+See only complaints from your zone
+Put an "Unresolved" action on complaints
+Put "eligible" and "non-eligible" actions on complaints
+Remove the "Reject" part
+Encrypt data concerning violence and corruption

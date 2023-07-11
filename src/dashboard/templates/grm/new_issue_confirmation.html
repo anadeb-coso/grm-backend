@@ -138,14 +138,14 @@
                                         {{ doc.issue_date|string_to_date|date:'j - F - Y' }}
                                     </div>
                                 </div>
-                                <div class="row mr-2 mb-2">
+                                {% comment %} <div class="row mr-2 mb-2">
                                     <label class="col-3 label-align">
                                         {% translate "Report" %}:
                                     </label>
                                     <div class="col-9 text-regular-family">
                                         {{ doc.issue_type.name }}
                                     </div>
-                                </div>
+                                </div> {% endcomment %}
                                 <div class="row mr-2 mb-2">
                                     <label class="col-3 label-align">
                                         {% translate "Type of grievance" %}:

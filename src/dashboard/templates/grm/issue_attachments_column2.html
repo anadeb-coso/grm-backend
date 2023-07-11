@@ -72,7 +72,7 @@
                                 </a>
                                 {% endif %}
                             {% else %}
-                                {{ reason.comment }}
+                                {{ reason.comment|safe }}
                             {% endif %}
                         </div>
                     </div>

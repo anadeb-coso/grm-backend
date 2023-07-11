@@ -29,8 +29,8 @@ class StatisticsOfTasksUpdatedByRegionView(AJAXRequestMixin, LoginRequiredMixin,
 class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
     def get(self, request, *args, **kwargs):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
-
-        if hasattr(self.request.user, 'governmentworker'):
+        
+        if hasattr(self.request.user, 'governmentworker') and not self.request.user.groups.filter(name="Admin").exists():
             issues_stats = grm_db.get_view_result('issues', 'by_assignee_stats', key=self.request.user.id)
         else:
             issues_stats = grm_db.get_view_result('issues', 'by_assignee_stats')

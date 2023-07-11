@@ -20,7 +20,7 @@ class RestAdministrativeLevelFilter(APIView):
         _filters = dict(request.GET)
         filters = {k:(float(v[0]) if v[0].isdigit() else (None if v[0] == 'null' else v[0])) for k, v in _filters.items()}
         administrativelevel = filters.get("administrativelevel")
-        ads = AdministrativeLevel.objects.using('mis').filter(type=administrativelevel)
+        ads = AdministrativeLevel.objects.using('mis').filter(type=administrativelevel) #.filter_by_government_worker(request.user)
         if administrativelevel:
             del filters['administrativelevel']
         _filters = {}
@@ -57,7 +57,7 @@ class RestAdministrativeLevelFilterByADL(APIView):
     def get(self, request, *args, **kwargs):
         _filters = dict(request.GET)
         filters = {k:(float(v[0]) if v[0].isdigit() else (None if v[0] == 'null' else v[0])) for k, v in _filters.items()}
-        administrative_region = int(filters.get("administrative_region"))
+        administrative_region = int(filters.get("administrative_region") if filters.get("administrative_region") not in ('undefined', 'null', None) else 0)
 
         # eadl_db = get_db()
         # doc_user = {}

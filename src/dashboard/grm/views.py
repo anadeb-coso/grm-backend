@@ -20,13 +20,15 @@ from dashboard.grm import CHOICE_CONTACT
 from dashboard.grm.forms import (
     IssueCommentForm, IssueDetailsForm, IssueRejectReasonForm, IssueResearchResultForm, MAX_LENGTH, NewIssueConfirmForm,
     NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm, 
-    IssueOpenStatusForm, IssueReasonCommentForm
+    IssueOpenStatusForm, IssueReasonCommentForm, IssueIssueEscalateForm, IssueSetUnresolvedForm,
+    IssueIssuePublishForm, IssueIssueUnpublishForm
 )
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from grm.utils import (
     get_administrative_level_descendants, get_auto_increment_id, get_child_administrative_regions,
     get_parent_administrative_level, get_administrative_level_descendants_using_mis, 
-    get_child_administrative_regions_using_mis
+    get_child_administrative_regions_using_mis, cryptography_fernet_key, cryptography_fernet_encrypt,
+    cryptography_fernet_decrypt
 )
 from dashboard.grm.functions import get_issue_status_stories
 from dashboard.tasks import check_issues, send_sms_message, escalate_issues
@@ -47,18 +49,18 @@ class IssueCommentsContextMixin:
                 "id": self.doc['category']['assigned_department'],
                 "type": 'issue_department'
             })[0][0]
+            context['colors'] = ['warning', 'mediumslateblue', 'gray', 'mediumpurple', 'plum', 'primary', 'danger']
+            comments = self.doc['comments'] if 'comments' in self.doc else list()
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+            users = {r['user_id'] for r in reasons} | {c['id'] for c in comments} | {
+                (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']} | {
+                    self.request.user.id}
+            indexed_users = {}
+            for index, user_id in enumerate(users):
+                indexed_users[user_id] = index
+            context['indexed_users'] = indexed_users
         except Exception:
-            raise Http404
-        context['colors'] = ['warning', 'mediumslateblue', 'gray', 'mediumpurple', 'plum', 'primary', 'danger']
-        comments = self.doc['comments'] if 'comments' in self.doc else list()
-        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
-        users = {r['user_id'] for r in reasons} | {c['id'] for c in comments} | {
-            (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0), self.doc_department['head']['id']} | {
-                self.request.user.id}
-        indexed_users = {}
-        for index, user_id in enumerate(users):
-            indexed_users[user_id] = index
-        context['indexed_users'] = indexed_users
+            pass
         return context
 
 
@@ -118,7 +120,7 @@ class IssueMixin:
         user = self.request.user
 
         if self.doc["confirmed"]:
-            if user.groups.filter(name__in=["Admin", "Assignee"]).exists() or user.is_superuser:
+            if user.groups.filter(name__in=["Admin", "Assignee"]).exists():
                 self.has_permission = True
             elif 'read_only_by_reporter' in self.permissions and self.doc['reporter']['id'] != user.id:
                 self.has_permission = False
@@ -162,11 +164,11 @@ class IssueMixin:
         user = self.request.user
         is_assigned = 'assignee' in self.doc and self.doc['assignee']
         permission_to_edit = False
-        if user.groups.filter(name="Admin").exists() or user.is_superuser:
+        if user.groups.filter(name="Admin").exists():
             permission_to_edit = True
         elif hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
             parent_id = user.governmentworker.administrative_id
-            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [])
+            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [], self.request.user)
             allowed_regions = descendants + [parent_id]
             if self.doc["administrative_region"]["administrative_id"] in allowed_regions:
                 permission_to_edit = True
@@ -332,12 +334,13 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
         self.doc['intake_date'] = data['intake_date'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc['issue_date'] = data['issue_date'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc['description'] = data['description']
+        self.doc['publish'] = False
 
         try:
-            doc_type = self.grm_db.get_query_result({
-                "id": int(data['issue_type']),
-                "type": 'issue_type'
-            })[0][0]
+            # doc_type = self.grm_db.get_query_result({
+            #     "id": int(data['issue_type']),
+            #     "type": 'issue_type'
+            # })[0][0]
             doc_category = self.grm_db.get_query_result({
                 "id": int(data['category']),
                 "type": 'issue_category'
@@ -346,9 +349,13 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
         except Exception:
             raise Http404
 
+        # self.doc['issue_type'] = {
+        #     "id": doc_type['id'],
+        #     "name": doc_type['name'],
+        # }
         self.doc['issue_type'] = {
-            "id": doc_type['id'],
-            "name": doc_type['name'],
+            "id": 1,
+            "name": "Plainte"
         }
         assigned_department = doc_category['assigned_department'][
             'administrative_level'] if 'administrative_level' in doc_category['assigned_department'] else None
@@ -510,7 +517,9 @@ class NewIssueLocationFormView(PageMixin, NewIssueMixin):
     title = _('GRM')
     active_level1 = 'grm'
     form_class = NewIssueLocationForm
-    fields_to_check = ('contact_medium', 'intake_date', 'issue_date', 'issue_type', 'category', 'description',
+    fields_to_check = ('contact_medium', 'intake_date', 'issue_date', 
+                    #    'issue_type', 
+                       'category', 'description',
                        'ongoing_issue')
 
     def form_valid(self, form):
@@ -529,7 +538,9 @@ class NewIssueConfirmFormView(PageMixin, NewIssueMixin):
     title = _('GRM')
     active_level1 = 'grm'
     form_class = NewIssueConfirmForm
-    fields_to_check = ('contact_medium', 'intake_date', 'issue_date', 'issue_type', 'category', 'description',
+    fields_to_check = ('contact_medium', 'intake_date', 'issue_date', 
+                    #    'issue_type', 
+                       'category', 'description',
                        'ongoing_issue', 'assignee', 'administrative_region')
 
     def form_valid(self, form):
@@ -616,13 +627,36 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         escalate_issues()
         send_sms_message()
         return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['publish_option'] = False
+        if user.groups.filter(name="Admin").exists() or hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
+            context['publish_option'] = True
+        return context
 
 
 class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
     template_name = 'grm/issue_list.html'
     context_object_name = 'issues'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        index = int(self.request.GET.get('index'))
+        offset = int(self.request.GET.get('offset'))
+        issues = self.get_results()
+        context['total_issues'] = len(list(issues))
+        context['issues'] = issues[index:index + offset]
+        return context
+    
     def get_queryset(self):
+        # index = int(self.request.GET.get('index'))
+        # offset = int(self.request.GET.get('offset'))
+        # return self.get_results()[index:index + offset]
+        return []
+    
+    def get_results(self):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         index = int(self.request.GET.get('index'))
@@ -632,14 +666,15 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         code = self.request.GET.get('code')
         assigned_to = self.request.GET.get('assigned_to')
         category = self.request.GET.get('category')
-        issue_type = self.request.GET.get('type')
+        # issue_type = self.request.GET.get('type')
         status = self.request.GET.get('status')
         other = self.request.GET.get('other')
         region = self.request.GET.get('region')
         reported_by = self.request.GET.get('reported_by')
+        publish = self.request.GET.get('publish')
         user = self.request.user
 
-        if user.groups.filter(name="Admin").exists() or user.is_superuser:
+        if user.groups.filter(name="Admin").exists():
             selector = {
                 "type": "issue",
             }
@@ -650,10 +685,10 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                 "auto_increment_id": {"$ne": ""},
             }
             
-            if hasattr(user, 'governmentworker'):
+            if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
                 parent_id = user.governmentworker.administrative_id
                 # descendants = get_administrative_level_descendants(adl_db, parent_id, [])
-                descendants = get_administrative_level_descendants_using_mis(adl_db, parent_id, [])
+                descendants = get_administrative_level_descendants_using_mis(adl_db, parent_id, [], self.request.user)
                 allowed_regions = descendants + [parent_id]
                 selector["$or"] = [
                     {"assignee.id": user.id},
@@ -662,6 +697,11 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                         {"administrative_region.administrative_id": {"$in": allowed_regions}},
                     ]}
                 ]
+            else:
+                selector = {
+                    "type": "issue",
+                    "publish": True
+                }
 
         date_range = {}
         if start_date:
@@ -674,26 +714,28 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             selector["intake_date"] = date_range
         if code:
             code_filter = {"$regex": f"^{code}"}
-            selector['$or'] = [{"internal_code": code_filter}, {"tracking_code": code_filter}]
+            selector['$or'] = [{"internal_code": code_filter}, {"tracking_code": code_filter},
+                               {"description": code_filter}]
         if assigned_to:
             selector["assignee.id"] = int(assigned_to)
         if category:
             selector["category.id"] = int(category)
-        if issue_type:
-            selector["issue_type.id"] = int(issue_type)
+        # if issue_type:
+        #     selector["issue_type.id"] = int(issue_type)
         if status:
             selector["status.id"] = int(status)
         if other:
             if other == "Escalate":
                 selector["escalation_reasons"] = {"$exists": True}
-        print(reported_by)
         if reported_by:
-            print(reported_by)
             selector["reporter.id"] = int(reported_by)
+        if publish in ('True', 'False'):
+            selector["publish"] = True if publish == 'True' else False
 
         if region:
             # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
-            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, []) + [region]
+            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], self.request.user) + [region]
+            print(filter_regions)
             selector["administrative_region.administrative_id"] = {
                 "$in": filter_regions
             }
@@ -702,7 +744,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         # for elt in _query_governmentworker:
         #     if elt not in _query_result:
         #         _.append(elt)
-        return grm_db.get_query_result(selector)[index:index + offset]
+        return grm_db.get_query_result(selector)
 
 
 
@@ -743,11 +785,11 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         user = self.request.user
 
         context['enable_add_comment'] = user_id == (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0) or user_id == self.doc_department[
-            'head']['id'] or user.groups.filter(name="Admin").exists() or user.is_superuser
+            'head']['id'] or user.groups.filter(name="Admin").exists()
 
         if not context['enable_add_comment'] and hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
             parent_id = user.governmentworker.administrative_id
-            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [])
+            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [], self.request.user)
             allowed_regions = descendants + [parent_id]
             if self.doc["administrative_region"]["administrative_id"] in allowed_regions:
                 context['enable_add_comment'] = True
@@ -916,7 +958,7 @@ class SubmitIssueOpenStatusView(AJAXRequestMixin, ModalFormMixin, LoginRequiredM
         comment_obj = {
             "name": self.request.user.name,
             "id": self.request.user.id,
-            "comment": data["open_reason"],
+            "comment": "<h6>"+_("Issue opened") + "</h6>" + data["open_reason"],
             "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         }
         comments.insert(0, comment_obj)
@@ -977,12 +1019,159 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
         comment_obj = {
             "name": self.request.user.name,
             "id": self.request.user.id,
-            "comment": data["open_reason"],
+            "comment": "<h6>"+_("Issue resolved") + "</h6>" + data["research_result"],
             "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         }
         comments.insert(0, comment_obj)
         self.doc['comments'] = comments
 
+        self.doc.save()
+        msg = _("The issue status was successfully updated.")
+        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        return self.render_to_json_response(context, safe=False)
+
+class SubmitIssueSetUnresolvedFormView(AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
+                                        IssueFormMixin):
+    form_class = IssueSetUnresolvedForm
+    id_form = "unresolved_reason_form"
+    title = _('Please enter the reason for changing the status to unresolved for this issue')
+    submit_button = _('Save')
+    permissions = ('read',)
+
+    def check_permissions(self):
+        super().check_permissions()
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        self.doc['unresolved_reason'] = data["unresolved_reason"]
+        self.doc['_comment'] = data["unresolved_reason"]
+        try:
+            doc_status = self.grm_db.get_query_result({
+                "unresolved_status": True,
+                "type": 'issue_status'
+            })[0][0]
+        except Exception:
+            raise Http404
+        self.doc['status'] = {
+            "name": doc_status['name'],
+            "id": doc_status['id']
+        }
+        self.doc['unresolved_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+        del self.doc['_comment']
+
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        comment_obj = {
+            "name": self.request.user.name,
+            "id": self.request.user.id,
+            "comment": "<h6>"+_("Unresolved Issue") + "</h6>" + data["unresolved_reason"],
+            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        comments.insert(0, comment_obj)
+        self.doc['comments'] = comments
+
+        self.doc.save()
+        msg = _("The issue status was successfully updated.")
+        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        return self.render_to_json_response(context, safe=False)
+
+
+class SubmitIssueEscalateFormView(AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
+                                        IssueFormMixin):
+    form_class = IssueIssueEscalateForm
+    id_form = "escalate_reason_form"
+    title = _('Please enter the reason of the escalate for this issue')
+    submit_button = _('Save')
+    permissions = ('read',)
+
+    def check_permissions(self):
+        super().check_permissions()
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        self.doc['escalate_reason'] = data["escalate_reason"]
+        self.doc['_comment'] = data["escalate_reason"]
+        
+        self.doc['escalate_flag'] = True
+        self.doc['escalate_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+        del self.doc['_comment']
+
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        escalation_reasons = self.doc['escalation_reasons'] if 'escalation_reasons' in self.doc else list()
+        comment_obj = {
+            "name": self.request.user.name,
+            "id": self.request.user.id,
+            "comment": "<h6>"+_("Issue escalated") + "</h6>" + data["escalate_reason"],
+            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        comments.insert(0, comment_obj)
+        self.doc['comments'] = comments
+        escalation_reasons.insert(0, comment_obj)
+        self.doc['escalation_reasons'] = escalation_reasons
+
+        self.doc.save()
+
+        escalate_issues()
+
+        msg = _("The issue status was successfully updated.")
+        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        return self.render_to_json_response(context, safe=False)
+    
+
+
+class SubmitIssuePublishFormView(AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
+                                        IssueFormMixin):
+    form_class = IssueIssuePublishForm
+    id_form = "issue_publish_form"
+    title = _('Please edit the description before publish')
+    submit_button = _('Publish')
+    permissions = ('read',)
+
+    def check_permissions(self):
+        self.has_permission = False
+        if self.request.user.groups.filter(name__in=["Admin"]).exists():
+            self.has_permission = True
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        if not self.doc.get('original_description'):
+            self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), cryptography_fernet_key(data.get("issue_password"))))
+        self.doc['description'] = data["issue_description"]
+        
+        self.doc['publish'] = True
+        self.doc['publish_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        
+        self.doc.save()
+        msg = _("The issue status was successfully updated.")
+        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        return self.render_to_json_response(context, safe=False)
+    
+
+class SubmitIssueUnpublishFormView(AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
+                                        IssueFormMixin):
+    form_class = IssueIssueUnpublishForm
+    id_form = "issue_unpublish_form"
+    title = _('Hide issue')
+    submit_button = _('Unpublish')
+    permissions = ('read',)
+
+    def check_permissions(self):
+        self.has_permission = False
+        if self.request.user.groups.filter(name__in=["Admin"]).exists():
+            self.has_permission = True
+
+    def form_valid(self, form):
+        self.doc['publish'] = False
+        self.doc['unpublish_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc.save()
         msg = _("The issue status was successfully updated.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -1039,7 +1228,7 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
         comment_obj = {
             "name": self.request.user.name,
             "id": self.request.user.id,
-            "comment": data["open_reason"],
+            "comment": "<h6>"+_("Issue rejected") + "</h6>" + data["open_reason"],
             "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         }
         comments.insert(0, comment_obj)
@@ -1059,10 +1248,10 @@ class GetChoicesForNextAdministrativeLevelView(AJAXRequestMixin, LoginRequiredMi
         exclude_lower_level = request.GET.get('exclude_lower_level', None)
         adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         # data = get_child_administrative_regions(adl_db, parent_id)
-        data = get_child_administrative_regions_using_mis(adl_db, parent_id)
-
+        data = get_child_administrative_regions_using_mis(adl_db, parent_id, request.user)
+        
         # if data and exclude_lower_level and not get_child_administrative_regions(adl_db, data[0]['administrative_id']):
-        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id']):
+        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id'], request.use):
             data = []
 
         return self.render_to_json_response(data, safe=False)

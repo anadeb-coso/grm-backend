@@ -30,14 +30,14 @@ def get_cascade_administrative_levels_by_administrative_level_id(_id):
             regions = []
             prefectures = []
             communes = []
-            cantons = [ad_obj]
+            cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=ad_obj.id)
             villages = ads
         elif _type == "Village":
             regions = []
             prefectures = []
             communes = []
-            cantons = []
-            villages = [ad_obj]
+            cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=0)
+            villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=ad_obj.id)
         else:
             regions = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
             prefectures = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Prefecture")

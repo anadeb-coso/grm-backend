@@ -43,7 +43,7 @@ def create_or_update_adl_user_adl(user, updated=False):
             "password": user.password
         },
         "phases": [],
-        "administrative_region": "1",
+        "administrative_region": None,
         "department": 1,
         "unique_region": 0,
         "village_secretary": 1
@@ -59,3 +59,36 @@ def create_or_update_adl_user_adl(user, updated=False):
 def delete_adl_user_adl(user):
     eadl_db = get_db()
     eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": user.id})[0][0]["_id"]].delete()
+
+
+def set_user_government_worker_adl(government_worker):
+    eadl_db = get_db()
+    doc_user_update = {}
+    try:
+        doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
+    except Exception as exc:
+        pass
+    
+    doc_user = {
+        "administrative_region": government_worker.administrative_id,
+    }
+
+    for k, v in doc_user.items():
+        doc_user_update[k] = v
+    doc_user_update.save()
+
+def delete_user_government_worker_adl(government_worker):
+    eadl_db = get_db()
+    doc_user_update = {}
+    try:
+        doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
+    except Exception as exc:
+        pass
+    
+    doc_user = {
+        "administrative_region": None
+    }
+
+    for k, v in doc_user.items():
+        doc_user_update[k] = v
+    doc_user_update.save()

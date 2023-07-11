@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.utils.translation import gettext as _
 from twilio.base.exceptions import TwilioRestException
+from datetime import datetime
 
 from authentication.models import anonymize_issue_data, get_assignee, get_assignee_to_escalate
 from client import get_db
@@ -205,11 +206,28 @@ def escalate_issues():
             })[0][0]
             department_id = doc_category['assigned_department']['id']
             administrative_id = issue_doc['administrative_region']['administrative_id']
+
+            #Search the last escalate
+            escalation_administrativelevels = issue_doc['escalation_administrativelevels'] if 'escalation_administrativelevels' in issue_doc else list()
+            if escalation_administrativelevels:
+                administrative_id = escalation_administrativelevels[0]['escalate_to']['administrative_id']
+                
             adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-            assignee = get_assignee_to_escalate(adl_db, department_id, administrative_id)
+            assignee, escalate_to_administrative = get_assignee_to_escalate(adl_db, department_id, administrative_id)
+            
             if assignee:
                 issue_doc['assignee'] = assignee
                 issue_doc['escalate_flag'] = False
+                escalation_administrativelevels.insert(0, {
+                    "escalate_to": escalate_to_administrative,
+                    "comment": (escalation_administrativelevels[0]['escalate_to']['name'] if \
+                                escalation_administrativelevels else issue_doc['administrative_region']['name']) \
+                                    + " " + _("to") + " " + escalate_to_administrative['name'] + \
+                                        " (" + escalate_to_administrative['administrative_level'] + ")",
+                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                })
+                issue_doc['escalation_administrativelevels'] = escalation_administrativelevels
+
                 result['issues_updated'].append(issue_id)
                 issues_updated = True
             else:

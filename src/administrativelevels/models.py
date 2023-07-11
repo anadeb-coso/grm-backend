@@ -1,6 +1,58 @@
 from email.policy import default
 from django.db import models
 from django.db.models.signals import post_save
+from django.db import models
+from typing import TypeVar, Any
+
+_QS = TypeVar("_QS", bound="models._BaseQuerySet[Any]")
+class CustomQuerySet(models.QuerySet):
+    def get_administrative_level_descendants_using_mis(self, adl_db, parent_id, ids, user=None):
+        data = []
+        if parent_id:
+            if int(parent_id) == 1:
+                data = AdministrativeLevel.objects.using('mis').filter(type="Region")
+            else:
+                data = AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id))
+            
+        descendants_ids = [obj.id for obj in data]
+        for descendant_id in descendants_ids:
+            self.get_administrative_level_descendants_using_mis(adl_db, descendant_id, ids, user)
+            ids.append(str(descendant_id))
+        return ids
+    
+    def get_administrative_level_ascendants_using_mis(self, adl_db, child_id, ids, user=None):
+        data = []
+        if child_id and str(child_id).isdigit():
+            child_ad_obj = list(AdministrativeLevel.objects.using('mis').filter(id=int(child_id)))
+            if child_ad_obj:
+                if child_ad_obj[0].type == "Region":
+                    data = []
+                else:
+                    data.append(child_ad_obj[0].parent)
+            
+        ascendants_ids = [obj.id for obj in data]
+        for ascendant_id in ascendants_ids:
+            self.get_administrative_level_ascendants_using_mis(adl_db, ascendant_id, ids, user)
+            ids.append(str(ascendant_id))
+        return ids
+    
+    def filter_by_government_worker(self, user, ascendant=True, descendant=True) -> _QS:
+        if user and hasattr(user, 'governmentworker') and user.governmentworker.administrative_id not in (None, '', '1', 1) and descendant and descendant:
+            ids = list(self.get_administrative_level_ascendants_using_mis(None, user.governmentworker.administrative_id, [], user)) if ascendant else []
+            
+            ids += list(self.get_administrative_level_descendants_using_mis(None, user.governmentworker.administrative_id, [], user)) if descendant else []
+            ids += [str(user.governmentworker.administrative_id)]
+            ids = list(set(ids))
+            l = []
+            for o in self:
+                if str(o.id) in ids:
+                    l.append(o)
+                    
+            return l
+            
+            
+
+        return self
 
 
 # Create your models here.
@@ -29,7 +81,8 @@ class AdministrativeLevel(BaseModel):
     updated_date = models.DateTimeField(auto_now=True)
     no_sql_db_id = models.CharField(null=True, blank=True, max_length=255)
 
-    
+    objects = CustomQuerySet.as_manager()
+
     class Meta:
         unique_together = ['name', 'parent', 'type']
 

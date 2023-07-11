@@ -656,7 +656,7 @@ msgstr "Pourcentage"
 #: dashboard/templates/grm/issue_list.html:12
 #: dashboard/templates/grm/review_issues.html:220
 msgid "Type"
-msgstr "Catégorie"
+msgstr "Sujet"
 
 #: dashboard/templates/diagnostics/home.html:21
 #: dashboard/templates/diagnostics/home.html:188
@@ -664,7 +664,7 @@ msgstr "Catégorie"
 #: dashboard/templates/grm/issue_list.html:11
 #: dashboard/templates/grm/review_issues.html:216
 msgid "Category"
-msgstr "Sujet"
+msgstr "Catégorie"
 
 #: dashboard/templates/diagnostics/home.html:29
 #: dashboard/templates/grm/review_issues.html:24
@@ -1079,8 +1079,8 @@ msgid "Me"
 msgstr "Moi"
 
 #: dashboard/templates/grm/issue_list.html
-msgid "Closing reasons"
-msgstr "Raisons de clôture"
+msgid "Decisions"
+msgstr "Décisions"
 
 #: dashboard/templates/grm/issue_list.html
 msgid "No reasons found"
@@ -1165,3 +1165,63 @@ msgstr "Spécialistes Sauvegardes"
 #: .\dashboard\templatetags\custom_tags.py
 msgid "The issue was escalated"
 msgstr "La plainte a été escaladée/remontée"
+
+#: dashboard/templates/grm/issue_status_buttons.html
+msgid "Set to unresolved"
+msgstr "Mettre à non résolue"
+
+#: dashboard/grm/views.py
+msgid "Please enter the reason for changing the status to unresolved for this issue"
+msgstr "SVP entrez la raison du chanment du status en non resolu pour ce problème"
+
+#: dashboard/grm/views.py
+msgid "Escalate Issue"
+msgstr "Faire remonter la plainte"
+
+#: dashboard/grm/views.py
+msgid "Please enter the reason of the escalate for this issue"
+msgstr "SVP entrez la raison de la remontée de cette plainte"
+
+#: dashboard/grm/views.py
+msgid "Issue rejected"
+msgstr "Plainte réjétée"
+
+#: dashboard/grm/views.py
+msgid "Issue escalated"
+msgstr "Plainte rémontée"
+
+#: dashboard/grm/views.py
+msgid "Unresolved Issue"
+msgstr "Plainte mise en non résolue"
+
+#: dashboard/grm/views.py
+msgid "Issue resolved"
+msgstr "Plainte résolue"
+
+#: dashboard/grm/views.py
+msgid "Issue opened"
+msgstr "Plainte ouverte"
+
+#: dashboard/grm/views.py
+msgid "to"
+msgstr "à"
+
+#: dashboard/grm/views.py
+msgid "Please edit the description before publish"
+msgstr "Veuillez modifier la description avant de la publier"
+
+#: dashboard/grm/views.py
+msgid "Publish"
+msgstr "Publier"
+
+#: dashboard/grm/views.py
+msgid "Unpublish"
+msgstr "Dépublier"
+
+#: dashboard/grm/views.py
+msgid "Password used to view original description"
+msgstr "Mot de passe qui sera utilisé pour voir la description originale"
+
+#: dashboard/grm/views.py
+msgid "Hide issue"
+msgstr "Cacher la plainte"

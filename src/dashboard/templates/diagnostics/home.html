@@ -17,7 +17,7 @@
     {% translate 'Number' as number %}
     {% translate 'Percentage' as percentage %}
     {% translate 'Status' as status %}
-    {% translate 'Type' as type %}
+    {% comment %} {% translate 'Type' as type %} {% endcomment %}
     {% translate 'Category' as category %}
 
     <div class="row">
@@ -37,7 +37,7 @@
                             {% bootstrap_field form.end_date layout='horizontal' show_label=False %}
                         </div>
                         <div class="col-4 issues-filter border-left">
-                            {% bootstrap_field form.type layout='horizontal' show_label=False %}
+                            {% comment %} {% bootstrap_field form.type layout='horizontal' show_label=False %} {% endcomment %}
                             {% bootstrap_field form.category layout='horizontal' show_label=False %}
                         </div>
                         <div class="col-4 regions-filter border-left">
@@ -84,7 +84,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-4">
+                    <div class="col-lg-4" style="margin-left: auto !important;margin-right: auto !important;">
                         <div class="card">
                             <div class="card-header border-0">
                                 <div class="card-title">
@@ -113,7 +113,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
+                    {% comment %} <div class="col-lg-4">
                         <div class="card">
                             <div class="card-header border-0">
                                 <div class="card-title">
@@ -141,8 +141,8 @@
                                 </table>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-lg-4">
+                    </div> {% endcomment %}
+                    <div class="col-lg-4" style="margin: auto !important;">
                         <div class="card">
                             <div class="card-header border-0">
                                 <div class="card-title">
@@ -188,10 +188,10 @@
             placeholder: "{% translate 'Category' %}",
             allowClear: true
         });
-        $("#id_type").select2({
+        {% comment %} $("#id_type").select2({
             placeholder: "{% translate 'Type' %}",
             allowClear: true,
-        });
+        }); {% endcomment %}
         $("#id_administrative_region").select2({
             placeholder: "{% translate 'Location' %}",
             allowClear: true
@@ -214,11 +214,11 @@
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
         let category = $('#id_category');
-        let type = $('#id_type');
+        {% comment %} let type = $('#id_type'); {% endcomment %}
         let current_region_id;
         let markers = [];
         let statusPieChartCanvas = $('#status_pie_chart').get(0).getContext('2d');
-        let typePieChartCanvas = $('#type_pie_chart').get(0).getContext('2d');
+        {% comment %} let typePieChartCanvas = $('#type_pie_chart').get(0).getContext('2d'); {% endcomment %}
         let categoryPieChartCanvas = $('#category_pie_chart').get(0).getContext('2d');
         let pieOptions = {
             maintainAspectRatio: false,
@@ -354,13 +354,13 @@
                     start_date: start_date.val(),
                     end_date: end_date.val(),
                     category: category.val(),
-                    type: type.val(),
+                    {% comment %} type: type.val(), {% endcomment %}
                     region: current_region_id,
                 },
                 success: function (data) {
                     let region_stats = data.region_stats;
                     let status_stats = data.status_stats;
-                    let type_stats = data.type_stats;
+                    {% comment %} let type_stats = data.type_stats; {% endcomment %}
                     let category_stats = data.category_stats;
 
                     let statusChart = new Chart(statusPieChartCanvas, {
@@ -376,7 +376,7 @@
                         },
                         options: pieOptions
                     });
-                    let typeChart = new Chart(typePieChartCanvas, {
+                    {% comment %} let typeChart = new Chart(typePieChartCanvas, {
                         type: 'pie',
                         data: {
                             labels: [],
@@ -388,7 +388,7 @@
                             ]
                         },
                         options: pieOptions
-                    });
+                    }); {% endcomment %}
                     let categoryChart = new Chart(categoryPieChartCanvas, {
                         type: 'pie',
                         data: {
@@ -413,18 +413,19 @@
                             el.className = 'map-marker';
                             el.title = region.name;
                             el.textContent = region.percentage + '%';
-
                             // create the marker
-                            let marker = new mapboxgl.Marker(el)
-                                .setLngLat([region.longitude, region.latitude])
-                                .addTo(map);
-                            markers.push(marker);
+                            if(region.longitude && region.latitude){
+                                let marker = new mapboxgl.Marker(el)
+                                    .setLngLat([region.longitude, region.latitude])
+                                    .addTo(map);
+                                markers.push(marker);
+                            }
 
                         });
 
                         fillStats(region_stats, $('#region-stats'));
                         fillStats(status_stats, $('#status-stats'), statusChart);
-                        fillStats(type_stats, $('#type-stats'), typeChart);
+                        {% comment %} fillStats(type_stats, $('#type-stats'), typeChart); {% endcomment %}
                         fillStats(category_stats, $('#category-stats'), categoryChart);
 
                     } else {
@@ -432,7 +433,7 @@
                         let no_issues_msg_html = '<td class="text-center" colspan="3">' + no_issues_msg + '</td>';
                         $('#region-stats').html(no_issues_msg_html);
                         $('#status-stats').html(no_issues_msg_html);
-                        $('#type-stats').html(no_issues_msg_html);
+                        {% comment %} $('#type-stats').html(no_issues_msg_html); {% endcomment %}
                         $('#category-stats').html(no_issues_msg_html);
                     }
                     statistics_spin.hide();

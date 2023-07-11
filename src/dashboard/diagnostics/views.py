@@ -40,7 +40,7 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
         start_date = self.request.GET.get('start_date')
         end_date = self.request.GET.get('end_date')
         category = self.request.GET.get('category')
-        issue_type = self.request.GET.get('type')
+        # issue_type = self.request.GET.get('type')
         region = self.request.GET.get('region')
 
         selector = {
@@ -60,12 +60,12 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             selector["intake_date"] = date_range
         if category:
             selector["category.id"] = int(category)
-        if issue_type:
-            selector["issue_type.id"] = int(issue_type)
+        # if issue_type:
+        #     selector["issue_type.id"] = int(issue_type)
 
         if region:
             # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
-            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, []) + [region]
+            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], request.user) + [region]
             selector["administrative_region.administrative_id"] = {
                 "$in": filter_regions
             }
@@ -101,8 +101,8 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             status_key = doc['status']['id']
             fill_count(status_key, status_stats, doc['status']['name'])
 
-            type_key = doc['issue_type']['id']
-            fill_count(type_key, type_stats, doc['issue_type']['name'])
+            # type_key = doc['issue_type']['id']
+            # fill_count(type_key, type_stats, doc['issue_type']['name'])
 
             category_key = doc['category']['id']
             fill_count(category_key, category_stats, doc['category']['name'])

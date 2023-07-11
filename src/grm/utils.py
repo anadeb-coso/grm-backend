@@ -1,5 +1,7 @@
 from datetime import datetime
 from operator import itemgetter
+from cryptography.fernet import Fernet
+import base64
 
 from django.template.defaultfilters import date as _date
 from administrativelevels import models as administrativelevels_models
@@ -213,11 +215,11 @@ def belongs_to_region(adl_db, child_administrative_id, parent_administrative_id)
         belongs = child_administrative_id in get_administrative_level_descendants(adl_db, parent_administrative_id, [])
     return belongs
 
-def belongs_to_region_using_mis(adl_db, child_administrative_id, parent_administrative_id):
+def belongs_to_region_using_mis(adl_db, child_administrative_id, parent_administrative_id, user=None):
     if parent_administrative_id == child_administrative_id:
         belongs = True
     else:
-        belongs = child_administrative_id in get_administrative_level_descendants_using_mis(adl_db, parent_administrative_id, [])
+        belongs = child_administrative_id in get_administrative_level_descendants_using_mis(adl_db, parent_administrative_id, [], user)
     return belongs
 
 def get_auto_increment_id(grm_db):
@@ -228,34 +230,33 @@ def get_auto_increment_id(grm_db):
     return max_auto_increment_id + 1
 
 
-def get_administrative_level_descendants_using_mis(adl_db, parent_id, ids):
+def get_administrative_level_descendants_using_mis(adl_db, parent_id, ids, user=None):
     data = []
     if parent_id:
         if int(parent_id) == 1:
-            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
+            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region") #.filter_by_government_worker(user, False, False)
         else:
-            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id))
+            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id)) #.filter_by_government_worker(user, False, False)
         
     descendants_ids = [obj.id for obj in data]
     for descendant_id in descendants_ids:
-        get_administrative_level_descendants_using_mis(adl_db, descendant_id, ids)
+        get_administrative_level_descendants_using_mis(adl_db, descendant_id, ids, user)
         ids.append(str(descendant_id))
 
     return ids
 
-
-def get_child_administrative_regions_using_mis(adl_db, parent_id):
+def get_child_administrative_regions_using_mis(adl_db, parent_id, user=None):
     data_ser = []
     if parent_id:
         if int(parent_id) == 1:
-            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
+            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region").filter_by_government_worker(user)
         else:
-            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id))
+            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id)).filter_by_government_worker(user)
     
     for obj in data:
         obj_ser = AdministrativeLevelSerializer(obj).data
-        obj_ser["administrative_id"] = obj.id
-        obj_ser["parent_id"] = obj.parent.id if obj.parent else None
+        obj_ser["administrative_id"] = str(obj.id)
+        obj_ser["parent_id"] = str(obj.parent.id) if obj.parent else None
         obj_ser["administrative_level"] = obj.type
         obj_ser["type"] = "administrative_level"
         data_ser.append(obj_ser)
@@ -269,3 +270,25 @@ def datetime_str(datetime_now = None):
     # day = str(datetime_now.day) if datetime_now.day > 9 else ("0"+str(datetime_now.day))
     # return f"{str(datetime_now.year)}-{month}-{str(day)} {str(datetime_now.hour)}:{str(datetime_now.minute)}:{str(datetime_now.second)}"
     return datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+def cryptography_fernet_key(password):
+    if password:
+        if len(password) > 7:
+            password = password[:7]
+        elif len(password) < 7:
+            password = password + ((7-len(password)) * "0")
+    else:
+        password = "0000000"
+    k = bytes(password, 'utf-32')
+    return base64.urlsafe_b64encode(k)
+
+def cryptography_fernet_encrypt(text, key):
+    fernet = Fernet(key)
+    return fernet.encrypt(text.encode())
+
+def cryptography_fernet_decrypt(text_encrypt, key):
+    fernet = Fernet(key)
+    return fernet.decrypt(text_encrypt).decode()
+
+def convert_str_bytes_to_bytes(text) -> bytes:
+    return bytes(text[2:][:-1].encode())

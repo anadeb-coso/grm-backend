@@ -107,6 +107,9 @@ class NewIssueDetailsForm(forms.Form):
     category = forms.ChoiceField(label=_('Choose type of grievance'))
     description = forms.CharField(label=_('Briefly describe the issue'), max_length=2000, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Please describe the issue')}))
+    issue_password = forms.CharField(label=_('Password'), max_length=7, min_length=7, required=False,
+                                     widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+
     ongoing_issue = forms.BooleanField(label=_('Current event or multiple occurrences'),
                                        widget=forms.CheckboxInput, required=False)
 
@@ -127,6 +130,7 @@ class NewIssueDetailsForm(forms.Form):
             'class'] = 'form-control datetimepicker-input'
         self.fields['intake_date'].widget.attrs['data-target'] = '#intake_date'
         self.fields['issue_date'].widget.attrs['data-target'] = '#issue_date'
+        self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view original description")+'</span>'
 
         document = grm_db[doc_id]
         if 'description' in document and document['description']:
@@ -231,10 +235,24 @@ class IssueDetailsForm(forms.Form):
 class IssueCommentForm(forms.Form):
     comment = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Add comment')}))
+    issue_password_comment = forms.CharField(label='', max_length=7, min_length=7, required=False,
+                                             widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['issue_password_comment'].help_text = '<span style="color:black;">'+_("Password used to view the add. This field isn't require.")+'</span>'
+
 
 class IssueReasonCommentForm(forms.Form):
     reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(
-        attrs={'rows': '3', 'placeholder': _('Add comment')}))
+        attrs={'rows': '3', 'placeholder': _('Add decision')}))
+    issue_password_reason = forms.CharField(label='', max_length=7, min_length=7, required=False,
+                                            widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['issue_password_reason'].help_text = '<span style="color:black;">'+_("Password used to view the add. This field isn't require.")+'</span>'
+
 
 class IssueOpenStatusForm(forms.Form):
     open_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
@@ -288,7 +306,7 @@ class IssueIssueEscalateForm(forms.Form):
 
 class IssueIssuePublishForm(forms.Form):
     issue_description = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
-    issue_password = forms.CharField(label='', max_length=7, min_length=7,widget=forms.TextInput(attrs={'placeholder': _('Password')}))
+    issue_password = forms.CharField(label='', max_length=7, min_length=7,widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')

@@ -22,7 +22,14 @@
     </div>
     <div class="row border-bottom mt-2 mb-3">
         <div class="col-10 mb-2 text-regular-family mb-3">
-            {{ comment.comment|safe }}
+            <p id="issue_comment_comment">
+            {% comment %} {{ comment.comment|safe }} {% endcomment %}
+            {% if "b'" in comment.comment %}
+                ***
+            {% else %}
+                {{ comment.comment|safe }}
+            {% endif %}
+            </p>
         </div>
     </div>
 {% empty %}

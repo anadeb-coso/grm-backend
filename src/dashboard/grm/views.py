@@ -11,6 +11,7 @@ from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
+from cryptography.fernet import InvalidToken
 
 from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee
 from client import get_db, upload_file
@@ -333,7 +334,13 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
     def set_details_fields(self, data):
         self.doc['intake_date'] = data['intake_date'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.doc['issue_date'] = data['issue_date'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        self.doc['description'] = data['description']
+        
+        if int(data['category']) in (4, 7) and data.get("issue_password"):
+            self.request.session["issue_password"] = data.get("issue_password")
+        if int(data['category']) in (4, 7) and self.request.POST.get("confirm") == "confirm":
+            self.doc['description'] = str(cryptography_fernet_encrypt(data['description'], cryptography_fernet_key(self.request.session["issue_password"])))
+        else:
+            self.doc['description'] = data['description']
         self.doc['publish'] = False
 
         try:
@@ -587,6 +594,8 @@ class NewIssueConfirmFormView(PageMixin, NewIssueMixin):
         self.doc['source'] = "web"
         self.doc['comments'] = []
         anonymize_issue_data(self.doc)
+
+        self.request.session["issue_password"] = None
         self.doc.save()
         return HttpResponseRedirect(reverse('dashboard:grm:new_issue_step_6', kwargs={'issue': self.kwargs['issue']}))
 
@@ -677,6 +686,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         if user.groups.filter(name="Admin").exists():
             selector = {
                 "type": "issue",
+                "confirmed": True,
             }
         else:
             selector = {
@@ -700,7 +710,8 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             else:
                 selector = {
                     "type": "issue",
-                    "publish": True
+                    "publish": True,
+                    "confirmed": True,
                 }
 
         date_range = {}
@@ -851,6 +862,11 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
         if comment:
             comments = self.doc['comments'] if 'comments' in self.doc else list()
             reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+
+            issue_password = request.POST.get('issue_password_reason') if request.POST.get('issue_password_reason') else request.POST.get('issue_password_comment')
+            if  self.doc['category']["id"] in (4, 7) and issue_password:
+                comment = str(cryptography_fernet_encrypt(comment, cryptography_fernet_key(issue_password)))
+            
             if reason:
                 comment_obj = {
                     "user_name": request.user.name,
@@ -1142,7 +1158,11 @@ class SubmitIssuePublishFormView(AJAXRequestMixin, ModalFormMixin, LoginRequired
     def form_valid(self, form):
         data = form.cleaned_data
         if not self.doc.get('original_description'):
-            self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), cryptography_fernet_key(data.get("issue_password"))))
+            if self.doc['category']["id"] in (4, 7):
+                self.doc['original_description'] = self.doc.get('description')
+            else:
+                self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), cryptography_fernet_key(data.get("issue_password"))))
+            
         self.doc['description'] = data["issue_description"]
         
         self.doc['publish'] = True
@@ -1275,12 +1295,19 @@ class GetAncestorAdministrativeLevelsView(AJAXRequestMixin, LoginRequiredMixin, 
         return self.render_to_json_response(ancestors, safe=False)
 
 
-class GetSensitiveIssueDataView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+class GetSensitiveIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
 
     def post(self, request, *args, **kwargs):
         data = None
 
-        if self.request.user.check_password(request.POST.get('password')):
+        if self.request.user.check_password(request.POST.get('password')) and \
+            (
+                self.request.user.groups.filter(name="Admin").exists() 
+                or 
+                (self.doc.get('reporter') and self.doc.get('reporter').get('id') == self.request.user.id)
+                or 
+                (self.doc.get('assignee') and self.doc.get('assignee').get('id') == self.request.user.id)
+            ):
             doc_id = request.POST.get('id')
 
             citizen = Pdata.objects.get(key=doc_id) if Pdata.objects.filter(key=doc_id).exists() else None
@@ -1303,3 +1330,82 @@ class GetSensitiveIssueDataView(AJAXRequestMixin, LoginRequiredMixin, JSONRespon
             'data': data
         }
         return self.render_to_json_response(context, safe=False)
+
+class GetIssueDescriptionView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+
+    def post(self, request, *args, **kwargs):
+        data = None
+
+        try:
+            password = request.POST.get('password')
+            description_encrypt = self.doc['description']
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else []
+            comments = self.doc['comments'] if 'comments' in self.doc else []
+            
+            for i_r in range(len(reasons)):
+                if reasons[i_r].get('type') == 'comment' and reasons[i_r].get('comment') and "b'" in reasons[i_r].get('comment'):
+                    try:
+                        reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], cryptography_fernet_key(password))
+                    except:
+                        pass
+            for i_r in range(len(comments)):
+                if comments[i_r].get('type') == 'comment' and comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
+                    try:
+                        comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], cryptography_fernet_key(password))
+                    except:
+                        pass
+            data = {
+                'description': cryptography_fernet_decrypt(description_encrypt, cryptography_fernet_key(password)),
+                'reasons': reasons,
+                'comments': comments
+            }
+
+        except:
+            msg = _("The password was not correct, we could not proceed with action.")
+            messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
+
+        context = {
+            'msg': render(self.request, 'common/messages.html').content.decode("utf-8"),
+            'data': data
+        }
+        return self.render_to_json_response(context, safe=False)
+    
+
+class IssueCommentDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXRequestMixin, LoginRequiredMixin,
+                           generic.ListView):
+    template_name = 'grm/issue_comments.html'
+    context_object_name = 'comments'
+    permissions = ('read',)
+
+    def get_queryset(self):
+        password = self.request.GET.get('password')
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        for i_r in range(len(comments)):
+            if comments[i_r].get('type') == 'comment' and comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
+                try:
+                    comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], cryptography_fernet_key(password))
+                except InvalidToken:
+                    pass
+                except:
+                    pass
+        return comments
+
+
+class IssueReasonsDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXRequestMixin, LoginRequiredMixin,
+                           generic.ListView):
+    template_name = 'grm/issue_attachments_column2.html'
+    context_object_name = 'reasons'
+    permissions = ('read',)
+
+    def get_queryset(self):
+        password = self.request.GET.get('password')
+        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+        for i_r in range(len(reasons)):
+            if reasons[i_r].get('type') == 'comment' and reasons[i_r].get('comment') and "b'" in reasons[i_r].get('comment'):
+                try:
+                    reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], cryptography_fernet_key(password))
+                except InvalidToken:
+                    pass
+                except:
+                    pass
+        return reasons

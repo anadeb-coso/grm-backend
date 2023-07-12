@@ -74,8 +74,8 @@
     </div>
     <div class="col-4">
         <button type="button" class="
-        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 %}btn-status {% endif %} btn btn-primary pull-right" id="set_unresolved"
-                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 %}disabled{% endif %}>
+        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 or doc_status.unresolved_status %}btn-status {% endif %} btn btn-primary pull-right" id="set_unresolved"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 or doc_status.unresolved_status %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>

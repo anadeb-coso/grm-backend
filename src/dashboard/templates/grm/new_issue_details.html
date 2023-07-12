@@ -168,5 +168,21 @@
                     showPopupMessage(data.msg);
                 })
         });
+        
+        let issue_password = $('#id_issue_password');
+        let issue_password_parent = issue_password.parent().parent();
+        issue_password.attr('required', false);
+        issue_password_parent.hide();
+        
+        $('#id_category').change(function(event){
+            if([4, 7].includes(Number(this.value))){
+                {% comment %} issue_password.attr('required', true); {% endcomment %}
+                issue_password_parent.show();
+            }else{
+                issue_password.attr('required', false);
+                issue_password_parent.hide();
+            }
+        });
+
     </script>
 {% endblock javascript %}

@@ -39,7 +39,13 @@
                 </a>
             </td>
             <td>{{ issue.tracking_code }}</td>
-            <td>{{ issue.description }}</td>
+            <td>
+                {% if "b'" in issue.description %}
+                    ***
+                {% else %}
+                    {{ issue.description }}
+                {% endif %}
+            </td>
             <td>{{ issue.assignee.name }}</td>
             <td>{% get_days_until_today issue.created_date %}</td>
             <td>{{ issue.category.name }}</td>

@@ -67,7 +67,7 @@ msgstr "Email"
 
 #: authentication/serializers.py:21
 msgid "Password"
-msgstr "Mot de pass"
+msgstr "Mot de passe"
 
 #: authentication/serializers.py:28 authentication/serializers.py:75
 #, python-brace-format
@@ -1216,7 +1216,7 @@ msgstr "Publier"
 
 #: dashboard/grm/views.py
 msgid "Unpublish"
-msgstr "Dépublier"
+msgstr "Non publier"
 
 #: dashboard/grm/views.py
 msgid "Password used to view original description"
@@ -1225,3 +1225,11 @@ msgstr "Mot de passe qui sera utilisé pour voir la description originale"
 #: dashboard/grm/views.py
 msgid "Hide issue"
 msgstr "Cacher la plainte"
+
+#: dashboard/grm/views.py
+msgid "Add decision"
+msgstr "Ajouter décision"
+
+#: dashboard/grm/views.py
+msgid "Password used to view the add. This field isn't require."
+msgstr "Mot de passe utilisé pour visualiser l'ajout. Ce champ n'est pas obligatoire."

@@ -16,7 +16,15 @@
                     <div class="row mr-2">
                         <div class="col-12">
                             <label>{% translate 'Summary' %}</label>
-                            <p>{{ doc.description }}</p>
+                            <p id="issue_description">
+                                {% if "b'" in doc.description %}
+                                    ****
+                                    <i class="fas fa-eye pull-right link show-data" id="show-data-description"
+                                        title='{% translate "Show sensitive data" %}'></i>
+                                {% else %}
+                                    {{ doc.description }}
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                     <div class="overlay-wrapper">
@@ -154,7 +162,7 @@
                                     <div id="citizen">
                                         *****
                                         <i class="fas fa-eye pull-right link show-data"
-                                           title={% translate "Show sensitive data" %}></i>
+                                           title='{% translate "Show sensitive data" %}'></i>
                                     </div>
                                 {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
                                     {% translate 'Confidential' %}
@@ -162,7 +170,7 @@
                                     <div id="citizen">
                                         *****
                                         <i class="fas fa-eye pull-right link show-data"
-                                           title={% translate "Show sensitive data" %}></i>
+                                           title='{% translate "Show sensitive data" %}'></i>
                                     </div>
                                 {% endif %}
                             </div>
@@ -347,7 +355,7 @@
 
 
 
-    <div id="fileFormModalReason" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
+    {% comment %} <div id="fileFormModalReason" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
     <div id="statusChangeModalFormReason" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
 
     <div class="modal fade modal-confirmation" id="checkPasswordModalReason">
@@ -380,7 +388,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> {% endcomment %}
 
 {% endblock modals %}
 
@@ -612,7 +620,8 @@
         }
 
         let file_form_ajax_reason = new FileFormReasonAjaxSubmit();
-        let file_form_modal_reason = $('#fileFormModalReason');
+        {% comment %} let file_form_modal_reason = $('#fileFormModalReason'); {% endcomment %}
+        let file_form_modal_reason = $('#fileFormModal');
 
         function reasonLoadAttachments() {
             load_attachments_spin_reason.show();
@@ -682,6 +691,7 @@
                 url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}",
                 data: {
                     "comment": comment.val(),
+                    issue_password_comment: $('#id_issue_password_comment').val(),
                 },
                 success: function (response) {
                     showPopupMessage(response.msg);
@@ -730,6 +740,7 @@
                 url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}?reason=1",
                 data: {
                     "comment": comment_reason.val(),
+                    issue_password_reason: $('#id_issue_password_reason').val(),
                 },
                 success: function (response) {
                     showPopupMessage(response.msg);
@@ -759,36 +770,129 @@
 
 
 
-
-        $(".show-data").click(function () {
-            $('#checkPasswordModal').modal('show');
-        });
+        var type_checking = "citizen"; //issue_description
+        function show_dta(){
+            $(".show-data").click(function () {
+                if(this.id == "show-data-description"){
+                    type_checking = "issue_description";
+                }
+                $('#checkPasswordModal').modal('show');
+            });
+        }
+        show_dta();
+        
+        function hide_data(){
+            $(".hide-data").click(function () {
+                this.id = this.id.replace('hide', 'show');
+                $(('#'+type_checking)).html(`
+                    ****
+                    <i class="fas fa-eye pull-right link show-data" id="`+this.id+`"
+                        title='{% translate "Show sensitive data" %}'></i>
+                `);
+            });
+        show_dta();
+        }
+        
 
         $("#check-password").click(function () {
-            $.ajax({
-                type: "POST",
-                url: "{% url 'dashboard:grm:get_sensitive_issue_data' %}",
-                data: {
-                    "password": $("#id_password").val(),
-                    "id": "{{ doc|get:'_id' }}",
-                },
-                success: function (response) {
-                    showPopupMessage(response.msg);
-                    let data = response.data;
-                    if (data && data.citizen) {
-                        console.log(data);
-                        $("#citizen").html(data.citizen);
-                    }
-                    $('#checkPasswordModal').modal('hide')
-                },
-                error: function (data, status, error) {
-                            if(error == "Forbidden"){
-                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
-                            }else{
-                                alert(error_server_message + "Error " + data.status);
-                            }
+            if(type_checking == "issue_description"){
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'dashboard:grm:get_issue_description' doc|get:'auto_increment_id' %}",
+                    data: {
+                        "password": $("#id_password").val(),
+                        "id": "{{ doc|get:'_id' }}",
+                    },
+                    success: function (response) {
+                        showPopupMessage(response.msg);
+                        let data = response.data;
+                        if (data && data.description) {
+                            $("#issue_description").html(
+                                data.description
+                                {% comment %} +`
+                                <i class="fas fa-eye-slash pull-right link hide-data" id="hide-data-description"
+                                        title='{% translate "Hide sensitive data" %}'></i>
+                                ` {% endcomment %}
+                            );
+                            {% comment %} hide_data(); {% endcomment %}
                         }
-            });
+                        $('#checkPasswordModal').modal('hide');
+                    },
+                    error: function (data, status, error) {
+                                if(error == "Forbidden"){
+                                    alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                                }else{
+                                    alert(error_server_message + "Error " + data.status);
+                                }
+                            }
+                });
+
+                //Decrypt Comments
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'dashboard:grm:issue_comments_decrypt' doc|get:'auto_increment_id' %}",
+                    data: {
+                        "password": $("#id_password").val(),
+                        "id": "{{ doc|get:'_id' }}",
+                    },
+                    success: function (response) {
+                        $("#comments").html(response);
+                    },
+                    error: function (data, status, error) {
+                            }
+                });
+                //End Decrypt Comments
+
+                //Decrypt Reasons
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'dashboard:grm:issue_reasons_decrypt' doc|get:'auto_increment_id' %}",
+                    data: {
+                        "password": $("#id_password").val(),
+                        "id": "{{ doc|get:'_id' }}",
+                    },
+                    success: function (response) {
+                        alert("777");
+                        $("#attachments-reason").html(response);
+                    },
+                    error: function (data, status, error) {
+                            }
+                });
+                //End Decrypt Reasons
+
+            }else{
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'dashboard:grm:get_sensitive_issue_data' doc|get:'auto_increment_id' %}",
+                    data: {
+                        "password": $("#id_password").val(),
+                        "id": "{{ doc|get:'_id' }}",
+                    },
+                    success: function (response) {
+                        showPopupMessage(response.msg);
+                        let data = response.data;
+                        if (data && data.citizen) {
+                            $("#citizen").html(
+                                data.citizen 
+                                {% comment %} + `
+                            <i class="fas fa-eye-slash pull-right link hide-data" id="hide-data-description"
+                                        title='{% translate "Hide sensitive data" %}'></i>    
+                            ` {% endcomment %}
+                            );
+                            hide_data();
+                        }
+                        $('#checkPasswordModal').modal('hide')
+                    },
+                    error: function (data, status, error) {
+                                if(error == "Forbidden"){
+                                    alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                                }else{
+                                    alert(error_server_message + "Error " + data.status);
+                                }
+                            }
+                });
+            }
+            
         });
 
     </script>

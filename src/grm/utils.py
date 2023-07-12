@@ -288,7 +288,9 @@ def cryptography_fernet_encrypt(text, key):
 
 def cryptography_fernet_decrypt(text_encrypt, key):
     fernet = Fernet(key)
-    return fernet.decrypt(text_encrypt).decode()
+    print(type(convert_str_bytes_to_bytes(text_encrypt)))
+    return fernet.decrypt(convert_str_bytes_to_bytes(text_encrypt)).decode()
 
 def convert_str_bytes_to_bytes(text) -> bytes:
+    print("here")
     return bytes(text[2:][:-1].encode())

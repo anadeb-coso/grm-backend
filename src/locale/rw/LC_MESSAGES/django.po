@@ -1183,3 +1183,11 @@ msgstr ""
 #: dashboard/grm/views.py
 msgid "Hide issue"
 msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Add decision"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Password used to view the add. This field isn't require."
+msgstr ""

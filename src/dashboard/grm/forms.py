@@ -240,7 +240,7 @@ class IssueCommentForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['issue_password_comment'].help_text = '<span style="color:black;">'+_("Password used to view the add. This field isn't require.")+'</span>'
+        self.fields['issue_password_comment'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
 
 
 class IssueReasonCommentForm(forms.Form):
@@ -251,7 +251,7 @@ class IssueReasonCommentForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['issue_password_reason'].help_text = '<span style="color:black;">'+_("Password used to view the add. This field isn't require.")+'</span>'
+        self.fields['issue_password_reason'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
 
 
 class IssueOpenStatusForm(forms.Form):

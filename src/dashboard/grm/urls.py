@@ -10,6 +10,8 @@ urlpatterns = [
          name='upload_issue_attachment'),
     path('delete-issue-attachment/<int:issue>/<str:attachment>/', views.IssueAttachmentDeleteView.as_view(),
          name='delete_issue_attachment'),
+     path('decrypt-issue-attachment/<int:issue>/<str:attachment>/', views.IssueAttachmentDecryptView.as_view(),
+         name='decrypt_issue_attachment'),
     path('issue-attachments/<int:issue>/', views.IssueAttachmentListView.as_view(), name='issue_attachments'),
     path('new-issue-step-1/<int:issue>/', views.NewIssueContactFormView.as_view(), name='new_issue_step_1'),
     path('new-issue-step-2/<int:issue>/', views.NewIssuePersonFormView.as_view(), name='new_issue_step_2'),

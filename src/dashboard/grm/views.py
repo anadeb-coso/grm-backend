@@ -29,7 +29,7 @@ from grm.utils import (
     get_administrative_level_descendants, get_auto_increment_id, get_child_administrative_regions,
     get_parent_administrative_level, get_administrative_level_descendants_using_mis, 
     get_child_administrative_regions_using_mis, cryptography_fernet_key, cryptography_fernet_encrypt,
-    cryptography_fernet_decrypt
+    cryptography_fernet_decrypt, delete_file_on_download_file
 )
 from dashboard.grm.functions import get_issue_status_stories
 from dashboard.tasks import check_issues, send_sms_message, escalate_issues
@@ -198,11 +198,16 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
         reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
 
         if len(attachments) < self.max_attachments or reason:
-            response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
+            issue_password_file = data['issue_password_file']
+            file = data['file']
+            if  ((self.doc.get('category') and self.doc['category']["id"] in (4, 7)) or not self.doc.get('category')) and issue_password_file:
+                file = cryptography_fernet_encrypt(file, cryptography_fernet_key(issue_password_file),  _type="file", filename=file.name)
+                file.name = f'encrypt_{file.name}' if 'encrypt_' not in file.name else file.name
+            response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
             if response['ok']:
                 attachment = {
-                    "name": data["file"].name,
-                    "url": f'/grm_attachments/{response["id"]}/{data["file"].name}',
+                    "name": file.name,
+                    "url": f'/grm_attachments/{response["id"]}/{file.name}',
                     "local_url": "",
                     "id": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
                     "uploaded": True,
@@ -220,6 +225,10 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
                     self.doc['attachments'] = attachments
 
                 self.doc.save()
+
+                # delete_file_on_download_file(file) #delete file on server
+
+
                 msg = _("The attachment was successfully uploaded.")
                 messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
             else:
@@ -239,39 +248,94 @@ class IssueAttachmentDeleteView(IssueMixin, AJAXRequestMixin, ModalFormMixin, Lo
     permissions = ('read',)
 
     def delete(self, request, *args, **kwargs):
-        if 'attachments' in self.doc:
-            attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
-            grm_attachment_db = get_db(COUCHDB_GRM_ATTACHMENT_DATABASE)
-            for attachment in attachments:
-                if attachment['id'] == kwargs['attachment']:
-                    try:
-                        grm_attachment_db[attachment['bd_id']].delete()
-                    except Exception:
-                        pass
-                    attachments.remove(attachment)
-                    break
-            
-            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
-            for reason in reasons:
-                if reason['id'] == kwargs['attachment']:
-                    try:
-                        grm_attachment_db[reason['bd_id']].delete()
-                    except Exception:
-                        pass
-                    reasons.remove(reason)
-                    break
+        # if 'attachments' in self.doc:
+        attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
+        grm_attachment_db = get_db(COUCHDB_GRM_ATTACHMENT_DATABASE)
+        for attachment in attachments:
+            if attachment['id'] == kwargs['attachment']:
+                try:
+                    grm_attachment_db[attachment['bd_id']].delete()
+                except Exception:
+                    pass
+                attachments.remove(attachment)
+                break
+        
+        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+        for reason in reasons:
+            if (reason.get('due_at') and reason['due_at'] == kwargs['attachment']) or \
+                (reason.get('id') and reason['id'] == kwargs['attachment']):
+                try:
+                    grm_attachment_db[reason['bd_id']].delete()
+                except Exception:
+                    pass
+                reasons.remove(reason)
+                break
 
-            try:
-                self.doc.save()
-            except:
-                pass
-            msg = _("The attachment was successfully deleted.")
-            messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
-            context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
-            return self.render_to_json_response(context, safe=False)
-        else:
+        try:
+            self.doc.save()
+        except:
+            pass
+        msg = _("The attachment was successfully deleted.")
+        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        return self.render_to_json_response(context, safe=False)
+        # else:
+        #     raise Http404
+
+
+# class IssueAttachmentDecryptView(IssueMixin, AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
+#                                 generic.DeleteView):
+class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
+                                generic.DeleteView):
+    permissions = ('read',)
+
+    def get(self, request, *args, **kwargs):
+        password = request.GET.get('password')
+        print(password)
+        if not password:
             raise Http404
+        
+        attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
+        grm_attachment_db = get_db(COUCHDB_GRM_ATTACHMENT_DATABASE)
+        attachment_name = None
+        _doc = None
 
+        for attachment in attachments:
+            if attachment['id'] == kwargs['attachment']:
+                try:
+                   attachment_name = attachment['name']
+                   _doc = grm_attachment_db[attachment['bd_id']]
+                except Exception:
+                    pass
+                break
+            
+        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+        for reason in reasons:
+            if (reason.get('due_at') and reason['due_at'] == kwargs['attachment']) or \
+                (reason.get('id') and reason['id'] == kwargs['attachment']):
+                try:
+                    attachment_name = reason['name']
+                    _doc = grm_attachment_db[reason['bd_id']]
+                except Exception:
+                    pass
+                break
+            
+        if not attachment_name or not _doc or not _doc.get('_attachments') or not _doc.get('_attachments').get(attachment_name):
+            raise Http404
+        
+        attachment_content = _doc.get_attachment(attachment_name)
+        # try:
+        return cryptography_fernet_decrypt(attachment_content, cryptography_fernet_key(password), _type="file", filename=attachment_name)
+        # msg = _("The attachment was successfully download.")
+        # messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+        # # except Exception as exc:
+        # #     print(exc)
+        # #     msg = _("An error occurred. Probably, your password is wrong.")
+        # #     messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='danger')
+        # context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        # return self.render_to_json_response(context, safe=False)
+        
+        
 
 class IssueAttachmentListView(IssueMixin, IssueCommentsContextMixin, AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
     template_name = 'grm/issue_attachments.html'
@@ -867,12 +931,14 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
             if  self.doc['category']["id"] in (4, 7) and issue_password:
                 comment = str(cryptography_fernet_encrypt(comment, cryptography_fernet_key(issue_password)))
             
+            due_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             if reason:
                 comment_obj = {
                     "user_name": request.user.name,
                     "user_id": user_id,
                     "comment": comment,
-                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                    "due_at": due_at,
+                    "id": due_at,
                     "type": "comment"
                 }
                 reasons.insert(0, comment_obj)
@@ -882,7 +948,7 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
                     "name": request.user.name,
                     "id": user_id,
                     "comment": comment,
-                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                    "due_at": due_at
                 }
                 comments.insert(0, comment_obj)
                 self.doc['comments'] = comments

@@ -31,6 +31,13 @@
                             <i class="far fa-trash-alt text-danger"></i>
                         </a>
                         {% endif %}
+                        {% if "encrypt_" in attachment.name %}
+                        <a class="btn pull-right show-data"
+                        data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                        id="show_data_attachment_{{ doc.auto_increment_id }}_{{ attachment.id }}">
+                            <i class="far fa-eye link show-data"></i>
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}

@@ -1189,5 +1189,13 @@ msgid "Add decision"
 msgstr ""
 
 #: dashboard/grm/views.py
-msgid "Password used to view the add. This field isn't require."
+msgid "Password used to view the add."
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "An error occurred. Probably, your password is wrong."
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "The attachment was successfully download."
 msgstr ""

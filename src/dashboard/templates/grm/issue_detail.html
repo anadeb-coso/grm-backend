@@ -665,6 +665,7 @@
                     showPopupMessage(data.msg);
                 })
         });
+
         //End Attachemnts
 
 
@@ -771,13 +772,25 @@
 
 
         var type_checking = "citizen"; //issue_description
+        var attachment_url_view = null;
         function show_dta(){
-            $(".show-data").click(function () {
+            $(document).on('click', '.show-data', function () {
                 if(this.id == "show-data-description"){
                     type_checking = "issue_description";
+                }else if(this.id.includes("show_data_attachment_")){
+                    type_checking = "issue_data_attachment";
+                    attachment_url_view = $(this).data('url');
                 }
                 $('#checkPasswordModal').modal('show');
             });
+            {% comment %} $(".show-data").click(function () {
+                if(this.id == "show-data-description"){
+                    type_checking = "issue_description";
+                }else if(this.id.includes("show-data-attachment-")){
+                    type_checking = "issue_data_attachment";
+                }
+                $('#checkPasswordModal').modal('show');
+            }); {% endcomment %}
         }
         show_dta();
         
@@ -795,7 +808,32 @@
         
 
         $("#check-password").click(function () {
-            if(type_checking == "issue_description"){
+            if(type_checking == "issue_data_attachment"){
+                console.log(attachment_url_view);
+                if(attachment_url_view){
+                    {% comment %} $.ajax({
+                        url: attachment_url_view,
+                        type: 'POST',
+                        data: {
+                             "password": $("#id_password").val()
+                        }
+                    })
+                    .fail(function (data, status, error) {
+                                if(error == "Forbidden"){
+                                    alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                                }else{
+                                    alert(error_server_message + "Error " + data.status);
+                                }
+                            })
+                    .done(function (data) {
+                        showPopupMessage(data.msg);
+                        $('#checkPasswordModal').modal('hide');
+                    }); {% endcomment %}
+                    
+                    window.open(`${attachment_url_view}?_token={{csrf_token}}&_ttoken={{csrf_token}}&password=${$("#id_password").val()}&token={{csrf_token}}`,"_blank");
+                }
+                
+            }else if(type_checking == "issue_description"){
                 $.ajax({
                     type: "POST",
                     url: "{% url 'dashboard:grm:get_issue_description' doc|get:'auto_increment_id' %}",
@@ -852,7 +890,6 @@
                         "id": "{{ doc|get:'_id' }}",
                     },
                     success: function (response) {
-                        alert("777");
                         $("#attachments-reason").html(response);
                     },
                     error: function (data, status, error) {
@@ -879,7 +916,7 @@
                                         title='{% translate "Hide sensitive data" %}'></i>    
                             ` {% endcomment %}
                             );
-                            hide_data();
+                            {% comment %} hide_data(); {% endcomment %}
                         }
                         $('#checkPasswordModal').modal('hide')
                     },
@@ -894,6 +931,48 @@
             }
             
         });
+
+
+        
+
+
+        $(document).ready(function(){
+            let issue_password_comment = $('#id_issue_password_comment');
+            let issue_password_comment_parent = issue_password_comment.parent();
+            let issue_password_reason = $('#id_issue_password_reason');
+            let issue_password_reason_parent = issue_password_reason.parent();
+
+
+            var password_fields = [issue_password_comment, issue_password_reason];
+            var password_fields_parent = [issue_password_comment_parent, issue_password_reason_parent];
+            var password_fields_more = [...password_fields, $('#id_password')]; 
+            
+            password_fields_more.forEach(function(elt){
+                elt.keyup(function () {
+                    password_fields_more.forEach(function(item){
+                        item.val(elt.val());
+                    });
+                });
+            });
+
+            password_fields.forEach(function(elt){
+                {% if doc.category.id == 4 or doc.category.id == 7 %}
+                    elt.attr('required', true);
+                {% else %}
+                    elt.attr('required', false);
+                {% endif %}
+            });
+            password_fields_parent.forEach(function(elt){
+                {% if doc.category.id == 4 or doc.category.id == 7 %}
+                    elt.show();
+                {% else %}
+                    elt.hide();
+                {% endif %}
+            }); 
+
+        });
+
+        
 
     </script>
 {% endblock javascript %}

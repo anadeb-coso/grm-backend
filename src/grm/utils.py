@@ -2,10 +2,16 @@ from datetime import datetime
 from operator import itemgetter
 from cryptography.fernet import Fernet
 import base64
+import os
+import magic
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from io import BytesIO
 
 from django.template.defaultfilters import date as _date
 from administrativelevels import models as administrativelevels_models
 from administrativelevels.serializers import AdministrativeLevelSerializer
+from grm.my_librairies import get_download_folder, download_file
 
 
 def sort_dictionary_list_by_field(list_to_be_sorted, field, reverse=False):
@@ -282,15 +288,74 @@ def cryptography_fernet_key(password):
     k = bytes(password, 'utf-32')
     return base64.urlsafe_b64encode(k)
 
-def cryptography_fernet_encrypt(text, key):
+def cryptography_fernet_encrypt(data, key, _type="txt", filename=None):
+    # fernet = Fernet(key)
+    # return fernet.encrypt(text.encode())
     fernet = Fernet(key)
-    return fernet.encrypt(text.encode())
+    if _type == "file":
+        # Read the content of the original file
+        file_content = data.read()
+        
+        # Encrypt the file content using the encryption key
+        encrypted_content = fernet.encrypt(file_content)
 
-def cryptography_fernet_decrypt(text_encrypt, key):
+        # Save the encrypted content to the file
+        # with open(os.path.join(get_download_folder.get_download_folder(), f'encrypt_{filename}'), 'wb') as encrypted_file_obj:
+        #     encrypted_file_obj.write(encrypted_content)
+        #     encrypted_file_obj.close()
+
+        #     file = open(os.path.join(get_download_folder.get_download_folder(), f'encrypt_{filename}'), 'rb')
+        #     file_content = file.read()
+        #     mime_type, file_extension = get_file_type(file_content)
+        #     return convert_buffered_to_InMemoryUploadedFile(file_content, f'encrypt_{filename}', mime_type)
+        return convert_buffered_to_InMemoryUploadedFile(encrypted_content, f'encrypt_{filename}', data.content_type)
+        
+    else:
+        return fernet.encrypt(data.encode())
+    
+
+def cryptography_fernet_decrypt(data, key, _type="txt", filename=None):
     fernet = Fernet(key)
-    print(type(convert_str_bytes_to_bytes(text_encrypt)))
-    return fernet.decrypt(convert_str_bytes_to_bytes(text_encrypt)).decode()
+    if _type == "file":
+        # Read the content of the original file
+        file_content = data #.read()
+        filename = filename.replace("encrypt_", "decrypt_")
+        
+        # Encrypt the file content using the encryption key
+        decrypted_content = fernet.decrypt(file_content)
+        # with open(os.path.join(get_download_folder.get_download_folder(), f'decrypt_{filename}'), 'wb') as decrypted_file_obj:
+        #     decrypted_file_obj.write(decrypted_content)
+        #     decrypted_file_obj.close()
+        #     return decrypted_file_obj
+
+        mime_type, file_extension = get_file_type(decrypted_content)
+        return download_file.download_file(decrypted_content, filename, mime_type, True)
+
+    return fernet.decrypt(convert_str_bytes_to_bytes(data)).decode()
 
 def convert_str_bytes_to_bytes(text) -> bytes:
-    print("here")
     return bytes(text[2:][:-1].encode())
+
+def get_file_type(file_content):
+    # Use python-magic to identify the file type
+    mime_type = magic.from_buffer(file_content, mime=True)
+    file_extension = magic.from_buffer(file_content, True)
+
+    return mime_type, file_extension
+
+def convert_buffered_to_InMemoryUploadedFile(file_content, file_name, content_type):
+    # Create an InMemoryUploadedFile object
+    uploaded_file = InMemoryUploadedFile(
+        file=BytesIO(file_content),
+        field_name=None,
+        name=file_name,
+        content_type=content_type,
+        size=len(file_content),
+        charset=None
+    )
+
+    return uploaded_file
+
+def delete_file_on_download_file(file):
+    if os.path.exists(os.path.join(get_download_folder.get_download_folder(), file.name)):
+        os.remove(os.path.join(get_download_folder.get_download_folder(), file.name))

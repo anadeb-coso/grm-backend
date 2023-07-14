@@ -71,6 +71,13 @@
                                     <i class="far fa-trash-alt text-danger"></i>
                                 </a>
                                 {% endif %}
+                                {% if "encrypt_" in reason.name %}
+                                <a class="btn pull-right show-data {% if not permission_to_edit %}disabled{% endif %}"
+                                data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id reason.id %}" 
+                                id="show_data_attachment_{{ doc.auto_increment_id }}_{{ reason.id }}">
+                                    <i class="far fa-eye link show-data"></i>
+                                </a>
+                                {% endif %}
                             {% else %}
                                 <p id="issue_reason_comment">
                                 {% comment %} {{ reason.comment|safe }} {% endcomment %}

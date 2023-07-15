@@ -288,9 +288,10 @@ def cryptography_fernet_key(password):
     k = bytes(password, 'utf-32')
     return base64.urlsafe_b64encode(k)
 
-def cryptography_fernet_encrypt(data, key, _type="txt", filename=None):
+def cryptography_fernet_encrypt(data, password, _type="txt", filename=None):
     # fernet = Fernet(key)
     # return fernet.encrypt(text.encode())
+    key = cryptography_fernet_key(password)
     fernet = Fernet(key)
     if _type == "file":
         # Read the content of the original file
@@ -314,7 +315,8 @@ def cryptography_fernet_encrypt(data, key, _type="txt", filename=None):
         return fernet.encrypt(data.encode())
     
 
-def cryptography_fernet_decrypt(data, key, _type="txt", filename=None):
+def cryptography_fernet_decrypt(data, password, _type="txt", filename=None):
+    key = cryptography_fernet_key(password)
     fernet = Fernet(key)
     if _type == "file":
         # Read the content of the original file

@@ -1199,3 +1199,7 @@ msgstr ""
 #: dashboard/grm/views.py
 msgid "The attachment was successfully download."
 msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Original description"
+msgstr ""

@@ -1337,7 +1337,7 @@ class GetChoicesForNextAdministrativeLevelView(AJAXRequestMixin, LoginRequiredMi
         data = get_child_administrative_regions_using_mis(adl_db, parent_id, request.user)
         
         # if data and exclude_lower_level and not get_child_administrative_regions(adl_db, data[0]['administrative_id']):
-        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id'], request.use):
+        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id'], request.user):
             data = []
 
         return self.render_to_json_response(data, safe=False)
@@ -1477,3 +1477,22 @@ class IssueReasonsDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXReq
                 except:
                     pass
         return reasons
+    
+class GetOriginalDescriptionIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+
+    def post(self, request, *args, **kwargs):
+        data = None
+
+        try:
+            data = {
+                'original_description': cryptography_fernet_decrypt(self.doc['original_description'], request.POST.get('password'))
+            }
+        except:
+            msg = _("The password was not correct, we could not proceed with action.")
+            messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
+
+        context = {
+            'msg': render(self.request, 'common/messages.html').content.decode("utf-8"),
+            'data': data
+        }
+        return self.render_to_json_response(context, safe=False)

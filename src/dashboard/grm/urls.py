@@ -23,6 +23,7 @@ urlpatterns = [
     path('issue-list', views.IssueListView.as_view(), name='issue_list'),
     path('issue-detail/<int:issue>/', views.IssueDetailsFormView.as_view(), name='issue_detail'),
     path('get-sensitive-issue-data/<int:issue>/', views.GetSensitiveIssueDataView.as_view(), name='get_sensitive_issue_data'),
+    path('get-original-description-issue-data/<int:issue>/', views.GetOriginalDescriptionIssueDataView.as_view(), name='get_original_description_issue_data'),
     path('get-issue-description/<int:issue>/', views.GetIssueDescriptionView.as_view(), name='get_issue_description'),
     path('edit-issue/<int:issue>/', views.EditIssueView.as_view(), name='edit_issue'),
     path('add-comment-to-issue/<int:issue>/', views.AddCommentToIssueView.as_view(), name='add_comment_to_issue'),

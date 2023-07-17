@@ -220,6 +220,25 @@
                             {{ doc.category.name }}
                         </div>
                     </div>
+                    {% if doc.original_description %}
+                    <hr />
+                    <div class="row mr-2 mb-2">
+                        <div class="col-3">
+                            <label class="label-align">
+                                {% translate 'Original description' %}
+                            </label>
+                        </div>
+                        <div class="col-9 text-regular-family">
+                            <div id="original_description">
+                                *****
+                                <i class="fas fa-eye pull-right link show-data" id="original-description"
+                                    title='{% translate "Show sensitive data" %}'></i>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+                    {% endif %}
+                    
                     {% comment %} <div class="row mr-2 mb-2">
                         <div class="col-3">
                             <label class="label-align">
@@ -780,6 +799,8 @@
                 }else if(this.id.includes("show_data_attachment_")){
                     type_checking = "issue_data_attachment";
                     attachment_url_view = $(this).data('url');
+                }else if(this.id == "original-description"){
+                    type_checking = "original_description";
                 }
                 $('#checkPasswordModal').modal('show');
             });
@@ -897,6 +918,30 @@
                 });
                 //End Decrypt Reasons
 
+            }else if(type_checking == "original_description"){
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'dashboard:grm:get_original_description_issue_data' doc|get:'auto_increment_id' %}",
+                    data: {
+                        "password": $("#id_password").val(),
+                        "id": "{{ doc|get:'_id' }}",
+                    },
+                    success: function (response) {
+                        showPopupMessage(response.msg);
+                        let data = response.data;
+                        if (data && data.original_description) {
+                            $("#original_description").html(data.original_description);
+                        }
+                        $('#checkPasswordModal').modal('hide')
+                    },
+                    error: function (data, status, error) {
+                                if(error == "Forbidden"){
+                                    alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                                }else{
+                                    alert(error_server_message + "Error " + data.status);
+                                }
+                            }
+                });
             }else{
                 $.ajax({
                     type: "POST",

@@ -1241,3 +1241,7 @@ msgstr "Une erreur s'est produite. Votre mot de passe est probablement erroné."
 #: dashboard/grm/views.py
 msgid "The attachment was successfully download."
 msgstr "La pièce jointe a été téléchargée avec succès."
+
+#: dashboard/grm/views.py
+msgid "Original description"
+msgstr "Description originale"

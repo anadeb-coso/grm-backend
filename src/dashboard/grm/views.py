@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta
 
-import cryptocode
+# import cryptocode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -28,7 +28,7 @@ from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin
 from grm.utils import (
     get_administrative_level_descendants, get_auto_increment_id, get_child_administrative_regions,
     get_parent_administrative_level, get_administrative_level_descendants_using_mis, 
-    get_child_administrative_regions_using_mis, cryptography_fernet_key, cryptography_fernet_encrypt,
+    get_child_administrative_regions_using_mis, cryptography_fernet_encrypt,
     cryptography_fernet_decrypt, delete_file_on_download_file
 )
 from dashboard.grm.functions import get_issue_status_stories
@@ -201,7 +201,7 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
             issue_password_file = data['issue_password_file']
             file = data['file']
             if  ((self.doc.get('category') and self.doc['category']["id"] in (4, 7)) or not self.doc.get('category')) and issue_password_file:
-                file = cryptography_fernet_encrypt(file, cryptography_fernet_key(issue_password_file),  _type="file", filename=file.name)
+                file = cryptography_fernet_encrypt(file, issue_password_file,  _type="file", filename=file.name)
                 file.name = f'encrypt_{file.name}' if 'encrypt_' not in file.name else file.name
             response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
             if response['ok']:
@@ -325,7 +325,7 @@ class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
         
         attachment_content = _doc.get_attachment(attachment_name)
         # try:
-        return cryptography_fernet_decrypt(attachment_content, cryptography_fernet_key(password), _type="file", filename=attachment_name)
+        return cryptography_fernet_decrypt(attachment_content, password, _type="file", filename=attachment_name)
         # msg = _("The attachment was successfully download.")
         # messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         # # except Exception as exc:
@@ -402,7 +402,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
         if int(data['category']) in (4, 7) and data.get("issue_password"):
             self.request.session["issue_password"] = data.get("issue_password")
         if int(data['category']) in (4, 7) and self.request.POST.get("confirm") == "confirm":
-            self.doc['description'] = str(cryptography_fernet_encrypt(data['description'], cryptography_fernet_key(self.request.session["issue_password"])))
+            self.doc['description'] = str(cryptography_fernet_encrypt(data['description'], self.request.session["issue_password"]))
         else:
             self.doc['description'] = data['description']
         self.doc['publish'] = False
@@ -929,7 +929,7 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
 
             issue_password = request.POST.get('issue_password_reason') if request.POST.get('issue_password_reason') else request.POST.get('issue_password_comment')
             if  self.doc['category']["id"] in (4, 7) and issue_password:
-                comment = str(cryptography_fernet_encrypt(comment, cryptography_fernet_key(issue_password)))
+                comment = str(cryptography_fernet_encrypt(comment, issue_password))
             
             due_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             if reason:
@@ -1227,7 +1227,7 @@ class SubmitIssuePublishFormView(AJAXRequestMixin, ModalFormMixin, LoginRequired
             if self.doc['category']["id"] in (4, 7):
                 self.doc['original_description'] = self.doc.get('description')
             else:
-                self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), cryptography_fernet_key(data.get("issue_password"))))
+                self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), data.get("issue_password")))
             
         self.doc['description'] = data["issue_description"]
         
@@ -1337,7 +1337,7 @@ class GetChoicesForNextAdministrativeLevelView(AJAXRequestMixin, LoginRequiredMi
         data = get_child_administrative_regions_using_mis(adl_db, parent_id, request.user)
         
         # if data and exclude_lower_level and not get_child_administrative_regions(adl_db, data[0]['administrative_id']):
-        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id'], request.use):
+        if data and exclude_lower_level and not get_child_administrative_regions_using_mis(adl_db, data[0]['administrative_id'], request.user):
             data = []
 
         return self.render_to_json_response(data, safe=False)
@@ -1377,10 +1377,12 @@ class GetSensitiveIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin
             doc_id = request.POST.get('id')
 
             citizen = Pdata.objects.get(key=doc_id) if Pdata.objects.filter(key=doc_id).exists() else None
-            citizen = cryptocode.decrypt(citizen.data, doc_id) if citizen else None
+            # citizen = cryptocode.decrypt(citizen.data, doc_id) if citizen else None
+            citizen = cryptography_fernet_decrypt(citizen.data, doc_id) if citizen else None
 
             contact = Cdata.objects.get(key=doc_id) if Cdata.objects.filter(key=doc_id).exists() else None
-            contact = cryptocode.decrypt(contact.data, doc_id) if contact else None
+            # contact = cryptocode.decrypt(contact.data, doc_id) if contact else None
+            contact = cryptography_fernet_decrypt(contact.data, doc_id) if contact else None
 
             data = {
                 'citizen': citizen,
@@ -1411,17 +1413,17 @@ class GetIssueDescriptionView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, 
             for i_r in range(len(reasons)):
                 if reasons[i_r].get('type') == 'comment' and reasons[i_r].get('comment') and "b'" in reasons[i_r].get('comment'):
                     try:
-                        reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], cryptography_fernet_key(password))
+                        reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], password)
                     except:
                         pass
             for i_r in range(len(comments)):
                 if comments[i_r].get('type') == 'comment' and comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
                     try:
-                        comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], cryptography_fernet_key(password))
+                        comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], password)
                     except:
                         pass
             data = {
-                'description': cryptography_fernet_decrypt(description_encrypt, cryptography_fernet_key(password)),
+                'description': cryptography_fernet_decrypt(description_encrypt, password),
                 'reasons': reasons,
                 'comments': comments
             }
@@ -1449,7 +1451,7 @@ class IssueCommentDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXReq
         for i_r in range(len(comments)):
             if comments[i_r].get('type') == 'comment' and comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
                 try:
-                    comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], cryptography_fernet_key(password))
+                    comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], password)
                 except InvalidToken:
                     pass
                 except:
@@ -1469,9 +1471,28 @@ class IssueReasonsDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXReq
         for i_r in range(len(reasons)):
             if reasons[i_r].get('type') == 'comment' and reasons[i_r].get('comment') and "b'" in reasons[i_r].get('comment'):
                 try:
-                    reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], cryptography_fernet_key(password))
+                    reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], password)
                 except InvalidToken:
                     pass
                 except:
                     pass
         return reasons
+    
+class GetOriginalDescriptionIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+
+    def post(self, request, *args, **kwargs):
+        data = None
+
+        try:
+            data = {
+                'original_description': cryptography_fernet_decrypt(self.doc['original_description'], request.POST.get('password'))
+            }
+        except:
+            msg = _("The password was not correct, we could not proceed with action.")
+            messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
+
+        context = {
+            'msg': render(self.request, 'common/messages.html').content.decode("utf-8"),
+            'data': data
+        }
+        return self.render_to_json_response(context, safe=False)

@@ -16,7 +16,7 @@ click-repl==0.2.0
 cloudant==2.14.0
 coreapi==2.3.3
 coreschema==0.0.4
-cryptocode
+# cryptocode
 distlib==0.3.1
 dj-database-url==0.5.0
 Django==3.2
@@ -83,4 +83,5 @@ zipp==3.4.0
 zope.event==4.5.0
 zope.interface==5.4.0
 cryptography==41.0.1
-python-magic-bin==0.4.14
+# python-magic-bin==0.4.14 #for developpment
+python-magic #for production

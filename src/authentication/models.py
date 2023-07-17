@@ -1,6 +1,7 @@
 import os
 
-import cryptocode
+# import cryptocode
+from hashlib import scrypt
 import shortuuid as uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -9,7 +10,7 @@ from django.db.models.signals import post_save, post_delete
 
 from grm.utils import (
     belongs_to_region, get_parent_administrative_level, get_related_region_with_specific_level,
-    sort_dictionary_list_by_field, belongs_to_region_using_mis
+    sort_dictionary_list_by_field, belongs_to_region_using_mis, cryptography_fernet_encrypt
 )
 from authentication.utils import (create_or_update_adl_user_adl, delete_adl_user_adl, 
                                   set_user_government_worker_adl, delete_user_government_worker_adl)
@@ -240,7 +241,9 @@ def anonymize_issue_data(issue_doc):
     citizen = issue_doc['citizen']
     if citizen:
         pdata, _ = Pdata.objects.get_or_create(key=key)
-        data_encoded = cryptocode.encrypt(citizen, key)
+        # data_encoded = cryptocode.encrypt(citizen, key)
+        data_encoded = cryptography_fernet_encrypt(citizen, key)
+        
         pdata.data = data_encoded
         pdata.save()
         issue_doc['citizen'] = "*"
@@ -251,7 +254,8 @@ def anonymize_issue_data(issue_doc):
     if contact_information:
         contact = contact_information['contact']
         cdata, _ = Cdata.objects.get_or_create(key=key)
-        data_encoded = cryptocode.encrypt(contact, key)
+        # data_encoded = cryptocode.encrypt(contact, key)
+        data_encoded = cryptography_fernet_encrypt(contact, key)
         cdata.data = data_encoded
         cdata.save()
         issue_doc['contact_information'] = {

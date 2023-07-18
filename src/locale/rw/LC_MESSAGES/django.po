@@ -1203,3 +1203,15 @@ msgstr ""
 #: dashboard/grm/views.py
 msgid "Original description"
 msgstr ""
+
+#: dashboard/grm/__init__.py
+msgid "Male"
+msgstr ""
+
+#: dashboard/grm/__init__.py
+msgid "Female"
+msgstr ""
+
+#: dashboard/grm/__init__.py
+msgid "Rather not say"
+msgstr ""

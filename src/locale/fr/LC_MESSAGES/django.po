@@ -1245,3 +1245,15 @@ msgstr "La pièce jointe a été téléchargée avec succès."
 #: dashboard/grm/views.py
 msgid "Original description"
 msgstr "Description originale"
+
+#: dashboard/grm/__init__.py
+msgid "Male"
+msgstr "Masculin"
+
+#: dashboard/grm/__init__.py
+msgid "Female"
+msgstr "Féminin"
+
+#: dashboard/grm/__init__.py
+msgid "Rather not say"
+msgstr "Ne pas dire"

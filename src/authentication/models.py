@@ -1,7 +1,7 @@
 import os
 
 # import cryptocode
-from hashlib import scrypt
+# from hashlib import scrypt
 import shortuuid as uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models

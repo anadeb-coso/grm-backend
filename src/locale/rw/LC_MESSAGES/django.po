@@ -1215,3 +1215,11 @@ msgstr ""
 #: dashboard/grm/__init__.py
 msgid "Rather not say"
 msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Unsynchronized"
+msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Minimum eight characters and at least one letter and one number"
+msgstr ""

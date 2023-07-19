@@ -60,10 +60,16 @@
                     <div class="row border-bottom mt-2 mb-3">
                         <div class="col-10 mb-2 text-regular-family mb-3">
                             {% if reason.type == "file" %}
-                                    <a href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm"
-                                    target="_blank">
+                                    <a 
+                                    {% if reason.bd_id %}
+                                    href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
+                                    target="_blank"
+                                    {% else %}
+                                    href="#!"
+                                    {% endif %}
+                                    >
                                         <i class="fas fa-paperclip mr-2"></i>
-                                        {{ reason.name }}
+                                        {{ reason.name }} {% if not reason.bd_id %}({% translate "Unsynchronized" %}){% endif %}
                                     </a>
                                 {% if user.id == doc.assignee.id %}
                                 <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"

@@ -5,11 +5,13 @@ from django import forms
 from django.core.exceptions import ValidationError
 import django.contrib.auth.password_validation as validators
 from django.contrib.auth.hashers import make_password
+import re
 
 from authentication.models import User
 from authentication import ADL, MAJOR
 from client import get_db
 from authentication.utils import get_validation_code
+from grm.form_utils import password_regex, _password_regex
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -40,6 +42,7 @@ class RegisterADLForm(forms.Form):
         label=_("Password"),
         strip=False,
         widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+        # validators=[password_regex]
     )
 
     error_messages = {
@@ -50,6 +53,7 @@ class RegisterADLForm(forms.Form):
         "password_invalide": _("Password invalidate"),
         'duplicated_email': _('A user with that email is already registered.'),
         'credentials': _('Unable to register with provided credentials.'),
+        'password_invalide_constraint': _("Minimum eight characters and at least one letter and one number")
     }
 
     def clean(self):
@@ -96,6 +100,11 @@ class RegisterADLForm(forms.Form):
                 self.error_messages["password_invalide"],
                 code="password_invalide",
             )
+        if not re.match(_password_regex, password):
+            raise ValidationError(
+                self.error_messages["password_invalide_constraint"],
+                code="password_invalide_constraint",
+            )
 
         if user is not None:
             if not user.is_active:
@@ -120,6 +129,7 @@ class ConfirmCodeForm(forms.Form):
         'duplicated_email': _('A user with that email is already registered.'),
         'wrong_validation_code': _('Unable to register with provided validation code.'),
         "password_invalide": _("Password invalidate"),
+        'password_invalide_constraint': _("Minimum eight characters and at least one letter and one number")
     }
 
     def __init__(self, *args, **kwargs):
@@ -174,6 +184,8 @@ class ConfirmCodeForm(forms.Form):
         # the exception raised here is different than serializers.ValidationError
         except ValidationError as e:
             errors['password'] = list(e.messages)
+        if not re.match(_password_regex, self.password):
+            errors['password'] = list(self.default_error_messages["password_invalide_constraint"])
 
         if errors:
             raise ValidationError(

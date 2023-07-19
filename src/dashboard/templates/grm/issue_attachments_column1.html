@@ -19,10 +19,16 @@
                 <div class="row">
                     <div class="col-9 border-bottom">
                         <div class="d-inline-block padding-6-0">
-                            <a href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm"
-                               target="_blank">
+                            <a 
+                                {% if attachment.bd_id %}
+                                href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm" 
+                                target="_blank"
+                                {% else %}
+                                href="#!"
+                                {% endif %}
+                               >
                                 <i class="fas fa-paperclip mr-2"></i>
-                                {{ attachment.name }}
+                                {{ attachment.name }} {% if not attachment.bd_id %}({% translate "Unsynchronized" %}){% endif %}
                             </a>
                         </div>
                         {% if user.id == doc.assignee.id %}

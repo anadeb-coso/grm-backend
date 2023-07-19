@@ -17,10 +17,16 @@
                 <div class="row border-bottom">
                     <div class="col-9">
                         <div class="align-self-center mt-2">
-                            <a href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm"
-                               target="_blank">
+                            <a 
+                                {% if attachment.bd_id %}
+                                href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm" 
+                                target="_blank"
+                                {% else %}
+                                href="#!"
+                                {% endif %}
+                               >
                                 <i class="fas fa-paperclip mr-2"></i>
-                                {{ attachment.name }}
+                                {{ attachment.name }} {% if not attachment.bd_id %}({% translate "Unsynchronized" %}){% endif %}
                             </a>
                         </div>
                     </div>

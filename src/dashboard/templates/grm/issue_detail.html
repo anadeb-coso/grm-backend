@@ -868,6 +868,11 @@
                         if (data && data.description) {
                             $("#issue_description").html(
                                 data.description
+                                +
+                                `
+                                <i class="fas fa-eye pull-right link show-data" id="show-data-description"
+                                    title='{% translate "Show sensitive data" %}'></i>
+                                `
                                 {% comment %} +`
                                 <i class="fas fa-eye-slash pull-right link hide-data" id="hide-data-description"
                                         title='{% translate "Hide sensitive data" %}'></i>

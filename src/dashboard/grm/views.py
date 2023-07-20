@@ -339,8 +339,10 @@ class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
             raise Http404
         
         attachment_content = _doc.get_attachment(attachment_name)
-        # try:
-        return cryptography_fernet_decrypt(attachment_content, password, _type="file", filename=attachment_name)
+        try:
+            return cryptography_fernet_decrypt(attachment_content, password, _type="file", filename=attachment_name)
+        except:
+            raise PermissionDenied
         # msg = _("The attachment was successfully download.")
         # messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         # # except Exception as exc:
@@ -1439,11 +1441,13 @@ class GetIssueDescriptionView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, 
                         comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], password)
                     except:
                         pass
-            data = {
-                'description': cryptography_fernet_decrypt(description_encrypt, password),
-                'reasons': reasons,
-                'comments': comments
-            }
+            data = dict()
+            try:
+                data['description'] = cryptography_fernet_decrypt(description_encrypt, password)
+            except:
+                pass
+            data['reasons'] = reasons
+            data['comments'] = comments
 
         except:
             msg = _("The password was not correct, we could not proceed with action.")

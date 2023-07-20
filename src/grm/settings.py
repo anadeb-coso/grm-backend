@@ -180,7 +180,7 @@ MEDIA_ROOT = BASE_DIR / 'media/'
 
 MEDIA_URL = '/media/'
 
-MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 5MB
 
 AUTH_USER_MODEL = 'authentication.User'
 

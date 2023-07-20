@@ -141,6 +141,17 @@ class IssueMixin:
                             if 'write' not in self.permissions:
                                 self.has_permission = False
 
+    def specific_permissions(self):
+        user = self.request.user
+        if not (
+                user.groups.all().exists() 
+                or 
+                (self.doc.get('reporter') and self.doc.get('reporter').get('id') == user.id)
+                or 
+                (self.doc.get('assignee') and self.doc.get('assignee').get('id') == user.id)
+            ):
+            raise PermissionDenied
+        
     def dispatch(self, request, *args, **kwargs):
         self.grm_db = get_db(COUCHDB_GRM_DATABASE)
         self.eadl_db = get_db()
@@ -249,6 +260,9 @@ class IssueAttachmentDeleteView(IssueMixin, AJAXRequestMixin, ModalFormMixin, Lo
 
     def delete(self, request, *args, **kwargs):
         # if 'attachments' in self.doc:
+       
+        self.specific_permissions()
+        
         attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
         grm_attachment_db = get_db(COUCHDB_GRM_ATTACHMENT_DATABASE)
         for attachment in attachments:
@@ -287,9 +301,10 @@ class IssueAttachmentDeleteView(IssueMixin, AJAXRequestMixin, ModalFormMixin, Lo
 #                                 generic.DeleteView):
 class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
                                 generic.DeleteView):
-    permissions = ('read',)
 
     def get(self, request, *args, **kwargs):
+        self.specific_permissions()
+        
         password = request.GET.get('password')
         print(password)
         if not password:
@@ -858,6 +873,8 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         context = super().get_context_data(**kwargs)
         user_id = self.request.user.id
         user = self.request.user
+
+        self.specific_permissions()
 
         context['enable_add_comment'] = user_id == (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0) or user_id == self.doc_department[
             'head']['id'] or user.groups.filter(name="Admin").exists()

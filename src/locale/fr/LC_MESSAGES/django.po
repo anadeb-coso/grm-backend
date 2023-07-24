@@ -1265,3 +1265,15 @@ msgstr "Non synchronisé(e)"
 #: dashboard/templates/grm/issue_attachments.html
 msgid "Minimum eight characters and at least one letter and one number"
 msgstr "Au moins huit caractères et au moins une lettre et un chiffre"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Safeguard"
+msgstr "Sauvegarde"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Country"
+msgstr "Pays"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "List"
+msgstr "Liste"

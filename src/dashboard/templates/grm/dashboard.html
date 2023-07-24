@@ -10,14 +10,44 @@
                     <div class="row mb-4">
                         <div class="col-6">
                             <div class="fs44 lh46 text-primary text-bold-family">
-                                {% translate 'Resources & Announcements' %}
+                                {% comment %} {% translate 'Resources & Announcements' %} {% endcomment %}
                             </div>
                         </div>
                         <div class="col-6">
                         </div>
                     </div>
+                    
                     <div class="row">
-                        <div class="col-6">
+                        <div class="col-4">
+                            <a href="{% url 'dashboard:grm:review_issues' %}" class="btn">
+                                <div class="card text-outline-white btn-outline-primary mb-3" style="max-width: 18rem;">
+                                    <div class="card-header">{% translate 'List' %}</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title text-box">{% translate 'REVIEW ISSUES' %}</h5>
+                                        <br />
+                                        <i class="fa fa-chevron-right align-bottom"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href='#' id='enter-issue' class="btn">
+                                <div class="card text-outline-white btn-outline-primary mb-3" style="max-width: 18rem;">
+                                    <form id='enter-issue-form' action="{% url 'dashboard:grm:start_new_issue' %}"
+                                        method="post">{% csrf_token %}
+                                        <div class="card-header">{% translate 'Add' %}</div>
+                                        <div class="card-body">
+                                            <h5 class="card-title text-box">{% translate 'ENTER NEW ISSUES' %}</h5>
+                                            <br />
+                                            <i class="fa fa-chevron-right align-bottom"></i>
+                                        </div>
+                                    </form>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                        </div>
+                        {% comment %} <div class="col-6">
                             <p class="fs20 lh27">
                                 {% blocktranslate trimmed %}
                                     - We have added new codes for classifying issues. Click here for more information.
@@ -49,7 +79,7 @@
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div> {% endcomment %}
                     </div>
 {#                    <div class="row">#}
 {#                        <div class="col-6">#}

@@ -14,6 +14,7 @@ from grm.utils import (
 )
 from authentication.utils import (create_or_update_adl_user_adl, delete_adl_user_adl, 
                                   set_user_government_worker_adl, delete_user_government_worker_adl)
+from administrativelevels.models import AdministrativeLevel
 
 
 def photo_path(instance, filename):
@@ -90,6 +91,20 @@ class GovernmentWorker(models.Model):
             return belongs
         except Exception:
             return False
+    
+    def administrative_level(self):
+        if self.administrative_id == "1":
+            a = AdministrativeLevel()
+            a.name = "TOGO"
+            a.type = "Country"
+            return a
+        try:
+            return AdministrativeLevel.objects.using('mis').get(id=int(self.administrative_id))
+        except AdministrativeLevel.DoesNotExist as e:
+            return None
+        except Exception as exc:
+            print(exc)
+            return None
 
 
 def get_government_worker_choices(empty_choice=True):

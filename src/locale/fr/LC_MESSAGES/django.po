@@ -1277,3 +1277,7 @@ msgstr "Pays"
 #: dashboard/templates/grm/issue_attachments.html
 msgid "List"
 msgstr "Liste"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Location Name"
+msgstr "Nom de la Localité"

@@ -1227,3 +1227,11 @@ msgstr ""
 #: dashboard/templates/grm/issue_attachments.html
 msgid "Safeguard"
 msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "List"
+msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Location Name"
+msgstr ""

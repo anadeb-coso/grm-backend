@@ -21,10 +21,11 @@
                         <thead>
                         <tr>
                             <th>{% translate 'Administrative Level' %}</th>
-                            <th>{% translate 'Photo' %}</th>
+                            <th>{% translate 'Location Name' %}</th>
                             <th>{% translate 'Name' %}</th>
-                            <th>{% translate 'Last activity' %}</th>
-                            <th>Last active</th>
+                            <th>{% translate 'Photo' %}</th>
+                            {% comment %} <th>{% translate 'Last activity' %}</th> {% endcomment %}
+                            {% comment %} <th>Last active</th> {% endcomment %}
                             <th>{% translate 'Action' %}</th>
                         </tr>
                         </thead>
@@ -33,6 +34,7 @@
                             {% with doc.representative as adl %}
                                 <tr>
                                     <td>{{ doc.name }}</td>
+                                    <td>{{ doc.location_name }}</td>
                                     <td>
                                         {% if adl.photo %}
                                             <img src="{{ adl.photo }}" class="profile-user-img-list"/>
@@ -42,8 +44,8 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ adl.name }}</td>
-                                    <td>{{ adl.last_active }}</td>
-                                    <td>{% date_order_format adl.last_active %}</td>
+                                    {% comment %} <td>{{ adl.last_active }}</td> {% endcomment %}
+                                    {% comment %} <td>{% date_order_format adl.last_active %}</td> {% endcomment %}
                                     <td>
                                         <a href="{% url 'dashboard:adls:detail' doc|get:'_id' %}"
                                            class="btn btn-primary btn-xs">

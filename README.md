@@ -15,3 +15,4 @@
         - Minister              : Minister
         - Assignee              : Assignee
         - Viewer                : Viewer
+        - Safeguard             : Safeguard

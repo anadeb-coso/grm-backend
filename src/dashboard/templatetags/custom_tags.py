@@ -170,10 +170,11 @@ def get_group_high(user):
         - Accountant            : Accountant
         - Regional Coordinator  : RegionalCoordinator
         - National Coordinator  : NationalCoordinator
-        - General Manager  : GeneralManager
-        - Director  : Director
-        - Advisor  : Advisor
-        - Minister  : Minister
+        - General Manager       : GeneralManager
+        - Director              : Director
+        - Advisor               : Advisor
+        - Minister              : Minister
+        - Safeguard             : Safeguard
     """
     if user.is_superuser:
         return gettext_lazy("Principal Administrator").__str__()
@@ -198,6 +199,18 @@ def get_group_high(user):
         return gettext_lazy("Advisor").__str__()
     if user.groups.filter(name="Minister").exists():
         return gettext_lazy("Minister").__str__()
+    if user.groups.filter(name="Safeguard").exists():
+        return gettext_lazy("Safeguard").__str__()
 
 
     return gettext_lazy("User").__str__()
+
+@register.filter(name='has_specific_permission') 
+def has_specific_permission(user):
+    if user.groups.filter(name="Viewer").exists() and user.groups.filter(name="Viewer").count() == 1:
+        return False
+    if not (
+            user.groups.all().exists() 
+        ):
+        return False
+    return True

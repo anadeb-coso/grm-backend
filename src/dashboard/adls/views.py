@@ -14,9 +14,10 @@ from authentication.utils import get_validation_code
 from client import COUCHDB_ATTACHMENT_DATABASE, get_db, upload_file
 from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
+from authentication.permissions import SpecificPermissionRequiredMixin
 
 
-class AdlListView(PageMixin, LoginRequiredMixin, generic.ListView):
+class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin, generic.ListView):
     template_name = 'adls/list.html'
     context_object_name = 'adls'
     title = _('Administrative Levels')
@@ -33,7 +34,7 @@ class AdlListView(PageMixin, LoginRequiredMixin, generic.ListView):
         return eadl_db.get_query_result({"type": {"$eq": ADL}})
 
 
-class ADLMixin(object):
+class ADLMixin(SpecificPermissionRequiredMixin, object):
     doc = None
 
     def dispatch(self, request, *args, **kwargs):
@@ -73,7 +74,7 @@ class AdlDetailView(ADLMixin, PageMixin, LoginRequiredMixin, generic.DetailView)
         return self.doc
 
 
-class ToggleAdlStatusView(LoginRequiredMixin, generic.View):
+class ToggleAdlStatusView(SpecificPermissionRequiredMixin, LoginRequiredMixin, generic.View):
 
     def post(self, request, *args, **kwargs):
         doc_id = kwargs['id']

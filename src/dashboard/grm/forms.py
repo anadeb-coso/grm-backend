@@ -96,6 +96,12 @@ class NewIssuePersonForm(forms.Form):
 
         if 'citizen_group_2' in document and document['citizen_group_2']:
             self.fields['citizen_group_2'].initial = document['citizen_group_2']['id']
+        
+        if len(citizen_group_1_choices) <= 1:
+            del self.fields['citizen_group_1']
+        if len(citizen_group_2_choices) <= 1:
+            del self.fields['citizen_group_2']
+
 
 
 class NewIssueDetailsForm(forms.Form):

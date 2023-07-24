@@ -84,7 +84,7 @@
                         }
                     }
                 ],
-                columnDefs: [
+                {% comment %} columnDefs: [
                     {
                         targets: 3,
                         orderData: 4
@@ -98,7 +98,7 @@
                         orderable: false,
                         searchable: false,
                     }
-                ],
+                ], {% endcomment %}
                 lengthMenu: [10, 50, 100],
                 pageLength: 10,
                 order: [[3, 'desc']]

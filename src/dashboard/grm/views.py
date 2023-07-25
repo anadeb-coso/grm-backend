@@ -484,7 +484,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
 
         self.doc['gender'] = data['gender']
 
-        if data['citizen_group_1']:
+        if data.get('citizen_group_1'):
             try:
                 doc_issue_citizen_group_1 = self.grm_db.get_query_result({
                     "id": int(data['citizen_group_1']),
@@ -499,7 +499,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
         else:
             self.doc['citizen_group_1'] = ""
 
-        if data['citizen_group_2']:
+        if data.get('citizen_group_2'):
             try:
                 doc_issue_citizen_group_2 = self.grm_db.get_query_result({
                     "id": int(data['citizen_group_2']),

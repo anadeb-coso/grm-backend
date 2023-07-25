@@ -15,7 +15,8 @@ CHOICE_WHATSAPP = 'whatsapp'
 CONTACT_CHOICES = [
     ('', ''),
     (CHOICE_EMAIL, _('email')),
-    (CHOICE_PHONE, _('phone number')),
+    # (CHOICE_PHONE, _('phone number')),
+    (CHOICE_PHONE, _('sms')),
     (CHOICE_WHATSAPP, 'whatsapp'),
 ]
 

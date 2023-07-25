@@ -177,7 +177,7 @@ msgstr "Recevoir les mises à jour de l'animateur"
 
 #: dashboard/grm/__init__.py:9
 msgid "Receive updates directly"
-msgstr "Recevez directement les mises à jour"
+msgstr "Recevoir directement les mises à jour"
 
 #: dashboard/grm/__init__.py:17
 msgid "email"

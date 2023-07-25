@@ -39,6 +39,12 @@ class User(AbstractUser):
     @property
     def name(self):
         return f'{self.first_name} {self.last_name}'
+    
+    @property
+    def administrative_level(self):
+        if self and hasattr(self, 'governmentworker'):
+            return self.governmentworker.administrative_level
+        return None
 
 
 class AbstractKeyData(models.Model):
@@ -96,7 +102,7 @@ class GovernmentWorker(models.Model):
         if self.administrative_id == "1":
             a = AdministrativeLevel()
             a.name = "TOGO"
-            a.type = "Country"
+            a.type = _("Country")
             return a
         try:
             return AdministrativeLevel.objects.using('mis').get(id=int(self.administrative_id))

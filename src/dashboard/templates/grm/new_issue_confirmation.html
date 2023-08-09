@@ -198,6 +198,28 @@
                                         {% get_administrative_region_name doc.administrative_region.administrative_id %}
                                     </div>
                                 </div>
+                                {% if doc.location_info and doc.location_info.location_description %}
+                                <div class="row mr-2 mb-2">
+                                    <label class="col-3 label-align">
+                                        {% translate "Location description" %}:
+                                    </label>
+                                    <div class="col-9 text-regular-family">
+                                        {{ doc.location_info.location_description }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if doc.structure_in_charge %}
+                                <div class="row mr-2 mb-2">
+                                    <label class="col-3 label-align">
+                                        {% translate "Structure in charge" %}:
+                                    </label>
+                                    <div class="col-9 text-regular-family">
+                                        {% if doc.structure_in_charge.name %}{{ doc.structure_in_charge.name }} {% else %} - {% endif %}
+                                        {% if doc.structure_in_charge.phone %} | {{ doc.structure_in_charge.phone }} {% endif %}
+                                        {% if doc.structure_in_charge.email %} | {{ doc.structure_in_charge.email }} {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

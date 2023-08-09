@@ -1281,3 +1281,31 @@ msgstr "Liste"
 #: dashboard/templates/grm/issue_attachments.html
 msgid "Location Name"
 msgstr "Nom de la Localité"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Location description"
+msgstr "Description de l'emplacement"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Please enter additional details about the location\nthat might help resolve the issue (e.g. street\naddress, street corner, or description of location)."
+msgstr "Veuillez ajouter tout détail supplémentaire concernant le lieu, le cas échéant."
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Please provide any additional details."
+msgstr "Écrivez les détails ici (facultatif)"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Structure in charge of this complaint"
+msgstr "Structure en charge de cette plainte"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Structure telephone number"
+msgstr "Numéro de téléphone de la structure"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Structure e-mail address"
+msgstr "Adresse mail de la structure"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Structure in charge"
+msgstr "Structure en charge"

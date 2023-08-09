@@ -528,6 +528,19 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
             "administrative_id": doc_administrative_level['administrative_id'],
             "name": doc_administrative_level['name'],
         }
+        
+        self.doc['location_info'] = {
+            'issue_location': self.doc['administrative_region'],
+            'location_description': data.get('location_description') if data.get('location_description') else '',
+        }
+
+        self.doc['structure_in_charge'] = {
+            'name': data.get('structure_in_charge') if data.get('structure_in_charge') else '',
+            'phone': data.get('structure_in_charge_phone') if data.get('structure_in_charge_phone') else '',
+            'email': data.get('structure_in_charge_email') if data.get('structure_in_charge_email') else '',
+        }
+
+
 
     def set_assignee(self):
 

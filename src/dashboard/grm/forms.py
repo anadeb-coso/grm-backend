@@ -152,6 +152,16 @@ class NewIssueDetailsForm(forms.Form):
 class NewIssueLocationForm(forms.Form):
     administrative_region = forms.ChoiceField()
     administrative_region_value = forms.CharField(label='', required=False)
+    location_description = forms.CharField(label=_("Location description"), required=False,
+        help_text=_("Please enter additional details about the location\nthat might help resolve the issue (e.g. street\naddress, street corner, or description of location)."), 
+        max_length=2000, widget=forms.Textarea(
+        attrs={'rows': '3', 'placeholder': _('Please provide any additional details.')}))
+    structure_in_charge = forms.CharField(label=_('Structure in charge of this complaint'), required=False,
+                              help_text=_('This is an optional field'))
+    structure_in_charge_phone = forms.CharField(label=_('Structure telephone number'), required=False,
+                              help_text=_('This is an optional field'))
+    structure_in_charge_email = forms.EmailField(label=_('Structure e-mail address'), required=False,
+                              help_text=_('This is an optional field'))
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
@@ -174,6 +184,18 @@ class NewIssueLocationForm(forms.Form):
             administrative_id = document['administrative_region']['administrative_id']
             self.fields['administrative_region_value'].initial = administrative_id
             self.fields['administrative_region'].initial = get_base_administrative_id(adl_db, administrative_id)
+
+        if 'location_info' in document and 'location_description' in document['location_info'] and document['location_info']['location_description']:
+            self.fields['location_description'].initial = document['location_info']['location_description']
+            
+        if 'structure_in_charge' in document:
+            if 'name' in document['structure_in_charge'] and  document['structure_in_charge']['name']:
+                self.fields['structure_in_charge'].initial = document['structure_in_charge']['name']
+            if 'phone' in document['structure_in_charge'] and  document['structure_in_charge']['phone']:
+                self.fields['structure_in_charge_phone'].initial = document['structure_in_charge']['phone']
+            if 'email' in document['structure_in_charge'] and  document['structure_in_charge']['email']:
+                self.fields['structure_in_charge_email'].initial = document['structure_in_charge']['email']
+
 
 
 class NewIssueConfirmForm(NewIssueLocationForm, NewIssueDetailsForm, NewIssuePersonForm, NewIssueContactForm):

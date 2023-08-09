@@ -210,6 +210,26 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {% if doc.location_info and doc.location_info.location_description %}
+                    <div class="row mr-2 mb-2">
+                        <div class="col-3">
+                            <label class="label-align">
+                                {% translate 'Location description' %}
+                            </label>
+                        </div>
+                        <div class="col-9 text-regular-family">
+                            {% if user|has_group:'Admin' %}
+                                {{ doc.location_info.location_description }}
+                            {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
+                                {% translate 'Confidential' %}
+                            {% else %}
+                                {{ doc.location_info.location_description }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="row mr-2 mb-2">
                         <div class="col-3">
                             <label class="label-align">
@@ -220,6 +240,30 @@
                             {{ doc.category.name }}
                         </div>
                     </div>
+
+                    {% if doc.structure_in_charge %}
+                    <div class="row mr-2 mb-2">
+                        <div class="col-3">
+                            <label class="label-align">
+                                {% translate 'Structure in charge' %}
+                            </label>
+                        </div>
+                        <div class="col-9 text-regular-family">
+                            {% if user|has_group:'Admin' %}
+                                {% if doc.structure_in_charge.name %}{{ doc.structure_in_charge.name }} {% else %} - {% endif %}
+                                {% if doc.structure_in_charge.phone %} | {{ doc.structure_in_charge.phone }} {% endif %}
+                                {% if doc.structure_in_charge.email %} | {{ doc.structure_in_charge.email }} {% endif %}
+                            {% elif doc.assignee.id != user.id and doc.citizen_type == 1 %}
+                                {% translate 'Confidential' %}
+                            {% else %}
+                                {% if doc.structure_in_charge.name %}{{ doc.structure_in_charge.name }} {% else %} - {% endif %}
+                                {% if doc.structure_in_charge.phone %} | {{ doc.structure_in_charge.phone }} {% endif %}
+                                {% if doc.structure_in_charge.email %} | {{ doc.structure_in_charge.email }} {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     {% if doc.original_description %}
                     <hr />
                     <div class="row mr-2 mb-2">

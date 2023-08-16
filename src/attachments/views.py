@@ -108,4 +108,15 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
                 attachment['bd_id'] = response["id"]
                 doc.save()
                 return Response(response, status=201)
+        
+        reasons = doc['reasons'] if 'reasons' in doc else list()
+        for reason in reasons:
+            if reason['id'] == reason['attachment_id'] and reason.get('type') and reason['type'] == 'file':
+                response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
+                reason['url'] = f'/grm_attachments/{response["id"]}/{data["file"].name}'
+                reason['uploaded'] = True
+                reason['bd_id'] = response["id"]
+                doc.save()
+                return Response(response, status=201)
+            
         raise Http404

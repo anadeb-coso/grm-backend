@@ -1309,3 +1309,11 @@ msgstr "Adresse mail de la structure"
 #: dashboard/templates/grm/issue_attachments.html
 msgid "Structure in charge"
 msgstr "Structure en charge"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "On going event"
+msgstr "Événement en cours"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Event has occurred several times"
+msgstr "Événement s’est produit plusieurs fois"

@@ -170,6 +170,14 @@
                                         {% endif %}
                                     </div>
                                 </div>
+                                <div class="row mr-2 mb-2">
+                                    <div class="col-3"></div>
+                                    <div class="col-9 text-regular-family">
+                                        {% if doc.event_recurrence %}
+                                            {{ form.event_recurrence.label }}
+                                        {% endif %}
+                                    </div>
+                                </div>
                                 {% if doc.attachments %}
                                     <div class="row mr-2 mb-2">
                                         <label class="col-3 label-align">

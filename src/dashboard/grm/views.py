@@ -455,6 +455,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
             "administrative_level": assigned_department,
         }
         self.doc['ongoing_issue'] = data['ongoing_issue']
+        self.doc['event_recurrence'] = data['event_recurrence']
 
         self.doc.save()
 
@@ -621,7 +622,7 @@ class NewIssueLocationFormView(PageMixin, NewIssueMixin):
     fields_to_check = ('contact_medium', 'intake_date', 'issue_date', 
                     #    'issue_type', 
                        'category', 'description',
-                       'ongoing_issue')
+                       'ongoing_issue', 'event_recurrence')
 
     def form_valid(self, form):
         data = form.cleaned_data
@@ -642,7 +643,7 @@ class NewIssueConfirmFormView(PageMixin, NewIssueMixin):
     fields_to_check = ('contact_medium', 'intake_date', 'issue_date', 
                     #    'issue_type', 
                        'category', 'description',
-                       'ongoing_issue', 'assignee', 'administrative_region')
+                       'ongoing_issue', 'event_recurrence', 'assignee', 'administrative_region')
 
     def form_valid(self, form):
         data = form.cleaned_data

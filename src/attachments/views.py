@@ -101,7 +101,7 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
             raise Http404
         attachments = doc['attachments'] if 'attachments' in doc else list()
         for attachment in attachments:
-            if attachment['id'] == data['attachment_id']:
+            if attachment['id'] == data['attachment_id'] and not attachment.get('uploaded'):
                 response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
                 attachment['url'] = f'/grm_attachments/{response["id"]}/{data["file"].name}'
                 attachment['uploaded'] = True
@@ -111,7 +111,7 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         
         reasons = doc['reasons'] if 'reasons' in doc else list()
         for reason in reasons:
-            if reason['id'] == reason['attachment_id'] and reason.get('type') and reason['type'] == 'file':
+            if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
                 response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
                 reason['url'] = f'/grm_attachments/{response["id"]}/{data["file"].name}'
                 reason['uploaded'] = True

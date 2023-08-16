@@ -116,7 +116,9 @@ class NewIssueDetailsForm(forms.Form):
     issue_password = forms.CharField(label=_('Password'), max_length=7, min_length=7, required=False,
                                      widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
 
-    ongoing_issue = forms.BooleanField(label=_('Current event or multiple occurrences'),
+    ongoing_issue = forms.BooleanField(label=_('On going event'),
+                                       widget=forms.CheckboxInput, required=False)
+    event_recurrence = forms.BooleanField(label=_('Event has occurred several times'),
                                        widget=forms.CheckboxInput, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -147,6 +149,8 @@ class NewIssueDetailsForm(forms.Form):
             self.fields['category'].initial = document['category']['id']
         if 'ongoing_issue' in document:
             self.fields['ongoing_issue'].initial = document['ongoing_issue']
+        if 'event_recurrence' in document:
+            self.fields['event_recurrence'].initial = document['event_recurrence']
 
 
 class NewIssueLocationForm(forms.Form):

@@ -33,6 +33,7 @@ from grm.utils import (
 )
 from dashboard.grm.functions import get_issue_status_stories
 from dashboard.tasks import check_issues, send_sms_message, escalate_issues
+from authentication.permissions import AdminPermissionRequiredMixin
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -937,7 +938,7 @@ class EditIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONRespon
         return self.render_to_json_response(context, safe=False)
 
 
-class EditIssueCategoryView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+class EditIssueCategoryView(IssueMixin, AJAXRequestMixin, AdminPermissionRequiredMixin, JSONResponseMixin, generic.View):
     permissions = ('read',)
 
     def post(self, request, *args, **kwargs):

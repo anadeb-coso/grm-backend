@@ -487,6 +487,10 @@
         let assignee = $('#id_assignee');
         let category_elt = $('#id_category');
 
+        {% if not user|has_group:'Admin' %}
+            category_elt.prop("disabled", true);
+        {% endif %}
+
         {% if not user|has_group:'Admin' and not user|has_group:'Assignee' %}
             //not permission_to_edit
             assignee.prop("disabled", true);

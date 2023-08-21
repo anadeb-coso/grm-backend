@@ -22,7 +22,7 @@ from dashboard.grm.forms import (
     IssueCommentForm, IssueDetailsForm, IssueRejectReasonForm, IssueResearchResultForm, MAX_LENGTH, NewIssueConfirmForm,
     NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm, 
     IssueOpenStatusForm, IssueReasonCommentForm, IssueIssueEscalateForm, IssueSetUnresolvedForm,
-    IssueIssuePublishForm, IssueIssueUnpublishForm
+    IssueIssuePublishForm, IssueIssueUnpublishForm, IssueCategoryForm
 )
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from grm.utils import (
@@ -913,6 +913,9 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
             raise Http404
         context['doc_status'] = doc_status
         context['password_confirm_form'] = PasswordConfirmForm()
+        context['category_form'] = IssueCategoryForm(
+            initial= {'doc_id': self.doc['_id']}
+        )
 
         return context
 
@@ -932,6 +935,50 @@ class EditIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONRespon
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)
+
+
+class EditIssueCategoryView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
+    permissions = ('read',)
+
+    def post(self, request, *args, **kwargs):
+        category_id = int(request.POST.get('category_id'))
+        
+        try:
+            doc_category = self.grm_db.get_query_result({
+                "id": int(category_id),
+                "type": 'issue_category'
+            })[0][0]
+            department_id = doc_category['assigned_department']['id']
+        except Exception:
+            raise Http404
+        
+        comments = self.doc['comments'] if 'comments' in self.doc else list()
+        comment_obj = {
+            "name": self.request.user.name,
+            "id": self.request.user.id,
+            "comment": f'{_("Category change")} : \"{self.doc["category"]["name"]}\" {_("to")} \"{doc_category["name"]}\"',
+            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        comments.insert(0, comment_obj)
+        self.doc['comments'] = comments
+
+        
+        assigned_department = doc_category['assigned_department'][
+            'administrative_level'] if 'administrative_level' in doc_category['assigned_department'] else None
+        self.doc['category'] = {
+            "id": doc_category['id'],
+            "name": doc_category['name'],
+            "confidentiality_level": doc_category['confidentiality_level'],
+            "assigned_department": department_id,
+            "administrative_level": assigned_department,
+        }
+
+        self.doc.save()
+        msg = _("The issue was successfully edited.")
+        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        return self.render_to_json_response(context, safe=False)
+    
 
 
 class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):

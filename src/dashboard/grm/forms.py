@@ -370,3 +370,22 @@ class IssueRejectReasonForm(forms.Form):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         document = grm_db[doc_id]
         self.fields['reject_reason'].initial = document['reject_reason'] if 'reject_reason' in document else ''
+
+
+class IssueCategoryForm(forms.Form):
+    category = forms.ChoiceField(label=_('Category'))
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        categories = get_issue_category_choices(grm_db)
+        self.fields['category'].widget.choices = categories
+        self.fields['category'].choices = categories
+        
+        document = grm_db[doc_id]
+        
+        if 'category' in document and document['category']:
+            self.fields['category'].initial = document['category']['id']

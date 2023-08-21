@@ -1317,3 +1317,15 @@ msgstr "Événement en cours"
 #: dashboard/templates/grm/issue_attachments.html
 msgid "Event has occurred several times"
 msgstr "Événement s’est produit plusieurs fois"
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Category change"
+msgstr "Changement de catégorie"
+
+#: dashboard/grm/views.py
+msgid "Confirm deletion"
+msgstr "Confirmer la suppression"
+
+#: dashboard/templates/authentication/register.html
+msgid "Please check this box and click the confirmation button for validation."
+msgstr "Veuillez cocher cette case et cliquer sur le bouton de confirmation pour valider."

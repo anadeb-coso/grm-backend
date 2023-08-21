@@ -230,7 +230,7 @@
                     </div>
                     {% endif %}
 
-                    <div class="row mr-2 mb-2">
+                    {% comment %} <div class="row mr-2 mb-2">
                         <div class="col-3">
                             <label class="label-align">
                                 {% translate 'Category' %}
@@ -239,7 +239,8 @@
                         <div class="col-9 text-regular-family">
                             {{ doc.category.name }}
                         </div>
-                    </div>
+                    </div> {% endcomment %}
+                    {% bootstrap_field category_form.category layout='horizontal' %}
 
                     {% if doc.structure_in_charge %}
                     <div class="row mr-2 mb-2">
@@ -325,6 +326,25 @@
                             </div>
                         {% endfor %}
                     {% endif %}
+
+                    {% if user|has_group:'Admin' %}
+                    <div class="row mr-2 mb-2">
+                        <div class="col-1">
+                            <label class="label-align">
+                                <i class="fas fa-times text-danger issue_delete" style="cursor: pointer; font-weight: bold;"
+                                    id="{% url 'dashboard:general:object_deletion_form'  doc.auto_increment_id 'Issue' %}">
+                                </i>
+                            </label>
+                        </div>
+                        <div class="col-11 text-regular-family">
+                            <span class="issue_delete text-danger" style="cursor: pointer; font-weight: bold;" 
+                                id="{% url 'dashboard:general:object_deletion_form'  doc.auto_increment_id 'Issue' %}">
+                                {% translate 'Delete issue' %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
                 </div>
             </div>
         </div>
@@ -465,6 +485,7 @@
         let load_status_buttons_spin = $('#load-status-buttons-spin');
         let status_change_modal = $('#statusChangeModalForm');
         let assignee = $('#id_assignee');
+        let category_elt = $('#id_category');
 
         {% if not user|has_group:'Admin' and not user|has_group:'Assignee' %}
             //not permission_to_edit
@@ -541,6 +562,13 @@
             }
         }
         let reject_reason_form_ajax = new RejectReasonFormAjaxSubmit();
+
+        class DelteIssueFormAjaxSubmit extends FormAjaxSubmit {
+                submitted_form() {
+                   window.location.href = "{% url 'dashboard:grm:review_issues' %}";
+                }
+            }
+        let delete_issue_form_ajax = new DelteIssueFormAjaxSubmit();
 
 
         function loadStatusButtons() {
@@ -1066,7 +1094,36 @@
 
         });
 
+
+
+        category_elt.on('change', function () {
+            $.ajax({
+                type: "POST",
+                url: "{% url 'dashboard:grm:edit_issue_category' doc.auto_increment_id %}",
+                data: {
+                    "category_id": category_elt.val()
+                },
+                success: function (response) {
+                    showPopupMessage(response.msg);
+                    loadComments();
+                },
+                error: function (data, status, error) {
+                            if(error == "Forbidden"){
+                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                            }else{
+                                alert(error_server_message + "Error " + data.status);
+                            }
+                        }
+            });
+        });
+
         
+        //Delete Issue
+        $(".issue_delete").on('click', function () {
+            delete_issue_form_ajax.load_form('#object_deletion_form', status_change_modal, this.id);
+        });
+        //End Delete Issue
+
 
     </script>
 {% endblock javascript %}

@@ -26,6 +26,7 @@ urlpatterns = [
     path('get-original-description-issue-data/<int:issue>/', views.GetOriginalDescriptionIssueDataView.as_view(), name='get_original_description_issue_data'),
     path('get-issue-description/<int:issue>/', views.GetIssueDescriptionView.as_view(), name='get_issue_description'),
     path('edit-issue/<int:issue>/', views.EditIssueView.as_view(), name='edit_issue'),
+    path('edit-issue-category/<int:issue>/', views.EditIssueCategoryView.as_view(), name='edit_issue_category'),
     path('add-comment-to-issue/<int:issue>/', views.AddCommentToIssueView.as_view(), name='add_comment_to_issue'),
     path('issue-comments/<int:issue>/', views.IssueCommentListView.as_view(), name='issue_comments'),
     path('issue-comments-decrypt/<int:issue>/', views.IssueCommentDecryptListView.as_view(), name='issue_comments_decrypt'),

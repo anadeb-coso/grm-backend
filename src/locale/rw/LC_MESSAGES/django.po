@@ -1243,3 +1243,15 @@ msgstr ""
 #: dashboard/templates/grm/issue_attachments.html
 msgid "Event has occurred several times"
 msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Category change"
+msgstr ""
+
+#: dashboard/grm/views.py
+msgid "Confirm deletion"
+msgstr ""
+
+#: dashboard/templates/authentication/register.html
+msgid "Please check this box and click the confirmation button for validation."
+msgstr ""

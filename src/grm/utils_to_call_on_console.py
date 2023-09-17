@@ -54,3 +54,36 @@ def create_training_user(start_number, end_number, administrative_level_type):
 
         print()
         print("End saving")
+
+
+
+
+def delete_training_user(start_number, end_number):
+    """
+    Ex: 
+        delete_training_user(0, 10)
+        delete_training_user(7, 10)
+    """
+
+    print("Start deleting")
+    print()
+
+    for number in range(start_number, end_number+1):
+        email = f"training{number}.anadeb@gmail.com"
+
+        users = User.objects.filter(email=email)
+        if users.exists():
+            user = users.first()
+            user_id = user
+
+            government_workers = GovernmentWorker.objects.filter(user_id=user_id)
+            if government_workers.exists():
+                government_worker = government_workers.first()
+                government_worker.delete()
+                
+            user.delete()
+            print(f"{email}. Okay")
+
+    print()
+    print("End deleting")
+

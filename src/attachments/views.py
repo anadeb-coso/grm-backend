@@ -11,6 +11,7 @@ from attachments.serializers import (
     TaskFileSerializer
 )
 from client import COUCHDB_ATTACHMENT_DATABASE, COUCHDB_PASSWORD, COUCHDB_URL, COUCHDB_USERNAME, get_db, upload_file
+from attachments.functions import reduce_image_size
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_GRM_ATTACHMENT_DATABASE = settings.COUCHDB_GRM_ATTACHMENT_DATABASE
@@ -102,8 +103,14 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         attachments = doc['attachments'] if 'attachments' in doc else list()
         for attachment in attachments:
             if attachment['id'] == data['attachment_id'] and not attachment.get('uploaded'):
-                response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
-                attachment['url'] = f'/grm_attachments/{response["id"]}/{data["file"].name}'
+                file = data['file']
+                if 'image' in file.content_type or 'img' in file.content_type:
+                    try:
+                        file = reduce_image_size(file)
+                    except:
+                        file = file
+                response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                attachment['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
                 attachment['uploaded'] = True
                 attachment['bd_id'] = response["id"]
                 doc.save()
@@ -112,8 +119,14 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         reasons = doc['reasons'] if 'reasons' in doc else list()
         for reason in reasons:
             if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
-                response = upload_file(data['file'], COUCHDB_GRM_ATTACHMENT_DATABASE)
-                reason['url'] = f'/grm_attachments/{response["id"]}/{data["file"].name}'
+                file = data['file']
+                if 'image' in file.content_type or 'img' in file.content_type:
+                    try:
+                        file = reduce_image_size(file)
+                    except:
+                        file = file
+                response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
                 reason['uploaded'] = True
                 reason['bd_id'] = response["id"]
                 doc.save()

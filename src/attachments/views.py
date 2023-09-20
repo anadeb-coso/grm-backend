@@ -5,6 +5,9 @@ from drf_yasg.openapi import IN_QUERY, Parameter
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, parsers
 from rest_framework.response import Response
+# from storages.backends.s3boto3 import S3Boto3Storage
+import os
+from datetime import datetime
 
 from attachments.serializers import (
     AttachmentUpdateStatusSerializer, IssueFileSerializer,
@@ -104,11 +107,35 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         for attachment in attachments:
             if attachment['id'] == data['attachment_id'] and not attachment.get('uploaded'):
                 file = data['file']
-                if 'image' in file.content_type or 'img' in file.content_type:
-                    try:
-                        file = reduce_image_size(file)
-                    except:
-                        file = file
+                # if 'image' in file.content_type or 'img' in file.content_type:
+                #     try:
+                #         file = reduce_image_size(file)
+                #     except:
+                #         file = file
+                # try:
+                #     #S3
+                #     file_directory_within_bucket = 'proof_of_work/'
+                #     file_path_within_bucket = os.path.join(
+                #         file_directory_within_bucket,
+                #         file.name
+                #     )
+
+                #     media_storage = S3Boto3Storage()
+
+                #     if not media_storage.exists(file_path_within_bucket):  # avoid overwriting existing file
+                #         media_storage.save(file_path_within_bucket, file)
+                #         file_url = media_storage.url(file_path_within_bucket)
+
+                #         attachment['url'] = file_url
+                #         attachment['uploaded'] = True
+                #         attachment['bd_id'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                #         doc.save()
+                #         return Response({
+                #             'message': 'OK',
+                #             'fileUrl': file_url,
+                #         }, status=201)
+                #     #End S3
+                # except:
                 response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
                 attachment['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
                 attachment['uploaded'] = True
@@ -120,11 +147,41 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         for reason in reasons:
             if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
                 file = data['file']
-                if 'image' in file.content_type or 'img' in file.content_type:
-                    try:
-                        file = reduce_image_size(file)
-                    except:
-                        file = file
+                # if 'image' in file.content_type or 'img' in file.content_type:
+                #     try:
+                #         file = reduce_image_size(file)
+                #     except:
+                #         file = file
+                # response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                # reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                # reason['uploaded'] = True
+                # reason['bd_id'] = response["id"]
+                # doc.save()
+                # return Response(response, status=201)
+                # try:
+                #     #S3
+                #     file_directory_within_bucket = 'proof_of_work/'
+                #     file_path_within_bucket = os.path.join(
+                #         file_directory_within_bucket,
+                #         file.name
+                #     )
+
+                #     media_storage = S3Boto3Storage()
+
+                #     if not media_storage.exists(file_path_within_bucket):  # avoid overwriting existing file
+                #         media_storage.save(file_path_within_bucket, file)
+                #         file_url = media_storage.url(file_path_within_bucket)
+
+                #         attachment['url'] = file_url
+                #         attachment['uploaded'] = True
+                #         attachment['bd_id'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                #         doc.save()
+                #         return Response({
+                #             'message': 'OK',
+                #             'fileUrl': file_url,
+                #         }, status=201)
+                #     #End S3
+                # except:
                 response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
                 reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
                 reason['uploaded'] = True

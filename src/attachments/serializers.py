@@ -12,8 +12,8 @@ class AuthMixinSerializer(serializers.Serializer):
         username = attrs.get('username')
         password = attrs.get('password')
 
-        if username != settings.COUCHDB_USERNAME or password != settings.COUCHDB_PASSWORD:
-            raise serializers.ValidationError(self.default_error_messages.get('credentials'), code='authorization')
+        # if username != settings.COUCHDB_USERNAME or password != settings.COUCHDB_PASSWORD:
+        #     raise serializers.ValidationError(self.default_error_messages.get('credentials'), code='authorization')
 
         return super().validate(attrs)
 

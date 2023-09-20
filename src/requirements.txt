@@ -87,3 +87,4 @@ cryptography==41.0.1
 # python-magic-bin==0.4.14 #for developpment
 python-magic #for production
 s3transfer==0.6.0
+boto3==1.24.61

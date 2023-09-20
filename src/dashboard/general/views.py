@@ -66,8 +66,12 @@ class DeleteObjectFormView(AJAXRequestMixin, ModalFormMixin, AdminPermissionRequ
         return self.render_to_json_response(context, safe=False)
     
     def _delete_object(self, obj):
-        
-        obj.delete()
+        try:
+            obj['_id']
+            obj['confirmed'] = False
+            obj.save()
+        except:
+            obj.delete()
         
         msg = _("The Step was successfully removed.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')

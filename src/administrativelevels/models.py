@@ -4,6 +4,8 @@ from django.db.models.signals import post_save
 from django.db import models
 from typing import TypeVar, Any
 
+from grm.models_base import BaseModel
+
 _QS = TypeVar("_QS", bound="models._BaseQuerySet[Any]")
 class CustomQuerySet(models.QuerySet):
     def get_administrative_level_descendants_using_mis(self, adl_db, parent_id, ids, user=None):
@@ -56,16 +58,7 @@ class CustomQuerySet(models.QuerySet):
 
 
 # Create your models here.
-class BaseModel(models.Model):
-    created_date = models.DateTimeField(auto_now_add = True, blank=True, null=True)
-    updated_date = models.DateTimeField(auto_now = True, blank=True, null=True)
 
-    class Meta:
-        abstract = True
-    
-    def save_and_return_object(self):
-        super().save()
-        return self
     
 class AdministrativeLevel(BaseModel):
     name = models.CharField(max_length=255)

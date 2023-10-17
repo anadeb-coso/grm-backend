@@ -4,6 +4,7 @@ import zlib
 import shortuuid as uuid
 
 from client import get_db
+from authentication.functions import send_code_by_mail
 
 def photo_path(instance, filename):
     filename, file_extension = os.path.splitext(filename)
@@ -23,6 +24,8 @@ def create_or_update_adl_user_adl(user, updated=False):
             doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": user.id})[0][0]["_id"]]
         except Exception as exc:
             updated = False
+    else:
+        send_code_by_mail(user, get_validation_code(user.email)) # Send user account code on their Email
     
     doc_user = {
         "type": "adl",

@@ -1,0 +1,30 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e24eae2",
+    "_rev": "1-33abc773fa88691410b069692057c119",
+    "name": "Demande de renseignement ou de précision",
+    "label": "1- Demande de renseignement ou de précision",
+    "abbreviation": "DRP",
+    "id": 1,
+    "value": 1,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Village",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_appeal_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_escalation_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

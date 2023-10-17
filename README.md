@@ -16,3 +16,4 @@
         - Assignee              : Assignee
         - Viewer                : Viewer
         - Safeguard             : Safeguard
+        - Privacy               : Privacy

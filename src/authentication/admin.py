@@ -4,8 +4,12 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.forms.fields import EmailField
+from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
 
 from authentication.models import GovernmentWorker, User, Pdata, Cdata
+# from grm.my_librairies.mail.send_mail import send_email
+# from authentication.utils import get_validation_code
 
 
 class UserWithEmptyPasswordCreationForm(forms.ModelForm):
@@ -22,6 +26,39 @@ class UserWithEmptyPasswordCreationForm(forms.ModelForm):
             self.fields[self._meta.model.EMAIL_FIELD].widget.attrs['autofocus'] = True
         self.fields['first_name'].required = True
         self.fields['last_name'].required = True
+    
+    # def save(self, commit=True):
+        
+    #     instance = super(UserWithEmptyPasswordCreationForm, self).save(commit=False)
+        
+    #     try:
+    #         msg = send_email(
+    #             _("Validation code for your GRM account"),
+    #             "mail/send/comment",
+    #             {
+    #                 "datas": {
+    #                     _("Title"): _("Validation code for your GRM account"),
+    #                     _("Code"): get_validation_code(instance.email),
+    #                     _("Comment"): _("Please do not share this code with anyone until it has been used.")
+    #                 },
+    #                 "user": {
+    #                     _("Name"): f"{instance.first_name} {instance.last_name}",
+    #                     _("Phone"): instance.phone_number,
+    #                     _("Email"): instance.email
+    #                 },
+    #                 # "url": f"{request.scheme}://{request.META['HTTP_HOST']}{reverse_lazy('dashboard:facilitators:detail', args=[no_sql_db_name])}"
+    #             },
+    #             [instance.email]
+    #         )
+    #     except Exception as exc:
+    #         pass
+
+    #     if commit:
+    #         self.save_m2m()
+    #         instance.save()
+
+    #     return instance
+
 
 
 class CustomUserChangeForm(UserChangeForm):

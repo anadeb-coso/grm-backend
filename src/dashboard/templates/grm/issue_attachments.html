@@ -18,7 +18,7 @@
                     <div class="col-9">
                         <div class="align-self-center mt-2">
                             <a 
-                                {% if attachment.bd_id %}
+                                {% if attachment.uploaded %}
                                 href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm" 
                                 target="_blank"
                                 {% else %}
@@ -26,7 +26,7 @@
                                 {% endif %}
                                >
                                 <i class="fas fa-paperclip mr-2"></i>
-                                {{ attachment.name }} {% if not attachment.bd_id %}({% translate "Unsynchronized" %}){% endif %}
+                                {{ attachment.name }} {% if not attachment.uploaded %}({% translate "Unsynchronized" %}){% endif %}
                             </a>
                         </div>
                     </div>

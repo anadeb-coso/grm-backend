@@ -40,7 +40,8 @@
                         </div>
                     </div>
                     <div class="card-footer mb-2">
-                        <button type="submit" class="btn btn-primary btn-sm rounded-xl float-right">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-xl float-right" 
+                            id="id-submit-issue-detail">
                             {% translate "SAVE & NEXT" %}
                         </button>
                         <a href="{% url 'dashboard:grm:new_issue_step_2' doc.auto_increment_id %}"
@@ -169,6 +170,7 @@
                 })
         });
         
+        let submit_issue_detail = $('#id-submit-issue-detail');
         let issue_password = $('#id_issue_password');
         let issue_password_parent = issue_password.parent().parent();
         issue_password.attr('required', false);
@@ -178,10 +180,44 @@
             if([4, 7].includes(Number(this.value))){
                 {% comment %} issue_password.attr('required', true); {% endcomment %}
                 issue_password_parent.show();
+                
+                submit_issue_detail.prop('disabled', true);
+                
             }else{
                 issue_password.attr('required', false);
                 issue_password_parent.hide();
+                
+                submit_issue_detail.prop('disabled', false);
             }
+        });
+
+        issue_password_parent.focusout(function(){
+            $.ajax({
+                url: "{% url 'privacy:validated_category_password' %}",
+                type: 'GET',
+                data: {
+                    category_id: $('#id_category').val(),
+                    password: issue_password.val()
+                },
+            })
+            .fail(function (data) {
+                alert(error_server_message + "Error " + data.status);
+            })
+            .done(function (data) {
+                if(data === true){
+                    issue_password.css('color', '#32cd32');
+                    issue_password.parent().parent().children().css('color', '#32cd32');
+                    issue_password.next().children().css('color', '#32cd32');
+                
+                    submit_issue_detail.prop('disabled', false);
+                }else{
+                    issue_password.css('color', 'red');
+                    issue_password.parent().parent().children().css('color', 'red');
+                    issue_password.next().children().css('color', 'red');
+                
+                    submit_issue_detail.prop('disabled', true);
+                }
+            });
         });
 
     </script>

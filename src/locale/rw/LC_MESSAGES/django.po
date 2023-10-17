@@ -212,6 +212,10 @@ msgstr ""
 msgid "Enter name of the citizen"
 msgstr ""
 
+#: dashboard/grm/forms.py:47
+msgid "Enter name of the citizen or of the group"
+msgstr ""
+
 #: dashboard/grm/forms.py:48 dashboard/grm/forms.py:50
 #: dashboard/grm/forms.py:52 dashboard/grm/forms.py:53
 #: dashboard/grm/forms.py:56 dashboard/grm/forms.py:58
@@ -1229,6 +1233,14 @@ msgid "Safeguard"
 msgstr ""
 
 #: dashboard/templates/grm/issue_attachments.html
+msgid "Country"
+msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
+msgid "Nation"
+msgstr ""
+
+#: dashboard/templates/grm/issue_attachments.html
 msgid "List"
 msgstr ""
 
@@ -1254,4 +1266,160 @@ msgstr ""
 
 #: dashboard/templates/authentication/register.html
 msgid "Please check this box and click the confirmation button for validation."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The password must have 8 characters minimum."
+msgstr ""
+
+#: dashboard/privacy
+msgid "You can't edit the password information."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The complaint has not been published. No password is defined for this category of complaint."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The complaint has not been published. The password does not match."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The file has not been saved. No password is defined for this category of complaint."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The file has not been saved. The password does not match."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The information has not been registered. No password is defined for this category of complaint."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The information has not been saved. The password does not match."
+msgstr ""
+
+#: dashboard/privacy
+msgid "Set to publish"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Set to unpublish"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Please fill the password field"
+msgstr ""
+
+#: dashboard/privacy
+msgid "We can't find this category informations."
+msgstr ""
+
+#: dashboard/privacy
+msgid "You are not authorized to view this information."
+msgstr ""
+
+#: dashboard/privacy
+msgid "Check password"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Level"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Organization (Structure) in charge"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Committee/Structure in charge"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Complainant type"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Individual"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Group"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Please enter your password to show sensitive data"
+msgstr ""
+
+#: dashboard/privacy
+msgid "phone call"
+msgstr ""
+
+#: dashboard/privacy
+msgid "by letter (correspondence)"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Validation code for your GRM account"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Please do not share this code with anyone until it has been used."
+msgstr ""
+
+#: dashboard/privacy
+msgid "Mail sent successfully"
+msgstr ""
+
+#: dashboard/privacy
+msgid "An error occurred while sending the email"
+msgstr ""
+
+#: dashboard/privacy
+msgid "See PV"
+msgstr ""
+
+#: dashboard/privacy
+msgid "See PV de reconciliation"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Attach PV of reconciliation"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Attach the complaint transfer file to the top level"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Transfer file"
+msgstr ""
+
+#: dashboard/privacy
+msgid "COSO GRM - A new issue recorded"
+msgstr ""
+
+#: dashboard/privacy
+msgid "COSO GRM - A new issue scaled"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Comment on the unresolution"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Comments on the scalation"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Unresolution date"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Scalation date"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Up to level"
 msgstr ""

@@ -1,0 +1,18 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e250f27",
+    "_rev": "1-3f48314ae5a7e853c48db5393275673b",
+    "name": "Allégation de corruption, de détournement de fonds ou de biais dans les marchés publiques (sensible)",
+    "label": "4- Allégation de corruption, de détournement de fonds ou de biais dans les marchés publiques (sensible)",
+    "abbreviation": "ACDFBMP",
+    "id": 4,
+    "value": 4,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 6,
+      "administrative_level": "Country",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

@@ -234,6 +234,12 @@ def get_auto_increment_id(grm_db):
     except Exception:
         max_auto_increment_id = 0
     return max_auto_increment_id + 1
+    # date_now = datetime.now()
+    # max_auto_increment_id_2 = int(float(str(max_auto_increment_id).replace(',', '.')))
+    # auto_increment = int((str(date_now.timestamp()) + str(date_now.microsecond)).replace('.', ''))
+    # if auto_increment <= max_auto_increment_id_2:
+    #     auto_increment = max_auto_increment_id_2 + 1
+    # return auto_increment
 
 
 def get_administrative_level_descendants_using_mis(adl_db, parent_id, ids, user=None):

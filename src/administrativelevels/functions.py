@@ -1,4 +1,6 @@
 from administrativelevels import models as administrativelevels_models
+from grm.call_objects_from_other_db import mis_objects_call
+from administrativelevels.models import AdministrativeLevel
 
 def get_cascade_administrative_levels_by_administrative_level_id(_id):
     print(_id)
@@ -53,3 +55,16 @@ def get_cascade_administrative_levels_by_administrative_level_id(_id):
 
     # return list(regions) + list(prefectures) + list(communes) + list(cantons) + list(villages)
     return list(cantons.order_by("name")) , list(villages.order_by("name"))
+
+
+
+def get_object_by_type_and_object(_type, obj):
+    if obj:
+        if obj.type == _type:
+            return obj
+        return get_object_by_type_and_object(_type, obj.parent)
+    return None
+
+def get_ald_parent_by_type_and_child_id(_type, child_id):
+    child_obj =  mis_objects_call.filter_objects(AdministrativeLevel, id=child_id).first()
+    return get_object_by_type_and_object(_type, child_obj)

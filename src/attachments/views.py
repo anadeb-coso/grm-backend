@@ -95,9 +95,9 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         operation_description="Allowed file size less than or equal to 2 MB"
     )
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        # serializer = self.get_serializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        data = request.data #serializer.validated_data
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         try:
             doc = grm_db[data['doc_id']]
@@ -144,6 +144,8 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
                 return Response(response, status=201)
         
         reasons = doc['reasons'] if 'reasons' in doc else list()
+        resolution_files = doc['resolution_files'] if 'resolution_files' in doc else list()
+        escalation_reasons = self.doc['escalation_reasons'] if 'escalation_reasons' in self.doc else list()
         for reason in reasons:
             if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
                 file = data['file']
@@ -186,6 +188,19 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
                 reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
                 reason['uploaded'] = True
                 reason['bd_id'] = response["id"]
+
+                for r_file in resolution_files:
+                    if r_file.get('id') == reason.get('id'):
+                        r_file['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                        r_file['uploaded'] = True
+                        r_file['bd_id'] = response["id"]
+                
+                for e_file in escalation_reasons:
+                    if e_file.get('id') == reason.get('id'):
+                        e_file['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                        e_file['uploaded'] = True
+                        e_file['bd_id'] = response["id"]
+
                 doc.save()
                 return Response(response, status=201)
             

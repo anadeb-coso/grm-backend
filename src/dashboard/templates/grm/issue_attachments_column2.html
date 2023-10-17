@@ -39,7 +39,7 @@
                 {% else %} {% endcomment %}
                     <div class="row">
                         <div class="col-6">
-                            {% with indexed_users|get:reason.user_id as color_index %}
+                            {% with indexed_users|get_indexed_user:reason.user_id as color_index %}
                                 <div class="circle-icon float-left mr-2 navbar-{{ colors|next_in_circular_list:color_index }}">
                                     <div class="center-32 pt-1 text-white text-bold-family">
                                         {% get_initials reason.user_name %}
@@ -61,7 +61,7 @@
                         <div class="col-10 mb-2 text-regular-family mb-3">
                             {% if reason.type == "file" %}
                                     <a 
-                                    {% if reason.bd_id %}
+                                    {% if reason.uploaded %}
                                     href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
                                     target="_blank"
                                     {% else %}
@@ -69,7 +69,7 @@
                                     {% endif %}
                                     >
                                         <i class="fas fa-paperclip mr-2"></i>
-                                        {{ reason.name }} {% if not reason.bd_id %}({% translate "Unsynchronized" %}){% endif %}
+                                        {{ reason.name }} {% if not reason.uploaded %}({% translate "Unsynchronized" %}){% endif %}
                                     </a>
                                 {% if user.id == doc.assignee.id %}
                                 <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
@@ -90,6 +90,9 @@
                                 {% if "b'" in reason.comment %}
                                     ***
                                 {% else %}
+                                    {% if reason.issue_status %}
+                                        <b>{{ reason.issue_status }}</b><br />
+                                    {% endif %}
                                     {{ reason.comment|safe }}
                                 {% endif %}
                                 </p>

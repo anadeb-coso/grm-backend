@@ -1,0 +1,30 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e2505f8",
+    "_rev": "1-9a501f91d9b1a98e3acf42e0f77c24f5",
+    "name": "Perception par une communauté ou une personne qu’elle est était injustement exclues de participer au projet",
+    "label": "3- Perception par une communauté ou une personne qu’elle est était injustement exclues de participer au projet",
+    "abbreviation": "PCPIEPP",
+    "id": 3,
+    "value": 3,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Village",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_appeal_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_escalation_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

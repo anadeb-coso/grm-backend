@@ -15,7 +15,7 @@ from grm.utils import (
 from authentication.utils import (create_or_update_adl_user_adl, delete_adl_user_adl, 
                                   set_user_government_worker_adl, delete_user_government_worker_adl)
 from administrativelevels.models import AdministrativeLevel
-
+from grm.call_objects_from_other_db import mis_objects_call
 
 def photo_path(instance, filename):
     filename, file_extension = os.path.splitext(filename)
@@ -102,7 +102,7 @@ class GovernmentWorker(models.Model):
         if self.administrative_id == "1":
             a = AdministrativeLevel()
             a.name = "TOGO"
-            a.type = _("Country")
+            a.type = _("Country").__str__()
             return a
         try:
             return AdministrativeLevel.objects.using('mis').get(id=int(self.administrative_id))
@@ -238,10 +238,17 @@ def get_assignee_to_escalate(adl_db, department_id, administrative_id):
     except Exception:
         raise
     if parent:
-        print(parent)
-        print(parent['administrative_level'])
+        
         administrative_id = parent['administrative_id']
-        if parent['administrative_level'] != "Commune":
+        parent_obj = mis_objects_call.filter_objects(AdministrativeLevel, id=administrative_id).first()
+        
+        if parent['administrative_level'] == 'Commune' or \
+            (parent['administrative_level'] == 'Region' and parent_obj and parent_obj.name.upper() in ('KARA', 'CENTRALE')) or \
+            (parent['administrative_level'] == 'Prefecture' and parent_obj and parent_obj.parent and parent_obj.parent.name.upper() == 'SAVANES'): #Specially for COSO TOGO
+        
+            return get_assignee_to_escalate(adl_db, department_id, administrative_id)
+        
+        else:
             worker = GovernmentWorker.objects.filter(department=department_id, administrative_id=administrative_id).first()
             if worker:
                 assignee = {
@@ -253,7 +260,7 @@ def get_assignee_to_escalate(adl_db, department_id, administrative_id):
                     "name": parent['name'],
                     "administrative_level": parent['administrative_level']
                 }
-        return get_assignee_to_escalate(adl_db, department_id, administrative_id)
+        # return get_assignee_to_escalate(adl_db, department_id, administrative_id)
     return None, None
 
 

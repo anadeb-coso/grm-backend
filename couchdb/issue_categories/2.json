@@ -1,0 +1,30 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e24f1fd",
+    "_rev": "1-ba24d0c82a3d16129da27c23950518ba",
+    "name": "Relative à un autre programme ou projet",
+    "label": "2- Relative à un autre programme ou projet",
+    "abbreviation": "RAPP",
+    "id": 2,
+    "value": 2,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Village",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_appeal_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_escalation_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

@@ -17,6 +17,10 @@ COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE
 def get(dictionary, key):
     return dictionary.get(key, None)
 
+@register.filter
+def get_indexed_user(dictionary, key):
+    return dictionary.get(key, 0)
+
 
 @register.simple_tag
 def get_code(email):
@@ -214,3 +218,28 @@ def has_specific_permission(user):
         ):
         return False
     return True
+
+
+class MakeListNode(template.Node):
+    def __init__(self, items, varname):
+        self.items = items
+        self.varname = varname
+
+    def render(self, context):
+        context[self.varname] = []
+        for i in self.items:
+            if i.isdigit():
+                context[self.varname].append(int(i))
+            else:
+                context[self.varname].append(str(i).replace('"', ''))
+        return ""
+    
+@register.tag
+def make_list(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) >= 4 and bits[-2] == "as":
+        varname = bits[-1]
+        items = bits[1:-2]
+        return MakeListNode(items, varname)
+    else:
+        raise template.TemplateSyntaxError("%r expected format is 'item [item ...] as varname'" % bits[0])

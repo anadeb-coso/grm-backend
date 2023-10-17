@@ -1,0 +1,18 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e253e05",
+    "_rev": "1-449388dc26ec4a42908f41360320ddea",
+    "name": "Violence basée sur le genre (sensible)",
+    "label": "7- Violence basée sur le genre (sensible)",
+    "abbreviation": "VBG",
+    "id": 7,
+    "value": 7,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 6,
+      "administrative_level": "Country",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

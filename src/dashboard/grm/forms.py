@@ -1,11 +1,15 @@
 from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.template.defaultfilters import filesizeformat
 
 from authentication.models import get_government_worker_choices
 from client import get_db
 from dashboard.forms.widgets import RadioSelect
-from dashboard.grm import CHOICE_CONTACT, CITIZEN_TYPE_CHOICES, CONTACT_CHOICES, GENDER_CHOICES, MEDIUM_CHOICES
+from dashboard.grm import (
+    CHOICE_CONTACT, CITIZEN_TYPE_CHOICES, CONTACT_CHOICES, GENDER_CHOICES, MEDIUM_CHOICES,
+    CITIZEN_OR_GROUP_CHOICES
+)
 from grm.utils import (
     get_administrative_region_choices, get_base_administrative_id, get_administrative_regions_by_level,
     get_issue_age_group_choices, get_issue_category_choices, get_issue_citizen_group_1_choices,
@@ -45,10 +49,12 @@ class NewIssueContactForm(forms.Form):
 
 
 class NewIssuePersonForm(forms.Form):
-    citizen = forms.CharField(label=_('Enter name of the citizen'), required=False,
+    citizen = forms.CharField(label=_('Enter name of the citizen or of the group'), required=False,
                               help_text=_('This is an optional field'))
     citizen_type = forms.ChoiceField(label=_(''), widget=RadioSelect, required=False,
                                      choices=CITIZEN_TYPE_CHOICES, help_text=_('This is an optional field'))
+    citizen_or_group = forms.ChoiceField(label=_('Complainant type'), widget=RadioSelect, required=False,
+                                     choices=CITIZEN_OR_GROUP_CHOICES, help_text=_('This is an optional field'))
     citizen_age_group = forms.ChoiceField(label=_('Enter age group'), required=False,
                                           help_text=_('This is an optional field'))
     gender = forms.ChoiceField(label=_('Choose gender'), required=False, help_text=_('This is an optional field'),
@@ -84,6 +90,9 @@ class NewIssuePersonForm(forms.Form):
 
         if 'citizen_type' in document:
             self.fields['citizen_type'].initial = document['citizen_type']
+        
+        if 'citizen_or_group' in document:
+            self.fields['citizen_or_group'].initial = document['citizen_or_group']
 
         if 'citizen_age_group' in document and document['citizen_age_group']:
             self.fields['citizen_age_group'].initial = document['citizen_age_group']['id']
@@ -124,13 +133,15 @@ class NewIssueDetailsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
         doc_id = initial.get('doc_id')
+        user = initial.get('user')
         super().__init__(*args, **kwargs)
-
+        
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         # types = get_issue_type_choices(grm_db)
         # self.fields['issue_type'].widget.choices = types
         # self.fields['issue_type'].choices = types
         categories = get_issue_category_choices(grm_db)
+        categories = [cat for cat in categories if (str(cat[0]) not in ('4', '7')) or (str(cat[0]) in ('4', '7') and user.groups.filter(name="Privacy").exists())]
         self.fields['category'].widget.choices = categories
         self.fields['category'].choices = categories
 
@@ -160,8 +171,11 @@ class NewIssueLocationForm(forms.Form):
         help_text=_("Please enter additional details about the location\nthat might help resolve the issue (e.g. street\naddress, street corner, or description of location)."), 
         max_length=2000, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Please provide any additional details.')}))
-    structure_in_charge = forms.CharField(label=_('Structure in charge of this complaint'), required=False,
-                              help_text=_('This is an optional field'))
+    structure_in_charge = forms.CharField(
+        # label=_('Structure in charge of this complaint'), 
+        label=_('Committee/Structure in charge'), 
+        required=False,
+        help_text=_('This is an optional field'))
     structure_in_charge_phone = forms.CharField(label=_('Structure telephone number'), required=False,
                               help_text=_('This is an optional field'))
     structure_in_charge_email = forms.EmailField(label=_('Structure e-mail address'), required=False,
@@ -301,16 +315,34 @@ class IssueOpenStatusForm(forms.Form):
 
 class IssueResearchResultForm(forms.Form):
     research_result = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+    file_pdf = forms.FileField(label=_('Attach PV of reconciliation'), help_text=_('Allowed file size less than or equal to 2 MB'), required=True)
+    issue_password = forms.CharField(label='', max_length=7, min_length=7, required=False,
+                                            widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+    
+    default_error_messages = {
+        'file_size': _('Select a file size less than or equal to %(max_size)s. The selected file size is %(size)s.')}
+    
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
         doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
+        self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
 
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         document = grm_db[doc_id]
         self.fields['research_result'].initial = document['research_result'] if 'research_result' in document else ''
-
+    
+    def clean_file_pdf(self):
+        max_upload_size = settings.MAX_UPLOAD_SIZE
+        value = self.cleaned_data.get('file_pdf')
+        if value and value.size > max_upload_size:
+            raise forms.ValidationError(
+                self.default_error_messages['file_size'] % {
+                    'max_size': filesizeformat(max_upload_size),
+                    'size': filesizeformat(value.size)})
+        return value
+    
 class IssueSetUnresolvedForm(forms.Form):
     unresolved_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
 
@@ -325,16 +357,35 @@ class IssueSetUnresolvedForm(forms.Form):
 
 class IssueIssueEscalateForm(forms.Form):
     escalate_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+    file_pdf = forms.FileField(label=_('Attach the complaint transfer file to the top level'), 
+                               help_text=_('Allowed file size less than or equal to 2 MB'), required=False)
+    issue_password = forms.CharField(label='', max_length=7, min_length=7, required=False,
+                                            widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+    
+    default_error_messages = {
+        'file_size': _('Select a file size less than or equal to %(max_size)s. The selected file size is %(size)s.')}
+    
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
         doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
+        self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
+
 
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         document = grm_db[doc_id]
         self.fields['escalate_reason'].initial = document['escalate_reason'] if 'escalate_reason' in document else ''
-
+    
+    def clean_file_pdf(self):
+        max_upload_size = settings.MAX_UPLOAD_SIZE
+        value = self.cleaned_data.get('file_pdf')
+        if value and value.size > max_upload_size:
+            raise forms.ValidationError(
+                self.default_error_messages['file_size'] % {
+                    'max_size': filesizeformat(max_upload_size),
+                    'size': filesizeformat(value.size)})
+        return value
 
 class IssueIssuePublishForm(forms.Form):
     issue_description = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))

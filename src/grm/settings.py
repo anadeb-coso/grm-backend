@@ -51,6 +51,8 @@ CREATED_APPS = [
     'authentication',
     'dashboard',
     'administrativelevels',
+    'privacy',
+    'issue',
 ]
 
 THIRD_PARTY_APPS = [
@@ -255,3 +257,13 @@ AWS_STORAGE_BUCKET_NAME = env('S3_BUCKET')
 AWS_ACCESS_KEY_ID = env('S3_ACCESS')
 
 AWS_SECRET_ACCESS_KEY = env('S3_SECRET')
+
+
+
+# SEND EMAIL Configuration
+EMAIL_BACKEND = env('EMAIL_BACKEND')
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_PORT = env('EMAIL_PORT')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')

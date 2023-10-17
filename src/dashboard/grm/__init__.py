@@ -11,13 +11,16 @@ MEDIUM_CHOICES = [
 
 CHOICE_EMAIL = 'email'
 CHOICE_PHONE = 'phone_number'
+CHOICE_SMS = 'sms'
 CHOICE_WHATSAPP = 'whatsapp'
+CHOICE_LETTER = 'letter'
 CONTACT_CHOICES = [
     ('', ''),
     (CHOICE_EMAIL, _('email')),
-    # (CHOICE_PHONE, _('phone number')),
-    (CHOICE_PHONE, _('sms')),
+    (CHOICE_PHONE, _('phone call')),
+    (CHOICE_SMS, _('sms')),
     (CHOICE_WHATSAPP, 'whatsapp'),
+    (CHOICE_LETTER, _('by letter (correspondence)')),
 ]
 
 CHOICE_1 = 1
@@ -48,4 +51,11 @@ GENDER_CHOICES = [
     (CHOICE_FEMALE, _(CHOICE_FEMALE)),
     (CHOICE_OTHER, _(CHOICE_OTHER)),
     (CHOICE_RNS, _(CHOICE_RNS)),
+]
+
+CHOICE_INDIVIDUAL = "Individual"
+CHOICE_GROUP = "Group"
+CITIZEN_OR_GROUP_CHOICES = [
+    (CHOICE_INDIVIDUAL, _('Individual')),
+    (CHOICE_GROUP, _('Group')),
 ]

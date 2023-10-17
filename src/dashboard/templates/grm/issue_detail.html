@@ -53,10 +53,11 @@
                         <div class="card mh-750">
                             
                             <div class="card-header">
-                                {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id and not doc.escalate_flag %}
+                                {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id %} 
+                                    {% comment %} and not doc.escalate_flag {% endcomment %}
                                     <div class="row mb-3">
                                         <div class="col-1">
-                                            {% with indexed_users|get:user.id as color_index %}
+                                            {% with indexed_users|get_indexed_user:user.id as color_index %}
                                                 <div class="circle-icon navbar-{{ colors|next_in_circular_list:color_index }}
                                                 text-white text-bold-family">
                                                     <div class="center-32 pt-1">
@@ -116,8 +117,9 @@
                             <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                         </div>
                     </div>
-
+                    {% if doc.category.id != 2 %}
                     {% bootstrap_field form.assignee layout='horizontal' %}
+                    {% endif %}
                     <div class="row mr-2 mb-2">
                         <div class="col-3">
                             <label class="label-align">
@@ -300,8 +302,8 @@
                         <hr />
                         {% for escalation_reason in doc.escalation_reasons %}
                             <div class="row">
-                                <div class="col-6">
-                                    {% with indexed_users|get:escalation_reason.id as color_index %}
+                                <div class="col-9">
+                                    {% with indexed_users|get_indexed_user:escalation_reason.id as color_index %}
                                         <div class="circle-icon float-left mr-2 navbar-{{ colors|next_in_circular_list:color_index }}">
                                             <div class="center-32 pt-1 text-white text-bold-family">
                                                 {% get_initials escalation_reason.name %}
@@ -315,12 +317,39 @@
                                         {{ escalation_reason.due_at|string_to_date|date:'j-F-Y' }}
                                     </div>
                                 </div>
-                                <div class="col-6 text-right lh15 mt-3 text-regular-family">
+                                <div class="col-3 text-right lh15 mt-3 text-regular-family">
                                     {% get_hour escalation_reason.due_at %}
                                 </div>
                             </div>
                             <div class="row border-bottom mt-2 mb-3">
                                 <div class="col-10 mb-2 text-regular-family mb-3">
+                                    {% if escalation_reason.issue_status %}
+                                        <b>{{ escalation_reason.issue_status }}</b><br />
+                                    {% endif %}
+                                    
+                                
+                                        {% if escalation_reason.attachment %}
+                                        
+                                            
+            <a href="{% url 'attachments:get-attachment' escalation_reason.attachment.bd_id escalation_reason.attachment.name %}?db=grm"
+                target="_blank">
+                {% translate 'Transfer file' %}
+            </a>
+            
+            {% if user.id == doc.assignee.id %}
+            <a class="btn delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
+            data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id escalation_reason.attachment.id %}">
+                <i class="far fa-trash-alt text-danger"></i>
+            </a>
+            {% endif %}
+            {% if "encrypt_" in escalation_reason.attachment.name %}
+            <a class="btn show-data {% if not permission_to_edit %}disabled{% endif %}"
+            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id escalation_reason.attachment.id %}" 
+            id="show_data_attachment_{{ doc.auto_increment_id }}_{{ escalation_reason.attachment.id }}">
+                <i class="far fa-eye link show-data"></i>
+            </a>
+            {% endif %}
+                                        <br />{% endif %}
                                     {{ escalation_reason.comment|safe }}
                                 </div>
                             </div>
@@ -364,7 +393,7 @@
                     {% if enable_add_comment and permission_to_edit %}
                         <div class="row mb-3">
                             <div class="col-1">
-                                {% with indexed_users|get:user.id as color_index %}
+                                {% with indexed_users|get_indexed_user:user.id as color_index %}
                                     <div class="circle-icon navbar-{{ colors|next_in_circular_list:color_index }}
                                     text-white text-bold-family">
                                         <div class="center-32 pt-1">
@@ -490,7 +519,7 @@
         {% if not user|has_group:'Admin' %}
             category_elt.prop("disabled", true);
         {% endif %}
-
+        
         {% if not user|has_group:'Admin' and not user|has_group:'Assignee' %}
             //not permission_to_edit
             assignee.prop("disabled", true);
@@ -521,6 +550,7 @@
         class OpenStatusFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                loadComments();
             }
         }
         let open_reason_form_ajax = new OpenStatusFormAjaxSubmit();
@@ -528,6 +558,8 @@
         class ResearchResultFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                reasonLoadAttachments();
+                loadComments();
             }
         }
         let research_result_form_ajax = new ResearchResultFormAjaxSubmit();
@@ -535,6 +567,7 @@
         class UnresolveFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                loadComments();
             }
         }
         let unresolved_reason_form_ajax = new UnresolveFormAjaxSubmit();
@@ -542,6 +575,7 @@
         class EscalateFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                loadComments();
             }
         }
         let escalate_reason_form_ajax = new EscalateFormAjaxSubmit();
@@ -549,6 +583,7 @@
         class PublishFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                loadComments();
             }
         }
         let issue_publish_form_ajax = new PublishFormAjaxSubmit();
@@ -556,6 +591,7 @@
         class UnpublishFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                loadComments();
             }
         }
         let issue_unpublish_form_ajax = new UnpublishFormAjaxSubmit();
@@ -563,6 +599,7 @@
         class RejectReasonFormAjaxSubmit extends FormAjaxSubmit {
             submitted_form() {
                 loadStatusButtons();
+                loadComments();
             }
         }
         let reject_reason_form_ajax = new RejectReasonFormAjaxSubmit();
@@ -573,6 +610,20 @@
                 }
             }
         let delete_issue_form_ajax = new DelteIssueFormAjaxSubmit();
+
+        class FileFormReasonAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                reasonLoadAttachments();
+            }
+        }
+        let file_form_ajax_reason = new FileFormReasonAjaxSubmit();
+
+        class FileFormAjaxSubmit extends FormAjaxSubmit {
+            submitted_form() {
+                loadAttachments();
+            }
+        }
+        let file_form_ajax = new FileFormAjaxSubmit();
 
 
         function loadStatusButtons() {
@@ -622,7 +673,7 @@
 
                 record_resolution.on('click', function () {
                     let url = "{% url 'dashboard:grm:submit_issue_research_result' doc.auto_increment_id %}";
-                    research_result_form_ajax.load_form('#research_result_form', status_change_modal, url);
+                    research_result_form_ajax.load_form('#research_result_form', status_change_modal, url, false, true);
                 });
 
                 set_unresolved.on('click', function () {
@@ -632,7 +683,7 @@
 
                 escalate_issue.on('click', function () {
                     let url = "{% url 'dashboard:grm:submit_issue_escalate' doc.auto_increment_id %}";
-                    escalate_reason_form_ajax.load_form('#escalate_reason_form', status_change_modal, url);
+                    escalate_reason_form_ajax.load_form('#escalate_reason_form', status_change_modal, url, false, true);
                 });
 
                 publish_issue.on('click', function () {
@@ -654,14 +705,6 @@
         }
 
         //Attachments
-
-        class FileFormAjaxSubmit extends FormAjaxSubmit {
-            submitted_form() {
-                loadAttachments();
-            }
-        }
-
-        let file_form_ajax = new FileFormAjaxSubmit();
         let file_form_modal = $('#fileFormModal');
 
         function loadAttachments() {
@@ -708,13 +751,6 @@
 
 
         //Reason - Attachments
-        class FileFormReasonAjaxSubmit extends FormAjaxSubmit {
-            submitted_form() {
-                reasonLoadAttachments();
-            }
-        }
-
-        let file_form_ajax_reason = new FileFormReasonAjaxSubmit();
         {% comment %} let file_form_modal_reason = $('#fileFormModalReason'); {% endcomment %}
         let file_form_modal_reason = $('#fileFormModal');
 
@@ -722,16 +758,18 @@
             load_attachments_spin_reason.show();
             $('#attachments-reason').load(
                 "{% url 'dashboard:grm:issue_attachments' doc.auto_increment_id %}?column=2&attr=reasons", function (
-                    response, status, xhr) {
-                    if (status === "error") {
-                        alert(error_server_message + "Error " + response.status);
-                    }
-                    load_attachments_spin_reason.hide();
-                    $('#add_attachment_reason').click(function () {
-                        let url = "{% url 'dashboard:grm:upload_issue_attachment' doc.auto_increment_id %}?reason=1";
-                        file_form_ajax_reason.load_form('#form', file_form_modal_reason, url, false, true);
-                    });
+                response, status, xhr) {
+                if (status === "error") {
+                    alert(error_server_message + "Error " + response.status);
+                }
+                load_attachments_spin_reason.hide();
+                $('#add_attachment_reason').click(function () {
+                    let url = "{% url 'dashboard:grm:upload_issue_attachment' doc.auto_increment_id %}?reason=1";
+                    file_form_ajax_reason.load_form('#form', file_form_modal_reason, url, false, true);
                 });
+            });
+         
+
         }
 
         $(document).ready(function () {
@@ -782,27 +820,43 @@
         }
 
         add_comment.click(function () {
-            $.ajax({
-                type: "POST",
-                url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}",
-                data: {
-                    "comment": comment.val(),
-                    issue_password_comment: $('#id_issue_password_comment').val(),
-                },
-                success: function (response) {
-                    showPopupMessage(response.msg);
-                    loadComments();
-                    comment.val('');
-                    add_comment.prop('disabled', true);
-                },
-                error: function (data, status, error) {
-                            if(error == "Forbidden"){
-                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
-                            }else{
-                                alert(error_server_message + "Error " + data.status);
-                            }
+            let ok_to_save_comment = true;
+            {% if doc.category.id == 4 or doc.category.id == 7 %}
+                if(!$('#id_issue_password_comment').val() || $('#id_issue_password_comment').val() == ''){
+                    ok_to_save_comment = false;
+                }
+            {% endif %}
+            if(ok_to_save_comment){
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}",
+                    data: {
+                        "comment": comment.val(),
+                        issue_password_comment: $('#id_issue_password_comment').val(),
+                    },
+                    success: function (response) {
+                        showPopupMessage(response.msg);
+                        loadComments();
+                        comment.val('');
+                        
+                        if(response.comment){
+                            comment.val(response.comment);
+                        }else{
+                            add_comment.prop('disabled', true);
                         }
-            });
+                    },
+                    error: function (data, status, error) {
+                                if(error == "Forbidden"){
+                                    alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                                }else{
+                                    alert(error_server_message + "Error " + data.status);
+                                }
+                            }
+                });
+            }else{
+                alert("{% translate 'Please fill the password field' %}");
+            }
+            
         });
 
         comment.on('keyup', function () {
@@ -831,27 +885,44 @@
         } {% endcomment %}
 
         add_comment_reason.click(function () {
-            $.ajax({
-                type: "POST",
-                url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}?reason=1",
-                data: {
-                    "comment": comment_reason.val(),
-                    issue_password_reason: $('#id_issue_password_reason').val(),
-                },
-                success: function (response) {
-                    showPopupMessage(response.msg);
-                    reasonLoadAttachments();
-                    comment_reason.val('');
-                    add_comment_reason.prop('disabled', true);
-                },
-                error: function (data, status, error) {
-                            if(error == "Forbidden"){
-                                alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
-                            }else{
-                                alert(error_server_message + "Error " + data.status);
-                            }
+            let ok_to_save_comment = true;
+            {% if doc.category.id == 4 or doc.category.id == 7 %}
+                if(!$('#id_issue_password_reason').val() || $('#id_issue_password_reason').val() == ''){
+                    ok_to_save_comment = false;
+                }
+            {% endif %}
+            if(ok_to_save_comment){
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}?reason=1",
+                    data: {
+                        "comment": comment_reason.val(),
+                        issue_password_reason: $('#id_issue_password_reason').val(),
+                    },
+                    success: function (response) {
+                        showPopupMessage(response.msg);
+                        reasonLoadAttachments();
+                        comment_reason.val('');
+                        
+                        if(response.comment){
+                            comment_reason.val(response.comment);
+                        }else{
+                            add_comment_reason.prop('disabled', true);
                         }
-            });
+                    },
+                    error: function (data, status, error) {
+                                if(error == "Forbidden"){
+                                    alert(`{% translate "You don't have permission to request this request." %}` + " Error " + data.status);
+                                }else{
+                                    alert(error_server_message + "Error " + data.status);
+                                }
+                            }
+                });
+            }else{
+                alert("{% translate 'Please fill the password field' %}");
+            }
+            
+
         });
 
         comment_reason.on('keyup', function () {

@@ -22,7 +22,7 @@
                 </div>
             </button>
         </div>
-        <form id="{{ id_form }}" enctype="multipart/form-data">
+        <form id="{{ id_form }}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="modal-body">
                 <div class="overlay-wrapper">
@@ -50,10 +50,12 @@
     $(document).ready(function(){
         let issue_password_file = $('#id_issue_password_file');
         let issue_password_file_parent = issue_password_file.parent();
+        let issue_password = $('#id_issue_password');
+        let issue_password_parent = issue_password.parent();
 
 
-        var password_fields = [issue_password_file]
-        var password_fields_parent = [issue_password_file_parent]
+        var password_fields = [issue_password_file, issue_password]
+        var password_fields_parent = [issue_password_file_parent, issue_password_parent]
         
         password_fields.forEach(function(elt){
             {% if not doc.category %}
@@ -73,6 +75,12 @@
                 elt.hide();
             {% endif %}
         });
+
+
+        $('#id_file_pdf').attr(
+            "accept", 
+            ".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        );
 
     });
 </script>

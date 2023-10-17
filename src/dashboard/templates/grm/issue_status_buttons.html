@@ -1,4 +1,6 @@
 {% load i18n custom_tags %}
+{% make_list 2 4 7 as list_category_cant_escalation %}
+
 <div class="row mr-2 mb-2">
     <div class="col-3">
         <label class="label-align">
@@ -9,11 +11,27 @@
         {{ doc.status.name }}
     </div>
 </div>
+
+<div class="row mr-2 mb-2">
+    <div class="col-3">
+        <label class="label-align">
+            {% translate 'Level' %}
+        </label>
+    </div>
+    <div class="col-9 text-regular-family">
+        {% if current_adl_obj.escalate_to.administrative_level == "Country" %}
+            {% translate "Nation" %}
+        {% else %}
+            {{ current_adl_obj.escalate_to.administrative_level }}
+        {% endif %}
+    </div>
+</div>
+
 {% if user|has_group:'Admin' and not doc.publish %}
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
-            {% translate 'Publish' %}
+            {% translate 'Set to publish' %}
         </label>
     </div>
     <div class="col-4">
@@ -28,7 +46,7 @@
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
-            {% translate 'Unpublish' %}
+            {% translate 'Set to unpublish' %}
         </label>
     </div>
     <div class="col-4">
@@ -39,6 +57,7 @@
     </div>
 </div>
 {% endif %}
+{% comment %} {% if doc.category.id != 2 %} {% endcomment %}
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
@@ -56,6 +75,28 @@
     <div class="col-8">
         <label class="label-align">
             {% translate 'Record Resolution' %}
+            {% if doc.resolution_files %}{% for file in doc.resolution_files %}
+            <br />
+            <a href="{% url 'attachments:get-attachment' file.bd_id file.name %}?db=grm"
+                target="_blank">
+                {% translate 'See PV de reconciliation' %}
+            </a>
+            
+            {% if user.id == doc.assignee.id %}
+            <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
+            data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id file.id %}">
+                <i class="far fa-trash-alt text-danger"></i>
+            </a>
+            {% endif %}
+            {% if "encrypt_" in file.name %}
+            <a class="btn pull-right show-data {% if not permission_to_edit %}disabled{% endif %}"
+            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id file.id %}" 
+            id="show_data_attachment_{{ doc.auto_increment_id }}_{{ file.id }}">
+                <i class="far fa-eye link show-data"></i>
+            </a>
+            {% endif %}
+
+            {% endfor %}{% endif %}
         </label>
     </div>
     <div class="col-4">
@@ -66,6 +107,7 @@
         </button>
     </div>
 </div>
+
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
@@ -74,8 +116,8 @@
     </div>
     <div class="col-4">
         <button type="button" class="
-        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 or doc_status.unresolved_status %}btn-status {% endif %} btn btn-primary pull-right" id="set_unresolved"
-                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or doc_status.final_status or doc.category.id == 2 or doc_status.unresolved_status %}disabled{% endif %}>
+        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or doc_status.final_status or doc.category.id in list_category_cant_escalation or doc_status.unresolved_status %}btn-status {% endif %} btn btn-primary pull-right" id="set_unresolved"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or doc_status.final_status or doc.category.id in list_category_cant_escalation or doc_status.unresolved_status %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
@@ -88,12 +130,13 @@
     </div>
     <div class="col-4">
         <button type="button" class="
-        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or not doc_status.unresolved_status or doc_status.final_status or doc.escalate_flag %}btn-status {% endif %} btn btn-primary pull-right" id="escalate_issue"
-                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or not doc_status.unresolved_status or doc_status.final_status or doc.escalate_flag %}disabled{% endif %}>
+        {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}btn-status {% elif doc_status.rejected_status or not doc_status.unresolved_status or doc_status.final_status or doc.escalate_flag or current_adl_obj.escalate_to.administrative_level == 'Country' %}btn-status {% endif %} btn btn-primary pull-right" id="escalate_issue"
+                {% if not user|has_group:'Admin' and doc.assignee.id != user.id %}disabled{% elif doc_status.rejected_status or not doc_status.unresolved_status or doc_status.final_status or doc.escalate_flag or current_adl_obj.escalate_to.administrative_level == 'Country' %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>
 </div>
+
 {% comment %} <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
@@ -107,3 +150,4 @@
         </button>
     </div>
 </div> {% endcomment %}
+{% comment %} {% endif %} {% endcomment %}

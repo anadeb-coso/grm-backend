@@ -1,0 +1,30 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e252f19",
+    "_rev": "1-3a753fc7d2c8067ca939be32b9ab342f",
+    "name": "Préjudices environnementaux ou sociaux causés aux communautés par les interventions du projet",
+    "label": "5- Préjudices environnementaux ou sociaux causés aux communautés par les interventions du projet",
+    "abbreviation": "PESCCIP",
+    "id": 5,
+    "value": 5,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Village",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_appeal_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_escalation_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

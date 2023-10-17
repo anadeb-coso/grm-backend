@@ -9,6 +9,8 @@ from dashboard.grm import CHOICE_CONTACT, CHOICE_PHONE
 from grm.celery import app
 from grm.utils import get_auto_increment_id
 from sms_client import send_sms
+from administrativelevels.functions import get_ald_parent_by_type_and_child_id
+from dashboard.grm.functions import send_notification_by_mail, send_notification_on_escalation_by_mail
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -207,8 +209,34 @@ def escalate_issues():
             department_id = doc_category['assigned_department']['id']
             administrative_id = issue_doc['administrative_region']['administrative_id']
 
-            #Search the last escalate
+            #Building the escate list
             escalation_administrativelevels = issue_doc['escalation_administrativelevels'] if 'escalation_administrativelevels' in issue_doc else list()
+            
+            for i_escalation in range(len(escalation_administrativelevels)):
+                if not escalation_administrativelevels[i_escalation].get('comment'):
+                    # try:
+                    ald_to_escalation = get_ald_parent_by_type_and_child_id(
+                        escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'],
+                        administrative_id
+                    )
+                    escalate_to_administrative = {
+                        "administrative_id": str(ald_to_escalation.id),
+                        "name": ald_to_escalation.name,
+                        "administrative_level": ald_to_escalation.type
+                    }
+                    # except:
+                    #     ald_to_escalation = None
+                    if ald_to_escalation:
+                        escalation_administrativelevels[i_escalation] = {
+                            "escalate_to": escalate_to_administrative,
+                            "comment": (escalation_administrativelevels[i_escalation-1]['escalate_to']['name'] if \
+                                        (i_escalation > 0) and len(escalation_administrativelevels) > 1 else issue_doc['administrative_region']['name']) \
+                                            + " " + _("to") + " " + escalate_to_administrative['name'] + \
+                                                " (" + escalate_to_administrative['administrative_level'] + ")",
+                            "due_at": escalation_administrativelevels[i_escalation]["due_at"]
+                        }
+
+            #Search the last escalate
             if escalation_administrativelevels:
                 administrative_id = escalation_administrativelevels[0]['escalate_to']['administrative_id']
                 
@@ -216,7 +244,7 @@ def escalate_issues():
             assignee, escalate_to_administrative = get_assignee_to_escalate(adl_db, department_id, administrative_id)
             
             if assignee:
-                issue_doc['assignee'] = assignee
+                # issue_doc['assignee'] = assignee
                 issue_doc['escalate_flag'] = False
                 escalation_administrativelevels.insert(0, {
                     "escalate_to": escalate_to_administrative,
@@ -230,6 +258,9 @@ def escalate_issues():
 
                 result['issues_updated'].append(issue_id)
                 issues_updated = True
+
+                send_notification_on_escalation_by_mail(issue_doc) #Send mail
+
             else:
                 result['scale_is_not_available'].append(issue_id)
 
@@ -237,6 +268,18 @@ def escalate_issues():
             error = f'Error trying to escalate for issue document with id {issue_id}'
             result['errors'].append(error)
         if issues_updated:
+            try:
+                doc_status = grm_db.get_query_result({
+                    "open_status": True,
+                    "type": 'issue_status'
+                })[0][0]
+                issue_doc['status'] = {
+                    "name": doc_status['name'],
+                    "id": doc_status['id']
+                }
+            except Exception:
+                pass
+            
             issue_doc.save()
             updated_issues += 1
             grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
@@ -366,6 +409,43 @@ def send_sms_message():
     return result
 
 
+
+@app.task
+def send_a_new_issue_notification():
+    """
+    Check the issues without 'auto_increment_id', 'internal_code' or 'assignee', and try to set a value for these fields
+    """
+    grm_db = get_db(COUCHDB_GRM_DATABASE)
+    selector = {
+        "type": "issue",
+        "confirmed": True,
+        "$or": [
+            {
+                "notification_send": False,
+            },
+            {
+                "notification_send": {
+                    "$exists": False
+                }
+            }
+        ]
+    }
+
+    issues = grm_db.get_query_result(selector)
+    
+    for issue in issues:
+        try:
+            issue_doc = grm_db[issue['_id']]
+            send_notification_by_mail(issue)
+            issue_doc['notification_send'] = True
+            issue_doc.save()
+        except Exception:
+            continue
+            
+
+
+
+
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Calls check_issues() every 5 minutes.
@@ -376,3 +456,6 @@ def setup_periodic_tasks(sender, **kwargs):
 
     # Calls send_sms_message() every 5 minutes.
     sender.add_periodic_task(300, send_sms_message.s(), name='send sms every 5 minutes')
+    
+    # Calls send_a_new_issue_notification() every 5 minutes.
+    sender.add_periodic_task(300, send_a_new_issue_notification.s(), name='send sms every 5 minutes')

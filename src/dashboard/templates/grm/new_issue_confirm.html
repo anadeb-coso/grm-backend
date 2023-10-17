@@ -344,5 +344,31 @@
         let choice_placeholder = "{% translate 'Click to select location' %}";
         changeRegionTrigger(get_choices_url, choice_placeholder);
         loadRegionSelectors(get_ancestors_url);
+
+
+        
+        $(document).ready(function(){
+            let structure_in_charge = $('#id_structure_in_charge');
+            let structure_in_charge_parent = structure_in_charge.parent().parent();
+            let structure_in_charge_phone = $('#id_structure_in_charge_phone');
+            let structure_in_charge_phone_parent = structure_in_charge_phone.parent().parent();
+            let structure_in_charge_email = $('#id_structure_in_charge_email');
+            let structure_in_charge_email_parent = structure_in_charge_email.parent().parent();
+
+
+            var password_fields_parent = [
+                structure_in_charge_phone_parent, structure_in_charge_email_parent
+            ];
+            
+            password_fields_parent.forEach(function(elt){
+                {% if doc.category.id == 7 %}
+                    elt.show();
+                {% else %}
+                    elt.hide();
+                {% endif %}
+            }); 
+
+
+        });
     </script>
 {% endblock javascript %}

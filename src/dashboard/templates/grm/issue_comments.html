@@ -2,7 +2,7 @@
 {% for comment in comments %}
     <div class="row">
         <div class="col-6">
-            {% with indexed_users|get:comment.id as color_index %}
+            {% with indexed_users|get_indexed_user:comment.id as color_index %}
                 <div class="circle-icon float-left mr-2 navbar-{{ colors|next_in_circular_list:color_index }}">
                     <div class="center-32 pt-1 text-white text-bold-family">
                         {% get_initials comment.name %}
@@ -27,6 +27,9 @@
             {% if "b'" in comment.comment %}
                 ***
             {% else %}
+                {% if comment.issue_status %}
+                    <b>{{ comment.issue_status }}</b><br />
+                {% endif %}
                 {{ comment.comment|safe }}
             {% endif %}
             </p>

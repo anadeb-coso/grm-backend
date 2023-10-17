@@ -12,6 +12,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
 from cryptography.fernet import InvalidToken
+from django.contrib.auth.hashers import check_password
 
 from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee
 from client import get_db, upload_file
@@ -32,8 +33,9 @@ from grm.utils import (
     cryptography_fernet_decrypt, delete_file_on_download_file
 )
 from dashboard.grm.functions import get_issue_status_stories
-from dashboard.tasks import check_issues, send_sms_message, escalate_issues
+from dashboard.tasks import check_issues, send_sms_message, escalate_issues, send_a_new_issue_notification
 from authentication.permissions import AdminPermissionRequiredMixin
+from privacy.functions import get_last_category_password, get_all_privacy_passwords
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -88,6 +90,10 @@ class StartNewIssueView(LoginRequiredMixin, generic.View):
         issue = {
             "auto_increment_id": auto_increment_id,
             "reporter": {
+                "id": user.id,
+                "name": user.name
+            },
+            "assignee": {
                 "id": user.id,
                 "name": user.name
             },
@@ -149,7 +155,9 @@ class IssueMixin:
                 or 
                 (self.doc.get('reporter') and self.doc.get('reporter').get('id') == user.id)
                 or 
-                (self.doc.get('assignee') and self.doc.get('assignee').get('id') == user.id)
+                (self.doc.get('assignee') and self.doc.get('assignee').get('id') == user.id) 
+                or 
+                hasattr(user, 'governmentworker') and user.governmentworker.administrative_id == "1"
             ):
             raise PermissionDenied
         
@@ -212,41 +220,56 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
         if len(attachments) < self.max_attachments or reason:
             issue_password_file = data['issue_password_file']
             file = data['file']
+            _ok = True
             if  ((self.doc.get('category') and self.doc['category']["id"] in (4, 7)) or not self.doc.get('category')) and issue_password_file:
-                file = cryptography_fernet_encrypt(file, issue_password_file,  _type="file", filename=file.name)
-                file.name = f'encrypt_{file.name}' if 'encrypt_' not in file.name else file.name
-            response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
-            if response['ok']:
-                attachment = {
-                    "name": file.name,
-                    "url": f'/grm_attachments/{response["id"]}/{file.name}',
-                    "local_url": "",
-                    "id": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                    "uploaded": True,
-                    "bd_id": response['id'],
-                }
-                
-                if reason:
-                    attachment["type"] = "file"
-                    attachment["user_id"] = self.request.user.id
-                    attachment["user_name"] = self.request.user.name
-                    reasons.insert(0, attachment)
-                    self.doc['reasons'] = reasons
+                last_category_password = get_last_category_password(self.doc['category']["id"])
+                if not last_category_password:
+                    msg = _("The file has not been saved. No password is defined for this category of complaint.")
+                    messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                    _ok = False
+                elif not check_password(issue_password_file, last_category_password.password):
+                    msg = _("The file has not been saved. The password does not match.")
+                    messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                    _ok = False
                 else:
-                    attachments.append(attachment)
-                    self.doc['attachments'] = attachments
+                    file = cryptography_fernet_encrypt(file, issue_password_file,  _type="file", filename=file.name)
+                    file.name = f'encrypt_{file.name}' if 'encrypt_' not in file.name else file.name
+            
+            if _ok:
+                response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                if response['ok']:
+                    attachment = {
+                        "name": file.name,
+                        "url": f'/grm_attachments/{response["id"]}/{file.name}',
+                        "local_url": "",
+                        "id": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                        "uploaded": True,
+                        "bd_id": response['id'],
+                        "subject": "issue"
+                    }
+                    
+                    if reason:
+                        attachment["type"] = "file"
+                        attachment["subject"] = "reason"
+                        attachment["user_id"] = self.request.user.id
+                        attachment["user_name"] = self.request.user.name
+                        reasons.insert(0, attachment)
+                        self.doc['reasons'] = reasons
+                    else:
+                        attachments.append(attachment)
+                        self.doc['attachments'] = attachments
 
-                self.doc.save()
+                    self.doc.save()
 
-                # delete_file_on_download_file(file) #delete file on server
+                    # delete_file_on_download_file(file) #delete file on server
 
 
-                msg = _("The attachment was successfully uploaded.")
-                messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
-            else:
-                msg = _("An error has occurred that did not allow the attachment to be uploaded to the database. "
-                        "Please report to IT staff.")
-                messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
+                    msg = _("The attachment was successfully uploaded.")
+                    messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+                else:
+                    msg = _("An error has occurred that did not allow the attachment to be uploaded to the database. "
+                            "Please report to IT staff.")
+                    messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
         else:
             msg = _("The file could not be uploaded because it has already reached the limit of %(max)d attachments."
                     ) % {'max': self.max_attachments}
@@ -310,6 +333,10 @@ class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
         print(password)
         if not password:
             raise Http404
+        else:
+            category_password = get_last_category_password(self.doc["category"]["id"])
+            if not category_password or not (category_password and check_password(password, category_password.password)):
+                raise PermissionDenied
         
         attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
         grm_attachment_db = get_db(COUCHDB_GRM_ATTACHMENT_DATABASE)
@@ -340,10 +367,13 @@ class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
             raise Http404
         
         attachment_content = _doc.get_attachment(attachment_name)
-        try:
-            return cryptography_fernet_decrypt(attachment_content, password, _type="file", filename=attachment_name)
-        except:
-            raise PermissionDenied
+        for cat_pass in get_all_privacy_passwords(self.doc["category"]["id"]):
+            try:
+                return cryptography_fernet_decrypt(attachment_content, cat_pass, _type="file", filename=attachment_name)
+            except:
+                pass
+        
+        raise PermissionDenied
         # msg = _("The attachment was successfully download.")
         # messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         # # except Exception as exc:
@@ -377,7 +407,7 @@ class IssueAttachmentListView(IssueMixin, IssueCommentsContextMixin, AJAXRequest
 class IssueFormMixin(IssueMixin, generic.FormView):
 
     def get_form_kwargs(self):
-        self.initial = {'doc_id': self.doc['_id']}
+        self.initial = {'doc_id': self.doc['_id'], 'user': self.request.user}
         return super().get_form_kwargs()
 
 
@@ -457,6 +487,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
         }
         self.doc['ongoing_issue'] = data['ongoing_issue']
         self.doc['event_recurrence'] = data['event_recurrence']
+        self.doc['notification_send'] = False
 
         self.doc.save()
 
@@ -515,6 +546,8 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
                 raise Http404
         else:
             self.doc['citizen_group_2'] = ""
+        
+        self.doc['citizen_or_group'] = data['citizen_or_group']
 
     def set_location_fields(self, data):
 
@@ -546,10 +579,10 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
 
     def set_assignee(self):
 
-        try:
-            assignee = get_assignee(self.grm_db, self.eadl_db, self.adl_db, self.doc)
-        except Exception:
-            raise Http404
+        # try:
+        assignee = get_assignee(self.grm_db, self.eadl_db, self.adl_db, self.doc)
+        # except Exception:
+            # raise Http404
 
         if assignee == "":
             msg = _("There is no staff member to assign the issue to. Please report to IT staff.")
@@ -628,7 +661,9 @@ class NewIssueLocationFormView(PageMixin, NewIssueMixin):
     def form_valid(self, form):
         data = form.cleaned_data
         self.set_location_fields(data)
+        print(7)
         self.set_assignee()
+        print(8)
         self.doc.save()
         if not self.doc['assignee']:
             return HttpResponseRedirect(
@@ -731,6 +766,7 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         check_issues()
         escalate_issues()
         send_sms_message()
+        send_a_new_issue_notification()
         return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
@@ -783,6 +819,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             selector = {
                 "type": "issue",
                 "confirmed": True,
+                "auto_increment_id": {"$ne": ""},
             }
         else:
             selector = {
@@ -891,6 +928,16 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         user_id = self.request.user.id
         user = self.request.user
 
+        if user.groups.filter(name="Admin").exists():
+            pass
+        else:
+            if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
+                pass
+            else:
+                if not self.doc.get('publish'):
+                    raise PermissionDenied
+
+
         self.specific_permissions()
 
         context['enable_add_comment'] = user_id == (self.doc['assignee']['id'] if type(self.doc['assignee']) == dict else 0) or user_id == self.doc_department[
@@ -917,6 +964,10 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         context['category_form'] = IssueCategoryForm(
             initial= {'doc_id': self.doc['_id']}
         )
+        
+        
+        escalate_issues()
+        send_a_new_issue_notification()
 
         return context
 
@@ -1009,37 +1060,57 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
             reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
 
             issue_password = request.POST.get('issue_password_reason') if request.POST.get('issue_password_reason') else request.POST.get('issue_password_comment')
-            if  self.doc['category']["id"] in (4, 7) and issue_password:
-                comment = str(cryptography_fernet_encrypt(comment, issue_password))
             
-            due_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            if reason:
-                comment_obj = {
-                    "user_name": request.user.name,
-                    "user_id": user_id,
-                    "comment": comment,
-                    "due_at": due_at,
-                    "id": due_at,
-                    "type": "comment"
-                }
-                reasons.insert(0, comment_obj)
-                self.doc['reasons'] = reasons
-            else:
-                comment_obj = {
-                    "name": request.user.name,
-                    "id": user_id,
-                    "comment": comment,
-                    "due_at": due_at
-                }
-                comments.insert(0, comment_obj)
-                self.doc['comments'] = comments
-            self.doc.save()
-            msg = _("The comment was sent successfully.")
-            messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+            
+            _ok = True
+            if  self.doc['category']["id"] in (4, 7): # and issue_password:
+                last_category_password = get_last_category_password(self.doc['category']["id"])
+                if not last_category_password:
+                    msg = _("The information has not been registered. No password is defined for this category of complaint.")
+                    messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                    _ok = False
+                elif not check_password(issue_password, last_category_password.password):
+                    msg = _("The information has not been saved. The password does not match.")
+                    messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                    _ok = False
+                else:
+                    comment = str(cryptography_fernet_encrypt(comment, issue_password))
+            if _ok:
+                due_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                if reason:
+                    comment_obj = {
+                        "user_name": request.user.name,
+                        "user_id": user_id,
+                        "comment": comment,
+                        "due_at": due_at,
+                        "id": due_at,
+                        "type": "comment"
+                    }
+                    reasons.insert(0, comment_obj)
+                    self.doc['reasons'] = reasons
+                else:
+                    comment_obj = {
+                        "name": request.user.name,
+                        "id": user_id,
+                        "comment": comment,
+                        "due_at": due_at
+                    }
+                    comments.insert(0, comment_obj)
+                    self.doc['comments'] = comments
+                self.doc.save()
+                msg = _("The comment was sent successfully.")
+                messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         else:
             msg = _("Comment cannot be empty.")
             messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
-        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        
+        if _ok:
+            context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
+        else:
+            context = {
+                'msg': render(self.request, 'common/messages.html').content.decode("utf-8"),
+                'comment': comment
+            }
         return self.render_to_json_response(context, safe=False)
 
 
@@ -1066,6 +1137,29 @@ class IssueStatusButtonsTemplateView(IssueMixin, AJAXRequestMixin, LoginRequired
         except Exception:
             raise Http404
         context['doc_status'] = doc_status
+
+
+        escalation_administrativelevels = self.doc['escalation_administrativelevels'] if 'escalation_administrativelevels' in self.doc else list()
+        if not escalation_administrativelevels:
+            try:
+                context['current_adl_obj'] = {
+                    'escalate_to': {
+                    'administrative_id': self.doc['administrative_region']['administrative_id'],
+                    'name': self.doc['administrative_region']['name'],
+                    'administrative_level': self.doc['category']['administrative_level']
+                    },
+                    'due_at': self.doc['issue_date']
+                }
+            except:
+                context['current_adl_obj'] = {
+                    'escalate_to': {
+                    'administrative_id': self.doc['administrative_region'],
+                    'administrative_level': self.doc['category']['administrative_level']
+                    },
+                    'due_at': self.doc['issue_date']
+                }
+        else:
+            context['current_adl_obj'] = escalation_administrativelevels[0]
 
         return context
 
@@ -1121,7 +1215,8 @@ class SubmitIssueOpenStatusView(AJAXRequestMixin, ModalFormMixin, LoginRequiredM
         comment_obj = {
             "name": self.request.user.name,
             "id": self.request.user.id,
-            "comment": "<h6>"+_("Issue opened") + "</h6>" + data["open_reason"],
+            "issue_status": _("Issue opened").__str__(),
+            "comment": data["open_reason"],
             "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         }
         comments.insert(0, comment_obj)
@@ -1160,37 +1255,92 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
 
     def form_valid(self, form):
         data = form.cleaned_data
-        self.doc['research_result'] = data["research_result"]
-        self.doc['_comment'] = data["research_result"]
-        # self.doc['reject_reason'] = ""
-        try:
-            doc_status = self.grm_db.get_query_result({
-                "final_status": True,
-                "type": 'issue_status'
-            })[0][0]
-        except Exception:
-            raise Http404
-        self.doc['status'] = {
-            "name": doc_status['name'],
-            "id": doc_status['id']
-        }
-        self.doc['resolution_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
-        del self.doc['_comment']
+        issue_password = data['issue_password'] if 'issue_password' in data else None
+        _ok = True
+        _comment = data["research_result"]
+        if  self.doc['category']["id"] in (4, 7): # and issue_password:
+            last_category_password = get_last_category_password(self.doc['category']["id"])
+            if not last_category_password:
+                msg = _("The information has not been registered. No password is defined for this category of complaint.")
+                messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                _ok = False
+            elif not check_password(issue_password, last_category_password.password):
+                msg = _("The information has not been saved. The password does not match.")
+                messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                _ok = False
+            else:
+                _comment = str(cryptography_fernet_encrypt(_comment, issue_password))
 
-        comments = self.doc['comments'] if 'comments' in self.doc else list()
-        comment_obj = {
-            "name": self.request.user.name,
-            "id": self.request.user.id,
-            "comment": "<h6>"+_("Issue resolved") + "</h6>" + data["research_result"],
-            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        }
-        comments.insert(0, comment_obj)
-        self.doc['comments'] = comments
+        if _ok:
+            self.doc['research_result'] = _comment
+            self.doc['_comment'] = _comment
+            # self.doc['reject_reason'] = ""
+            try:
+                doc_status = self.grm_db.get_query_result({
+                    "final_status": True,
+                    "type": 'issue_status'
+                })[0][0]
+            except Exception:
+                raise Http404
+            self.doc['status'] = {
+                "name": doc_status['name'],
+                "id": doc_status['id']
+            }
+            self.doc['resolution_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+            del self.doc['_comment']
 
-        self.doc.save()
-        msg = _("The issue status was successfully updated.")
-        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+            comments = self.doc['comments'] if 'comments' in self.doc else list()
+            comment_obj = {
+                "name": self.request.user.name,
+                "id": self.request.user.id,
+                "issue_status": _("Issue resolved").__str__(),
+                "comment": _comment,
+                "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            }
+            comments.insert(0, comment_obj)
+            self.doc['comments'] = comments
+
+
+            # File
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+            
+            file = data['file_pdf']
+            
+            if  file and self.doc.get('category') and self.doc['category']["id"] in (4, 7) and issue_password:
+                    file = cryptography_fernet_encrypt(file, issue_password,  _type="file", filename=file.name)
+                    file.name = f'encrypt_{file.name}' if 'encrypt_' not in file.name else file.name
+            
+            if file:
+                response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                if response['ok']:
+                    attachment = {
+                        "name": file.name,
+                        "url": f'/grm_attachments/{response["id"]}/{file.name}',
+                        "local_url": "",
+                        "id": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                        "uploaded": True,
+                        "bd_id": response['id'],
+                        "subject": "resolution"
+                    }
+                    
+                    attachment["type"] = "file"
+                    attachment["user_id"] = self.request.user.id
+                    attachment["user_name"] = self.request.user.name
+                    reasons.insert(0, attachment)
+                    self.doc['reasons'] = reasons
+
+                    resolution_files = self.doc['resolution_files'] if 'resolution_files' in self.doc else list()
+                    resolution_files.insert(0, attachment)
+                    self.doc['resolution_files'] = resolution_files
+                    
+            # End File
+
+
+
+            self.doc.save()
+            msg = _("The issue status was successfully updated.")
+            messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
 
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)
@@ -1229,7 +1379,8 @@ class SubmitIssueSetUnresolvedFormView(AJAXRequestMixin, ModalFormMixin, LoginRe
         comment_obj = {
             "name": self.request.user.name,
             "id": self.request.user.id,
-            "comment": "<h6>"+_("Unresolved Issue") + "</h6>" + data["unresolved_reason"],
+            "issue_status": _("Unresolved Issue").__str__(),
+            "comment": data["unresolved_reason"],
             "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         }
         comments.insert(0, comment_obj)
@@ -1256,33 +1407,89 @@ class SubmitIssueEscalateFormView(AJAXRequestMixin, ModalFormMixin, LoginRequire
 
     def form_valid(self, form):
         data = form.cleaned_data
-        self.doc['escalate_reason'] = data["escalate_reason"]
-        self.doc['_comment'] = data["escalate_reason"]
-        
-        self.doc['escalate_flag'] = True
-        self.doc['escalate_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
-        del self.doc['_comment']
+        issue_password = data['issue_password'] if 'issue_password' in data else None
+        _ok = True
+        _comment = data["escalate_reason"]
+        if  self.doc['category']["id"] in (4, 7): # and issue_password:
+            last_category_password = get_last_category_password(self.doc['category']["id"])
+            if not last_category_password:
+                msg = _("The information has not been registered. No password is defined for this category of complaint.")
+                messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                _ok = False
+            elif not check_password(issue_password, last_category_password.password):
+                msg = _("The information has not been saved. The password does not match.")
+                messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+                _ok = False
+            else:
+                _comment = str(cryptography_fernet_encrypt(_comment, issue_password))
 
-        comments = self.doc['comments'] if 'comments' in self.doc else list()
-        escalation_reasons = self.doc['escalation_reasons'] if 'escalation_reasons' in self.doc else list()
-        comment_obj = {
-            "name": self.request.user.name,
-            "id": self.request.user.id,
-            "comment": "<h6>"+_("Issue escalated") + "</h6>" + data["escalate_reason"],
-            "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        }
-        comments.insert(0, comment_obj)
-        self.doc['comments'] = comments
-        escalation_reasons.insert(0, comment_obj)
-        self.doc['escalation_reasons'] = escalation_reasons
+        if _ok:
+            self.doc['escalate_reason'] = _comment
+            self.doc['_comment'] = _comment
+            
+            self.doc['escalate_flag'] = True
+            self.doc['escalate_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            self.doc["issue_status_stories"] = get_issue_status_stories(self.request.user, self.doc, self.doc['status'])
+            del self.doc['_comment']
 
-        self.doc.save()
+            comments = self.doc['comments'] if 'comments' in self.doc else list()
+            escalation_reasons = self.doc['escalation_reasons'] if 'escalation_reasons' in self.doc else list()
+            comment_obj = {
+                "name": self.request.user.name,
+                "id": self.request.user.id,
+                "issue_status": _("Issue escalated").__str__(),
+                "comment": _comment,
+                "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            }
+            comments.insert(0, comment_obj)
+            self.doc['comments'] = comments
 
-        escalate_issues()
+            # File
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+            comment_obj["type"] = "comment"
+            comment_obj["user_id"] = self.request.user.id
+            comment_obj["user_name"] = self.request.user.name
+            reasons.insert(0, comment_obj)
+            
+            file = data['file_pdf']
+            
+            if  file and self.doc.get('category') and self.doc['category']["id"] in (4, 7) and issue_password:
+                    file = cryptography_fernet_encrypt(file, issue_password,  _type="file", filename=file.name)
+                    file.name = f'encrypt_{file.name}' if 'encrypt_' not in file.name else file.name
+            
+            if file:
+                response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                if response['ok']:
+                    attachment = {
+                        "name": file.name,
+                        "url": f'/grm_attachments/{response["id"]}/{file.name}',
+                        "local_url": "",
+                        "id": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                        "uploaded": True,
+                        "bd_id": response['id'],
+                        "subject": "escalation"
+                    }
+                    
+                    attachment["type"] = "file"
+                    attachment["user_id"] = self.request.user.id
+                    attachment["user_name"] = self.request.user.name
+                    reasons.insert(0, attachment)
+                    self.doc['reasons'] = reasons
 
-        msg = _("The issue status was successfully updated.")
-        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+                    del comment_obj['type']
+                    comment_obj['attachment'] = attachment
+                    
+            # End File
+
+            escalation_reasons.insert(0, comment_obj)
+            self.doc['escalation_reasons'] = escalation_reasons
+
+            self.doc.save()
+
+            escalate_issues()
+
+            msg = _("The issue status was successfully updated.")
+            messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
 
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)
@@ -1304,20 +1511,36 @@ class SubmitIssuePublishFormView(AJAXRequestMixin, ModalFormMixin, LoginRequired
 
     def form_valid(self, form):
         data = form.cleaned_data
-        if not self.doc.get('original_description'):
-            if self.doc['category']["id"] in (4, 7):
-                self.doc['original_description'] = self.doc.get('description')
+        issue_password = data.get("issue_password")
+        last_category_password = get_last_category_password(self.doc['category']["id"])
+        if not last_category_password:
+            msg = _("The complaint has not been published. No password is defined for this category of complaint.")
+            messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+        elif not check_password(issue_password, last_category_password.password):
+            msg = _("The complaint has not been published. The password does not match.")
+            messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+        else:
+            if not self.doc.get('original_description'):
+                if self.doc['category']["id"] in (4, 7):
+                    self.doc['original_description'] = self.doc.get('description')
+                    self.doc['description'] = str(cryptography_fernet_encrypt(data["issue_description"], issue_password))
+                else:
+                    self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), issue_password))
+                    self.doc['description'] = data["issue_description"]
             else:
-                self.doc['original_description'] = str(cryptography_fernet_encrypt(self.doc.get('description'), data.get("issue_password")))
+                if self.doc['category']["id"] in (4, 7):
+                    self.doc[f"description_{datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')}"] = self.doc.get('description')
+                    self.doc['description'] = str(cryptography_fernet_encrypt(data["issue_description"], issue_password))
+                else:
+                    self.doc[f"description_{datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')}"] = str(cryptography_fernet_encrypt(self.doc.get('description'), issue_password))
+                    self.doc['description'] = data["issue_description"]
             
-        self.doc['description'] = data["issue_description"]
-        
-        self.doc['publish'] = True
-        self.doc['publish_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        
-        self.doc.save()
-        msg = _("The issue status was successfully updated.")
-        messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+            self.doc['publish'] = True
+            self.doc['publish_date'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            
+            self.doc.save()
+            msg = _("The issue status was successfully updated.")
+            messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
 
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)
@@ -1395,7 +1618,8 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
         comment_obj = {
             "name": self.request.user.name,
             "id": self.request.user.id,
-            "comment": "<h6>"+_("Issue rejected") + "</h6>" + data["open_reason"],
+            "issue_status": _("Issue rejected").__str__(),
+            "comment": data["open_reason"],
             "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         }
         comments.insert(0, comment_obj)
@@ -1446,8 +1670,9 @@ class GetSensitiveIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin
 
     def post(self, request, *args, **kwargs):
         data = None
-
-        if self.request.user.check_password(request.POST.get('password')) and \
+        password = request.POST.get('password')
+        # if self.request.user.check_password(request.POST.get('password')) and \
+        if password and \
             (
                 self.request.user.groups.filter(name="Admin").exists() 
                 or 
@@ -1455,20 +1680,26 @@ class GetSensitiveIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin
                 or 
                 (self.doc.get('assignee') and self.doc.get('assignee').get('id') == self.request.user.id)
             ):
-            doc_id = request.POST.get('id')
 
-            citizen = Pdata.objects.get(key=doc_id) if Pdata.objects.filter(key=doc_id).exists() else None
-            # citizen = cryptocode.decrypt(citizen.data, doc_id) if citizen else None
-            citizen = cryptography_fernet_decrypt(citizen.data, doc_id) if citizen else None
+            category_password = get_last_category_password(self.doc["category"]["id"])
+            if not category_password or not (category_password and check_password(password, category_password.password)):
+                msg = _("You are not authorized to view this information.")
+                messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
+            else:
+                doc_id = request.POST.get('id')
 
-            contact = Cdata.objects.get(key=doc_id) if Cdata.objects.filter(key=doc_id).exists() else None
-            # contact = cryptocode.decrypt(contact.data, doc_id) if contact else None
-            contact = cryptography_fernet_decrypt(contact.data, doc_id) if contact else None
+                citizen = Pdata.objects.get(key=doc_id) if Pdata.objects.filter(key=doc_id).exists() else None
+                # citizen = cryptocode.decrypt(citizen.data, doc_id) if citizen else None
+                citizen = cryptography_fernet_decrypt(citizen.data, doc_id) if citizen else None
 
-            data = {
-                'citizen': citizen,
-                'contact': contact,
-            }
+                contact = Cdata.objects.get(key=doc_id) if Cdata.objects.filter(key=doc_id).exists() else None
+                # contact = cryptocode.decrypt(contact.data, doc_id) if contact else None
+                contact = cryptography_fernet_decrypt(contact.data, doc_id) if contact else None
+
+                data = {
+                    'citizen': citizen,
+                    'contact': contact,
+                }
 
         else:
             msg = _("The password was not correct, we could not proceed with action.")
@@ -1487,27 +1718,39 @@ class GetIssueDescriptionView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, 
 
         try:
             password = request.POST.get('password')
+
+            category_password = get_last_category_password(self.doc["category"]["id"])
+            if not category_password or not (category_password and check_password(password, category_password.password)):
+                raise PermissionDenied
+
+            privacy_passwords = get_all_privacy_passwords(self.doc["category"]["id"])
             description_encrypt = self.doc['description']
             reasons = self.doc['reasons'] if 'reasons' in self.doc else []
             comments = self.doc['comments'] if 'comments' in self.doc else []
             
             for i_r in range(len(reasons)):
                 if reasons[i_r].get('type') == 'comment' and reasons[i_r].get('comment') and "b'" in reasons[i_r].get('comment'):
-                    try:
-                        reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], password)
-                    except:
-                        pass
+                    for cat_pass in privacy_passwords:
+                        try:
+                            reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], cat_pass)
+                            break
+                        except:
+                            pass
             for i_r in range(len(comments)):
                 if comments[i_r].get('type') == 'comment' and comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
-                    try:
-                        comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], password)
-                    except:
-                        pass
+                    for cat_pass in privacy_passwords:
+                        try:
+                            comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], cat_pass)
+                            break
+                        except:
+                            pass
             data = dict()
-            try:
-                data['description'] = cryptography_fernet_decrypt(description_encrypt, password)
-            except:
-                pass
+            for cat_pass in privacy_passwords:
+                try:
+                    data['description'] = cryptography_fernet_decrypt(description_encrypt, cat_pass)
+                    break
+                except:
+                    pass
             data['reasons'] = reasons
             data['comments'] = comments
 
@@ -1530,15 +1773,21 @@ class IssueCommentDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXReq
 
     def get_queryset(self):
         password = self.request.GET.get('password')
+        category_password = get_last_category_password(self.doc["category"]["id"])
+        if not category_password or not (category_password and check_password(password, category_password.password)):
+            raise PermissionDenied
+        
         comments = self.doc['comments'] if 'comments' in self.doc else list()
         for i_r in range(len(comments)):
-            if comments[i_r].get('type') == 'comment' and comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
-                try:
-                    comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], password)
-                except InvalidToken:
-                    pass
-                except:
-                    pass
+            if comments[i_r].get('comment') and "b'" in comments[i_r].get('comment'):
+                for cat_pass in get_all_privacy_passwords(self.doc["category"]["id"]):
+                    try:
+                        comments[i_r]['comment'] = cryptography_fernet_decrypt(comments[i_r]['comment'], cat_pass)
+                        break
+                    except InvalidToken:
+                        pass
+                    except:
+                        pass
         return comments
 
 
@@ -1550,27 +1799,42 @@ class IssueReasonsDecryptListView(IssueMixin, IssueCommentsContextMixin, AJAXReq
 
     def get_queryset(self):
         password = self.request.GET.get('password')
+        category_password = get_last_category_password(self.doc["category"]["id"])
+        if not category_password or not (category_password and check_password(password, category_password.password)):
+            raise PermissionDenied
+        
         reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
         for i_r in range(len(reasons)):
             if reasons[i_r].get('type') == 'comment' and reasons[i_r].get('comment') and "b'" in reasons[i_r].get('comment'):
-                try:
-                    reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], password)
-                except InvalidToken:
-                    pass
-                except:
-                    pass
+                for cat_pass in get_all_privacy_passwords(self.doc["category"]["id"]):
+                    try:
+                        reasons[i_r]['comment'] = cryptography_fernet_decrypt(reasons[i_r]['comment'], cat_pass)
+                        break
+                    except InvalidToken:
+                        pass
+                    except:
+                        pass
         return reasons
     
 class GetOriginalDescriptionIssueDataView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
 
     def post(self, request, *args, **kwargs):
         data = None
+        password = request.POST.get('password')
+        category_password = get_last_category_password(self.doc["category"]["id"])
+        if not category_password or not (category_password and check_password(password, category_password.password)):
+            raise PermissionDenied
+        
+        for cat_pass in get_all_privacy_passwords(self.doc["category"]["id"]):
+            try:
+                data = {
+                    'original_description': cryptography_fernet_decrypt(self.doc['original_description'], cat_pass)
+                }
+                break
+            except:
+                pass
 
-        try:
-            data = {
-                'original_description': cryptography_fernet_decrypt(self.doc['original_description'], request.POST.get('password'))
-            }
-        except:
+        if not data:
             msg = _("The password was not correct, we could not proceed with action.")
             messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
 

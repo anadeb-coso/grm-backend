@@ -1,0 +1,30 @@
+{
+    "_id": "fd51ffdbe13acc374a2817bf5e253279",
+    "_rev": "1-030c061c60d6c65a8b37516a11a692a0",
+    "name": "Déviation de buts ou procédure du projet y compris les allégations de mauvaise performance ou comportement incorrects de personnel du projet",
+    "label": "6- Déviation de buts ou procédure du projet y compris les allégations de mauvaise performance ou comportement incorrects de personnel du projet",
+    "abbreviation": "DBPAMPCIPP",
+    "id": 6,
+    "value": 6,
+    "assigned_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Village",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_appeal_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "assigned_escalation_department": {
+      "name": "CGP",
+      "id": 1,
+      "administrative_level": "Canton",
+      "assigment_protocol": "entry_level"
+    },
+    "confidentiality_level": "Confidential",
+    "redirection_protocol": 0,
+    "type": "issue_category"
+  }

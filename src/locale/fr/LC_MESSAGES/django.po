@@ -188,7 +188,7 @@ msgid ""
 "Keep name confidential. Only the person resolving the issue will see the "
 "name."
 msgstr ""
-"Gardez le nom confidentiel. Seule la personne résolvant le problème verra "
+"Gardez le nom confidentiel. Seule la personne résolvant la plainte verra "
 "le nom."
 
 #: dashboard/grm/__init__.py:27
@@ -223,6 +223,10 @@ msgstr "Veuillez saisir les coordonnées"
 msgid "Enter name of the citizen"
 msgstr "Entrez le nom du citoyen"
 
+#: dashboard/grm/forms.py:47
+msgid "Enter name of the citizen or of the group"
+msgstr "Entrez le nom du citoyen ou du groupe"
+
 #: dashboard/grm/forms.py:48 dashboard/grm/forms.py:50
 #: dashboard/grm/forms.py:52 dashboard/grm/forms.py:53
 #: dashboard/grm/forms.py:56 dashboard/grm/forms.py:58
@@ -231,7 +235,7 @@ msgstr "Ce champ n'est pas obligatoire"
 
 #: dashboard/grm/forms.py:51
 msgid "Enter age group"
-msgstr "Entrez le groupe d'âge"
+msgstr "Entrez la tranche d'âge"
 
 #: dashboard/grm/forms.py:53
 msgid "Choose gender"
@@ -247,7 +251,7 @@ msgstr "Date de prise"
 
 #: dashboard/grm/forms.py:103
 msgid "Date of issue"
-msgstr "Date du Problème"
+msgstr "Date de la plainte"
 
 #: dashboard/grm/forms.py:105
 msgid "What are you reporting"
@@ -255,15 +259,15 @@ msgstr "Que signalez-vous"
 
 #: dashboard/grm/forms.py:106
 msgid "Choose type of grievance"
-msgstr "Choisissez le catégorie de plainte"
+msgstr "Choisissez la catégorie de la plainte"
 
 #: dashboard/grm/forms.py:107
 msgid "Briefly describe the issue"
-msgstr "Décrivez brièvement le problème"
+msgstr "Décrivez brièvement la plainte"
 
 #: dashboard/grm/forms.py:108
 msgid "Please describe the issue"
-msgstr "S'il vous plaît décrivez le problème"
+msgstr "S'il vous plaît décrivez la plainte"
 
 #: dashboard/grm/forms.py:109
 msgid "Current event or multiple occurrences"
@@ -337,20 +341,20 @@ msgstr "La pièce jointe a été supprimée avec succès."
 msgid ""
 "There is no staff member to assign the issue to. Please report to IT staff."
 msgstr ""
-"Il n'y a aucun membre du personnel à qui attribuer le problème. Veuillez le "
+"Il n'y a aucun membre du personnel à qui attribuer la plainte. Veuillez le "
 "signaler au personnel informatique."
 
 #: dashboard/grm/views.py:510 dashboard/grm/views.py:617
 msgid "Review Issues"
-msgstr "Examiner les Problèmes"
+msgstr "Examiner les plaintes"
 
 #: dashboard/grm/views.py:608
 msgid "Issue Detail"
-msgstr "Détails du Problème"
+msgstr "Détails de la plainte"
 
 #: dashboard/grm/views.py:665
 msgid "The issue was successfully edited."
-msgstr "Le problème a été modifié avec succès."
+msgstr "la plainte a été modifiée avec succès."
 
 #: dashboard/grm/views.py:697
 msgid "The comment was sent successfully."
@@ -363,15 +367,15 @@ msgstr "Le commentaire ne peut pas être vide"
 #: dashboard/grm/views.py:768 dashboard/grm/views.py:814
 #: dashboard/grm/views.py:861
 msgid "The issue status was successfully updated."
-msgstr "L'état du problème a été mis à jour avec succès."
+msgstr "L'état de la plainte a été mis à jour avec succès."
 
 #: dashboard/grm/views.py:778
 msgid "Please enter the resolution reached for this issue"
-msgstr "Veuillez saisir la résolution atteinte pour ce problème"
+msgstr "Veuillez saisir la résolution atteinte pour cette plainte"
 
 #: dashboard/grm/views.py:825
 msgid "Enter the reason for rejecting this issue"
-msgstr "Entrez la raison du rejet de ce problème"
+msgstr "Entrez la raison du rejet de cette plainte"
 
 #: dashboard/logs/views.py:10 dashboard/templates/layouts/sidebar.html:75
 msgid "Logs"
@@ -399,7 +403,7 @@ msgid ""
 "Your issue submitted has been accepted into the system with the code "
 "%s(tracking_code)s"
 msgstr ""
-"Votre problème soumis a été accepté dans le système avec le code "
+"Votre plainte soumise a été acceptée dans le système avec le code "
 "%s(tracking_code)s"
 
 #: dashboard/tasks.py:204
@@ -408,7 +412,7 @@ msgid ""
 "Your issue %s(tracking_code)s has been rejected with the following response: "
 "%s(reason)s"
 msgstr ""
-"Votre problème %s(tracking_code)s a été rejeté avec la réponse suivante: "
+"Votre plainte %s(tracking_code)s a été rejetée avec la réponse suivante: "
 "%s(reason)s"
 
 #: dashboard/tasks.py:206
@@ -417,7 +421,7 @@ msgid ""
 "Your issue %s(tracking_code)s has been resolved with the following response: "
 "%s(resolution)s"
 msgstr ""
-"Votre problème %s(tracking_code)s a été résolu avec la réponse suivante: "
+"Votre plainte %s(tracking_code)s a été résolue avec la réponse suivante: "
 "%s(resolution)s"
 
 #: dashboard/templates/adls/list.html:11
@@ -626,7 +630,7 @@ msgid ""
 "We track these errors automatically, but if the problem persists feel free "
 "to contact us. In the meantime, try refreshing."
 msgstr ""
-"Nous suivons automatiquement ces erreurs, mais si le problème persiste, "
+"Nous suivons automatiquement ces erreurs, mais si la plainte persiste, "
 "n'hésitez pas à nous contacter. En attendant, essayez de rafraîchir la page."
 
 #: dashboard/templates/common/under_construction.html:7
@@ -679,7 +683,7 @@ msgstr "Effacer tous les filtres"
 #: dashboard/templates/diagnostics/home.html:447
 #: dashboard/templates/grm/issue_list.html:34
 msgid "No issues found"
-msgstr "Aucun plainte ou demande n'a été trouvée"
+msgstr "Aucune plainte ou demande n'a été trouvée"
 
 #: dashboard/templates/diagnostics/home.html:477
 #: dashboard/templates/grm/new_issue_confirm.html:171
@@ -698,7 +702,7 @@ msgid ""
 "- We have added new codes for classifying issues. Click here for more "
 "information."
 msgstr ""
-"- Nous avons ajouté de nouveaux codes pour classer les problèmes. Cliquez "
+"- Nous avons ajouté de nouveaux codes pour classer les plaintes. Cliquez "
 "ici pour plus d'informations"
 
 #: dashboard/templates/grm/dashboard.html:26
@@ -711,11 +715,11 @@ msgstr ""
 
 #: dashboard/templates/grm/dashboard.html:37
 msgid "ENTER NEW ISSUES"
-msgstr "ENTRER DE NOUVEAUX PROBLÈMES"
+msgstr "ENTRER DE NOUVELLES PLAINTES"
 
 #: dashboard/templates/grm/dashboard.html:45
 msgid "REVIEW ISSUES"
-msgstr "RÉVISER LES PROBLÈMES"
+msgstr "RÉVISER LES PLAINTES"
 
 #: dashboard/templates/grm/issue_attachments.html:10
 #: dashboard/templates/grm/issue_attachments_column1.html:10
@@ -806,7 +810,7 @@ msgstr "Éditer"
 #: dashboard/templates/grm/new_issue_location.html:18
 #: dashboard/templates/grm/new_issue_person.html:18
 msgid "Enter New Issue"
-msgstr "Entrez un nouveau problème"
+msgstr "Entrez une nouvelle plainte"
 
 #: dashboard/templates/grm/new_issue_confirm.html:26
 #: dashboard/templates/grm/new_issue_confirmation.html:25
@@ -844,7 +848,7 @@ msgstr "Cliquez pour sélectionner la méthode de contact"
 #: dashboard/templates/grm/new_issue_confirm.html:146
 #: dashboard/templates/grm/new_issue_person.html:55
 msgid "Click to select age group"
-msgstr "Cliquez pour sélectionner le groupe d'âge"
+msgstr "Cliquez pour sélectionner la tranche d'âge"
 
 #: dashboard/templates/grm/new_issue_confirm.html:150
 #: dashboard/templates/grm/new_issue_person.html:59
@@ -912,7 +916,7 @@ msgstr "Informations de base"
 
 #: dashboard/templates/grm/new_issue_location.html:28
 msgid "Location of Issue or Feedback"
-msgstr "Emplacement du problème ou des commentaires"
+msgstr "Emplacement de la plainte ou des commentaires"
 
 #: dashboard/templates/grm/new_issue_person.html:28
 msgid "Name of Person or Group"
@@ -1168,11 +1172,11 @@ msgstr "La plainte a été escaladée/remontée"
 
 #: dashboard/templates/grm/issue_status_buttons.html
 msgid "Set to unresolved"
-msgstr "Mettre à non résolue"
+msgstr "Mettre à non résolution"
 
 #: dashboard/grm/views.py
 msgid "Please enter the reason for changing the status to unresolved for this issue"
-msgstr "SVP entrez la raison du chanment du status en non resolu pour ce problème"
+msgstr "SVP entrez la raison du changement du status en non resolu pour cette plainte"
 
 #: dashboard/grm/views.py
 msgid "Escalate Issue"
@@ -1275,6 +1279,10 @@ msgid "Country"
 msgstr "Pays"
 
 #: dashboard/templates/grm/issue_attachments.html
+msgid "Nation"
+msgstr "Nation"
+
+#: dashboard/templates/grm/issue_attachments.html
 msgid "List"
 msgstr "Liste"
 
@@ -1329,3 +1337,159 @@ msgstr "Confirmer la suppression"
 #: dashboard/templates/authentication/register.html
 msgid "Please check this box and click the confirmation button for validation."
 msgstr "Veuillez cocher cette case et cliquer sur le bouton de confirmation pour valider."
+
+#: dashboard/privacy
+msgid "The password must have 8 characters minimum."
+msgstr "Le mot de passe doit comporter au moins 8 caractères."
+
+#: dashboard/privacy
+msgid "You can't edit the password information."
+msgstr "Vous ne pouvez pas modifier les informations relatives au mot de passe."
+
+#: dashboard/privacy
+msgid "The complaint has not been published. No password is defined for this category of complaint."
+msgstr "La plainte n'a pas été publiée. Aucun mot de passe n'est defini pour cette catégorie de plainte."
+
+#: dashboard/privacy
+msgid "The complaint has not been published. The password does not match."
+msgstr "La plainte n'a pas été publiée. Le mot de pas ne correspond pas."
+
+#: dashboard/privacy
+msgid "The file has not been saved. No password is defined for this category of complaint."
+msgstr "Le fichier n'a pas été enregistré. Aucun mot de passe n'est defini pour cette catégorie de plainte."
+
+#: dashboard/privacy
+msgid "The file has not been saved. The password does not match."
+msgstr "Le fichier n'a pas été enregistré. Le mot de pas ne correspond pas."
+
+#: dashboard/privacy
+msgid "The information has not been registered. No password is defined for this category of complaint."
+msgstr "L'information n'a pas été enregistrée. Aucun mot de passe n'est defini pour cette catégorie de plainte."
+
+#: dashboard/privacy
+msgid "The information has not been saved. The password does not match."
+msgstr "L'information n'a pas été enregistré. Le mot de pas ne correspond pas."
+
+#: dashboard/privacy
+msgid "Set to publish"
+msgstr "Mettre à publier"
+
+#: dashboard/privacy
+msgid "Set to unpublish"
+msgstr "Mettre à non publier"
+
+#: dashboard/privacy
+msgid "Please fill the password field"
+msgstr "Veuillez remplir le champ du mot de passe"
+
+#: dashboard/privacy
+msgid "We can't find this category informations."
+msgstr "Nous ne trouvons pas d'informations sur cette catégorie."
+
+#: dashboard/privacy
+msgid "You are not authorized to view this information."
+msgstr "Vous n'avez pas l'autorisation pour voir cette information."
+
+#: dashboard/privacy
+msgid "Check password"
+msgstr "Vérifier le mot de passe"
+
+#: dashboard/privacy
+msgid "Level"
+msgstr "Niveau"
+
+#: dashboard/privacy
+msgid "Organization (Structure) in charge"
+msgstr "Organisation (Structure) en chargé"
+
+#: dashboard/privacy
+msgid "Committee/Structure in charge"
+msgstr "Comité/Structure en chargé"
+
+#: dashboard/privacy
+msgid "Complainant type"
+msgstr "Type de plaignant"
+
+#: dashboard/privacy
+msgid "Individual"
+msgstr "Individuel"
+
+#: dashboard/privacy
+msgid "Group"
+msgstr "Groupe"
+
+#: dashboard/privacy
+msgid "Please enter your password to show sensitive data"
+msgstr "Veuillez saisir votre mot de passe pour afficher les données sensibles"
+
+#: dashboard/privacy
+msgid "phone call"
+msgstr "appel téléphonique"
+
+#: dashboard/privacy
+msgid "by letter (correspondence)"
+msgstr "par lettre (correspondance)"
+
+#: dashboard/privacy
+msgid "Validation code for your GRM account"
+msgstr "Code de validation de votre compte MGP"
+
+#: dashboard/privacy
+msgid "Please do not share this code with anyone until it has been used."
+msgstr "Veuillez ne pas partager ce code à personne jusqu'à son utilisation."
+
+#: dashboard/privacy
+msgid "Mail sent successfully"
+msgstr "Mail envoyé avec succès"
+
+#: dashboard/privacy
+msgid "An error occurred while sending the email"
+msgstr "Une erreur s'est produite lors de l'envoi du courriel"
+
+#: dashboard/privacy
+msgid "See PV"
+msgstr "Voir PV"
+
+#: dashboard/privacy
+msgid "See PV de reconciliation"
+msgstr "Voir PV de reconciliation"
+
+#: dashboard/privacy
+msgid "Attach PV of reconciliation"
+msgstr "Joint PV de reconciliation"
+
+#: dashboard/privacy
+msgid "Attach the complaint transfer file to the top level"
+msgstr "Joint le fichier du transfert de la plainte au niveau supérieur"
+
+#: dashboard/privacy
+msgid "Transfer file"
+msgstr "Fiche de transfert"
+
+#: dashboard/privacy
+msgid "COSO GRM - A new issue recorded"
+msgstr "MGP COSO - Une nouvelle plainte est enregistrée"
+
+#: dashboard/privacy
+msgid "COSO GRM - A new issue scaled"
+msgstr "MGP COSO - Une plainte remontée"
+
+#: dashboard/privacy
+msgid "Comment on the unresolution"
+msgstr "Commentaire de la non résolution"
+
+#: dashboard/privacy
+msgid "Comments on the scalation"
+msgstr "Commentaire de la remontée"
+
+#: dashboard/privacy
+msgid "Unresolution date"
+msgstr "Date de la non résolution"
+
+#: dashboard/privacy
+msgid "Scalation date"
+msgstr "Date de la remontée"
+
+#: dashboard/privacy
+msgid "Up to level"
+msgstr "Remontée au niveau"

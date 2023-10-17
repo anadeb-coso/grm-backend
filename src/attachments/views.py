@@ -145,7 +145,7 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         
         reasons = doc['reasons'] if 'reasons' in doc else list()
         resolution_files = doc['resolution_files'] if 'resolution_files' in doc else list()
-        escalation_reasons = self.doc['escalation_reasons'] if 'escalation_reasons' in self.doc else list()
+        escalation_reasons = doc['escalation_reasons'] if 'escalation_reasons' in doc else list()
         for reason in reasons:
             if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
                 file = data['file']

@@ -16,7 +16,12 @@ def get_db(db=COUCHDB_DATABASE):
 def upload_file(file, db=COUCHDB_ATTACHMENT_DATABASE):
     attachment_db = get_db(db)
     attachment = attachment_db.create_document({})
-    return attachment.put_attachment(file.name, file.content_type, file)
+    if '.pdf' in file.name:
+        return attachment.put_attachment(file.name, file.content_type, file, headers = {
+            "Content-Type": "application/pdf"
+        })
+    else:
+        return attachment.put_attachment(file.name, file.content_type, file)
 
 
 def bulk_delete(db_client, documents):

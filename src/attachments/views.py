@@ -5,7 +5,7 @@ from drf_yasg.openapi import IN_QUERY, Parameter
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, parsers
 from rest_framework.response import Response
-from storages.backends.s3boto3 import S3Boto3Storage
+# from storages.backends.s3boto3 import S3Boto3Storage
 import os
 from datetime import datetime
 
@@ -160,61 +160,46 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
                 # reason['bd_id'] = response["id"]
                 # doc.save()
                 # return Response(response, status=201)
-                try:
-                    #S3
-                    file_directory_within_bucket = 'proof_of_work/'
-                    file_path_within_bucket = os.path.join(
-                        file_directory_within_bucket,
-                        file.name
-                    )
+                # try:
+                #     #S3
+                #     file_directory_within_bucket = 'proof_of_work/'
+                #     file_path_within_bucket = os.path.join(
+                #         file_directory_within_bucket,
+                #         file.name
+                #     )
 
-                    media_storage = S3Boto3Storage()
+                #     media_storage = S3Boto3Storage()
 
-                    if not media_storage.exists(file_path_within_bucket):  # avoid overwriting existing file
-                        media_storage.save(file_path_within_bucket, file)
-                        file_url = media_storage.url(file_path_within_bucket)
+                #     if not media_storage.exists(file_path_within_bucket):  # avoid overwriting existing file
+                #         media_storage.save(file_path_within_bucket, file)
+                #         file_url = media_storage.url(file_path_within_bucket)
 
-                        _id = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                        attachment['url'] = file_url
-                        attachment['uploaded'] = True
-                        attachment['bd_id'] = _id
+                #         attachment['url'] = file_url
+                #         attachment['uploaded'] = True
+                #         attachment['bd_id'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                #         doc.save()
+                #         return Response({
+                #             'message': 'OK',
+                #             'fileUrl': file_url,
+                #         }, status=201)
+                #     #End S3
+                # except:
+                response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                reason['uploaded'] = True
+                reason['bd_id'] = response["id"]
 
-                        for r_file in resolution_files:
-                            if r_file.get('id') == reason.get('id'):
-                                r_file['url'] = file_url
-                                r_file['uploaded'] = True
-                                r_file['bd_id'] = _id
-                        
-                        for e_file in escalation_reasons:
-                            if e_file.get('attachment') and e_file.get('attachment').get('id') == reason.get('id'):
-                                e_file['attachment']['url'] = file_url
-                                e_file['attachment']['uploaded'] = True
-                                e_file['attachment']['bd_id'] = _id
-                                
-                        doc.save()
-                        
-                        return Response({
-                            'message': 'OK',
-                            'fileUrl': file_url,
-                        }, status=201)
-                    #End S3
-                except:
-                    response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
-                    reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                    reason['uploaded'] = True
-                    reason['bd_id'] = response["id"]
-
-                    for r_file in resolution_files:
-                        if r_file.get('id') == reason.get('id'):
-                            r_file['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                            r_file['uploaded'] = True
-                            r_file['bd_id'] = response["id"]
-                    
-                    for e_file in escalation_reasons:
-                        if e_file.get('attachment') and e_file.get('attachment').get('id') == reason.get('id'):
-                            e_file['attachment']['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                            e_file['attachment']['uploaded'] = True
-                            e_file['attachment']['bd_id'] = response["id"]
+                for r_file in resolution_files:
+                    if r_file.get('id') == reason.get('id'):
+                        r_file['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                        r_file['uploaded'] = True
+                        r_file['bd_id'] = response["id"]
+                
+                for e_file in escalation_reasons:
+                    if e_file.get('attachment') and e_file.get('attachment').get('id') == reason.get('id'):
+                        e_file['attachment']['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                        e_file['attachment']['uploaded'] = True
+                        e_file['attachment']['bd_id'] = response["id"]
 
                 doc.save()
                 return Response(response, status=201)

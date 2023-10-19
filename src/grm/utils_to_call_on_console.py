@@ -87,3 +87,24 @@ def delete_training_user(start_number, end_number):
     print()
     print("End deleting")
 
+
+def delete_users(is_superuser=False):
+    print("Start deleting")
+    print()
+
+
+    users = User.objects.filter(is_superuser=is_superuser)
+    if users.exists():
+        user = users.first()
+        user_id = user
+
+        government_workers = GovernmentWorker.objects.filter(user_id=user_id)
+        if government_workers.exists():
+            government_worker = government_workers.first()
+            government_worker.delete()
+            
+        user.delete()
+        print(f"{user.email}. Okay")
+
+    print()
+    print("End deleting")

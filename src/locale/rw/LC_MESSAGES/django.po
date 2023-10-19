@@ -1423,3 +1423,7 @@ msgstr ""
 #: dashboard/privacy
 msgid "Up to level"
 msgstr ""
+
+#: dashboard/privacy
+msgid "No administrative level affected. Contact your superior."
+msgstr ""

@@ -77,7 +77,8 @@ class RegisterSerializer(serializers.Serializer):
         'credentials': _('Unable to register with provided credentials.'),
         'duplicated_email': _('A user with that email is already registered.'),
         'wrong_validation_code': _('Unable to register with provided validation code.'),
-        'not_found_email': _('A user with that email has not been found registered.')
+        'not_found_email': _('A user with that email has not been found registered.'),
+        'no_administrative_level_affected': _('No administrative level affected. Contact your superior.')
 
     }
 
@@ -136,6 +137,10 @@ class RegisterSerializer(serializers.Serializer):
 
         if validation_code != get_validation_code(doc['representative']['email']):
             raise serializers.ValidationError(self.default_error_messages.get('wrong_validation_code'))
+        
+        if not user.administrative_level:
+            raise serializers.ValidationError(self.default_error_messages.get('no_administrative_level_affected'))
+        
         doc['representative']['password'] = make_password(password)
         doc.save()
 

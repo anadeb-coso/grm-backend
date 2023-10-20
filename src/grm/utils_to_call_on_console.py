@@ -180,7 +180,17 @@ def create_users_mis_on_grm():
                         for u_p in _user['user_permissions']:
                             if Permission.objects.filter(name=u_p['name']).exists():
                                 user.user_permissions.add(Permission.objects.get(name=u_p['name']))
+
+                        if not hasattr(user, 'governmentworker'):
+                            government_worker = GovernmentWorker()
+                            government_worker.user = user
+                            government_worker.department = 1
+                            government_worker.administrative_id = "1"
+
+                            government_worker.save()
+                            
                         user.save()
+
 
             print()
             print(f"Account created : {account_created}")

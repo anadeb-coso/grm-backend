@@ -1427,3 +1427,12 @@ msgstr ""
 #: dashboard/privacy
 msgid "No administrative level affected. Contact your superior."
 msgstr ""
+
+#: dashboard/privacy
+msgid "Below is your account information."
+msgstr ""
+
+#: dashboard/privacy
+msgid "Hello"
+msgstr ""
+

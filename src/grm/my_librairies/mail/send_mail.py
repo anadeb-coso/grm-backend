@@ -7,10 +7,10 @@ def send_email(
         subject, template_path_without_extension, datas, 
         to,
         cc = [
-            "sig.anadeb@gmail.com", "cosotogosig@gmail.com", 
-            "palerbo@gmail.com", #Evaluator
-            "gounsougleyename@yahoo.fr", "mass.zato36@gmail.com", #CDDSpecialist
-            "yiroko777@gmail.com", "kegbaof@gmail.com" #Safeguard
+            # "sig.anadeb@gmail.com", "cosotogosig@gmail.com", 
+            # "palerbo@gmail.com", #Evaluator
+            # "gounsougleyename@yahoo.fr", "mass.zato36@gmail.com", #CDDSpecialist
+            # "yiroko777@gmail.com", "kegbaof@gmail.com" #Safeguard
         ]):
     
     try:

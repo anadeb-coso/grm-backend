@@ -1497,3 +1497,11 @@ msgstr "Remontée au niveau"
 #: dashboard/privacy
 msgid "No administrative level affected. Contact your superior."
 msgstr "Aucun niveau administratif n'est concerné. Contactez votre supérieur."
+
+#: dashboard/privacy
+msgid "Below is your account information."
+msgstr "Ci-dessous vos informations concernant votre compte."
+
+#: dashboard/privacy
+msgid "Hello"
+msgstr "Bonjour"

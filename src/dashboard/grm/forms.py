@@ -429,10 +429,12 @@ class IssueCategoryForm(forms.Form):
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
         doc_id = initial.get('doc_id')
+        user = initial.get('user')
         super().__init__(*args, **kwargs)
 
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         categories = get_issue_category_choices(grm_db)
+        categories = [cat for cat in categories if (str(cat[0]) not in ('4', '7')) or (str(cat[0]) in ('4', '7') and user.groups.filter(name="Privacy").exists())]
         self.fields['category'].widget.choices = categories
         self.fields['category'].choices = categories
         

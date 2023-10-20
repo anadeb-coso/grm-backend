@@ -962,7 +962,7 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         context['doc_status'] = doc_status
         context['password_confirm_form'] = PasswordConfirmForm()
         context['category_form'] = IssueCategoryForm(
-            initial= {'doc_id': self.doc['_id']}
+            initial= {'doc_id': self.doc['_id'], 'user': self.request.user}
         )
         
         

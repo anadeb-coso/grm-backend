@@ -3,7 +3,10 @@ from datetime import datetime
 
 from grm.utils import datetime_str
 from grm.my_librairies.mail.send_mail import send_email
-from grm.constants import SAFEGUARD_SPECIALIST_EMAILS, OTHER_SPECIALIST_ON_MAIL_COPY, ANADEB_EMAILS_ON_COPY
+from grm.constants import (
+    SAFEGUARD_SPECIALIST_EMAILS, OTHER_SPECIALIST_ON_MAIL_COPY, ANADEB_EMAILS_ON_COPY,
+    OTHERS_EMAILS_ON_COPY, ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS, COORDINATORS_EMAILS_ON_COPY
+)
 
 
 def get_issue_status_stories(user, doc, status):
@@ -44,7 +47,7 @@ def send_notification_by_mail(issue):
                 "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/"
             },
             SAFEGUARD_SPECIALIST_EMAILS,
-            cc= OTHER_SPECIALIST_ON_MAIL_COPY + ANADEB_EMAILS_ON_COPY
+            cc= COORDINATORS_EMAILS_ON_COPY + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALIST_ON_MAIL_COPY + ANADEB_EMAILS_ON_COPY + OTHERS_EMAILS_ON_COPY
         )
     except:
         return None
@@ -72,7 +75,7 @@ def send_notification_on_escalation_by_mail(issue):
                 "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/"
             },
             SAFEGUARD_SPECIALIST_EMAILS,
-            cc= OTHER_SPECIALIST_ON_MAIL_COPY + ANADEB_EMAILS_ON_COPY
+            cc= COORDINATORS_EMAILS_ON_COPY + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALIST_ON_MAIL_COPY + ANADEB_EMAILS_ON_COPY + OTHERS_EMAILS_ON_COPY
         )
     except:
         return None

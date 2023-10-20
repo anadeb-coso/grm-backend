@@ -7,6 +7,9 @@ COUCHDB_USERNAME = settings.COUCHDB_USERNAME
 COUCHDB_PASSWORD = settings.COUCHDB_PASSWORD
 COUCHDB_URL = settings.COUCHDB_URL
 
+def get_dbs_name():
+    client = CouchDB(COUCHDB_USERNAME, COUCHDB_PASSWORD, url=COUCHDB_URL, connect=True, auto_renew=True)
+    return client.all_dbs()
 
 def get_db(db=COUCHDB_DATABASE):
     client = CouchDB(COUCHDB_USERNAME, COUCHDB_PASSWORD, url=COUCHDB_URL, connect=True, auto_renew=True)

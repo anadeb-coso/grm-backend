@@ -53,7 +53,8 @@ class RegisterADLForm(forms.Form):
         "password_invalide": _("Password invalidate"),
         'duplicated_email': _('A user with that email is already registered.'),
         'credentials': _('Unable to register with provided credentials.'),
-        'password_invalide_constraint': _("Minimum eight characters and at least one letter and one number")
+        'password_invalide_constraint': _("Minimum eight characters and at least one letter and one number"),
+        'no_administrative_level_affected': _('No administrative level affected. Contact your superior.')
     }
 
     def clean(self):
@@ -112,6 +113,9 @@ class RegisterADLForm(forms.Form):
                     self.error_messages["inactive"],
                     code="inactive",
                 )
+            elif not user.administrative_level:
+                raise ValidationError(self.error_messages["no_administrative_level_affected"],
+                    code="no_administrative_level_affected")
         else:
             raise ValidationError(
                 self.error_messages["email_not_exists"],

@@ -193,7 +193,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/'
 
-LOGIN_REDIRECT_URL = 'dashboard:diagnostics:home'
+LOGIN_REDIRECT_URL = 'dashboard:grm:review_issues' #'dashboard:diagnostics:home'
 
 LOGOUT_REDIRECT_URL = '/'
 

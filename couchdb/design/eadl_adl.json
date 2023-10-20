@@ -1,6 +1,21 @@
 {
   "_id": "_design/eadl",
   "views": {
+    "by_email": {
+      "map": "function(doc) { if (doc.representative && doc.representative.email) { emit(doc.representative.email, doc); } }"
+    }
+  },
+  "indexes": {
+    "by_type": {
+      "fields": [
+        "type"
+      ]
+    },
+    "by_user_email": {
+      "fields": [
+        "representative.email"
+      ]
+    }
   },
   "filters": {
     "by_user_email": "function (doc, req) {\n return doc._id === '_design/eadl' || (doc.representative && doc.representative.email === req.query.email); \n}"

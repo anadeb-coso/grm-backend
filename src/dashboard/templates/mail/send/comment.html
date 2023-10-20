@@ -1,7 +1,7 @@
 
 {% if user_full_name %}
-    {{ greeting }} {{ user_full_name }},
-    {{ comment }}
+    <p>{{ greeting }} {{ user_full_name }},</p>
+    <p>{{ comment }}</p>
 {% endif %}
 
 {% for k, v in user.items %}

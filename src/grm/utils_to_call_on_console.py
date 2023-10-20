@@ -137,7 +137,7 @@ def create_users_mis_on_grm():
                 if _user.get('email') and \
                     not [\
                         _g for _g in _user['groups'] \
-                            if _g['name'] in ['NationalCoordinator', 'GeneralManager', 'Director', 'Advisor']\
+                            if _g['name'] in ['GeneralManager', 'Director', 'Advisor', 'Minister']\
                         ]:
                     
                     user = User.objects.filter(email=_user['email']).first()

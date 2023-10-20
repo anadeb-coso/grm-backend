@@ -1436,3 +1436,16 @@ msgstr ""
 msgid "Hello"
 msgstr ""
 
+#: dashboard/privacy
+msgid "Comment"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Title"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Phone"
+msgstr ""
+
+

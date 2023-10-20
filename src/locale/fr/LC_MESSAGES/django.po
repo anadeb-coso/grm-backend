@@ -1499,9 +1499,21 @@ msgid "No administrative level affected. Contact your superior."
 msgstr "Aucun niveau administratif n'est concerné. Contactez votre supérieur."
 
 #: dashboard/privacy
-msgid "Below is your account information."
-msgstr "Ci-dessous vos informations concernant votre compte."
+msgid "Please find below your account information."
+msgstr "Veuillez trouver ci-dessous les informations relatives à votre compte."
 
 #: dashboard/privacy
 msgid "Hello"
 msgstr "Bonjour"
+
+#: dashboard/privacy
+msgid "Comment"
+msgstr "Commentaire"
+
+#: dashboard/privacy
+msgid "Title"
+msgstr "Désignation"
+
+#: dashboard/privacy
+msgid "Phone"
+msgstr "Tel"

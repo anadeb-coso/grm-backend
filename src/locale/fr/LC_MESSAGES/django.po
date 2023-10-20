@@ -1517,3 +1517,7 @@ msgstr "Désignation"
 #: dashboard/privacy
 msgid "Phone"
 msgstr "Tel"
+
+#: dashboard/privacy
+msgid "Mr./Mrs."
+msgstr "M./Mme"

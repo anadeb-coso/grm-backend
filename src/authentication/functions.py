@@ -20,7 +20,9 @@ def send_code_by_mail(user, code):
                 },
                 "user_full_name": f"{user.first_name} {user.last_name}",
                 "comment":  _("Please find below your account information."), 
-                "greeting":  _("Hello")
+                "greeting":  _("Hello"),
+                "all_sex":  _("Mr./Mrs.")
+                
                 # "url": f"{request.scheme}://{request.META['HTTP_HOST']}{reverse_lazy('dashboard:facilitators:detail', args=[no_sql_db_name])}"
             },
             [user.email]

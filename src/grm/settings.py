@@ -120,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
-LANGUAGE_CODE = env('LANGUAGE_CODE', default='en')
+LANGUAGE_CODE = env('LANGUAGE_CODE', default='fr')
 
 TIME_ZONE = 'UTC'
 
@@ -267,3 +267,7 @@ EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_USE_TLS = env('EMAIL_USE_TLS')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
+
+# BASE URL COSO MIS
+BASE_URL_COSO_MIS = env('BASE_URL_COSO_MIS')

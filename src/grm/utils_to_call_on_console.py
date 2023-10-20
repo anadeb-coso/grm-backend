@@ -155,11 +155,11 @@ def create_users_mis_on_grm():
                         user.groups.set([])
                         user.user_permissions.set([])
                         for g in _user['groups']:
-                            if Group.objects.using('mis').filter(name=g['name']).exists():
-                                user.groups.add(Group.objects.using('mis').get(name=g['name']))
+                            if Group.objects.filter(name=g['name']).exists():
+                                user.groups.add(Group.objects.get(name=g['name']))
                         for u_p in _user['user_permissions']:
-                            if Permission.objects.using('mis').filter(name=u_p['name']).exists():
-                                user.user_permissions.add(Permission.objects.using('mis').get(name=u_p['name']))
+                            if Permission.objects.filter(name=u_p['name']).exists():
+                                user.user_permissions.add(Permission.objects.get(name=u_p['name']))
                             
                         government_worker = GovernmentWorker()
 
@@ -175,11 +175,11 @@ def create_users_mis_on_grm():
                         user.groups.set([])
                         user.user_permissions.set([])
                         for g in _user['groups']:
-                            if Group.objects.using('mis').filter(name=g['name']).exists():
-                                user.groups.add(Group.objects.using('mis').get(name=g['name']))
+                            if Group.objects.filter(name=g['name']).exists():
+                                user.groups.add(Group.objects.get(name=g['name']))
                         for u_p in _user['user_permissions']:
-                            if Permission.objects.using('mis').filter(name=u_p['name']).exists():
-                                user.user_permissions.add(Permission.objects.using('mis').get(name=u_p['name']))
+                            if Permission.objects.filter(name=u_p['name']).exists():
+                                user.user_permissions.add(Permission.objects.get(name=u_p['name']))
                         user.save()
 
             print()

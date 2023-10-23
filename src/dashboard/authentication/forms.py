@@ -53,7 +53,7 @@ class RegisterADLForm(forms.Form):
         "password_invalide": _("Password invalidate"),
         'duplicated_email': _('A user with that email is already registered.'),
         'credentials': _('Unable to register with provided credentials.'),
-        'password_invalide_constraint': _("Minimum eight characters and at least one letter and one number"),
+        'password_invalide_constraint': _("At least eight characters, including at least one letter and one number"),
         'no_administrative_level_affected': _('No administrative level affected. Contact your superior.')
     }
 
@@ -133,7 +133,7 @@ class ConfirmCodeForm(forms.Form):
         'duplicated_email': _('A user with that email is already registered.'),
         'wrong_validation_code': _('Unable to register with provided validation code.'),
         "password_invalide": _("Password invalidate"),
-        'password_invalide_constraint': _("Minimum eight characters and at least one letter and one number")
+        'password_invalide_constraint': _("At least eight characters, including at least one letter and one number")
     }
 
     def __init__(self, *args, **kwargs):

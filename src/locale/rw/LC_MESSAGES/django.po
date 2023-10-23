@@ -1225,7 +1225,7 @@ msgid "Unsynchronized"
 msgstr ""
 
 #: dashboard/templates/grm/issue_attachments.html
-msgid "Minimum eight characters and at least one letter and one number"
+msgid "At least eight characters, including at least one letter and one number"
 msgstr ""
 
 #: dashboard/templates/grm/issue_attachments.html

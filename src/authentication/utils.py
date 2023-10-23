@@ -44,7 +44,8 @@ def create_or_update_adl_user_adl(user, updated=False):
             "photo": user.photo.url if user.photo else "https://via.placeholder.com/150",
             "is_active": user.is_active,
             "last_active": None,
-            "password": user.password
+            "password": user.password,
+            "groups": [g.name for g in user.groups.all()]
         },
         "phases": [],
         "administrative_region": None,

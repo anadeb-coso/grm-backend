@@ -15,6 +15,7 @@
         - Minister              : Minister
         - Assignee              : Assignee
         - Viewer                : Viewer
+        - Viewer of all issues  : ViewerOfAllIssues
         - Safeguard             : Safeguard
         - Privacy               : Privacy
         - Infra                 : Infra

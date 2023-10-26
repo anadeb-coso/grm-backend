@@ -58,19 +58,35 @@ class RestAdministrativeLevelFilterByADL(APIView):
         _filters = dict(request.GET)
         filters = {k:(float(v[0]) if v[0].isdigit() else (None if v[0] == 'null' else v[0])) for k, v in _filters.items()}
         administrative_region = int(filters.get("administrative_region") if filters.get("administrative_region") not in ('undefined', 'null', None) else 0)
+        email = str(filters.get("email") if filters.get("email") not in ('undefined', 'null', None) else '')
+        
+        eadl_db = get_db()
+        doc_user = {}
+        
+        try:
+            doc_user = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.email": email})[0][0]["_id"]]
+            administrative_regions = list(
+                set(
+                    (doc_user['administrative_regions'] if 'administrative_regions' in doc_user else list()) + \
+                    ([administrative_region] if administrative_region else [])
+                )
+            )
+            print(administrative_regions)
+        except Exception as exc:
+            administrative_regions = [administrative_region] if administrative_region else []
+            # return Response({
+            #         'message' : 'error : ' + exc.__str__()
+            #     }, status.HTTP_400_BAD_REQUEST)
+            
+        cantons, villages = [], []
+        for adm_region in administrative_regions:
+            _cantons, _villages = get_cascade_administrative_levels_by_administrative_level_id(adm_region)
+            cantons += _cantons
+            villages += _villages
+        
+        cantons = set(list(cantons))
+        villages = set(list(villages))
 
-        # eadl_db = get_db()
-        # doc_user = {}
-        
-        # try:
-        #     doc_user = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": user_id})[0][0]["_id"]]
-        # except Exception as exc:
-        #     return Response({
-        #             'message' : 'error : ' + exc.__str__()
-        #         }, status.HTTP_400_BAD_REQUEST)
-        print(administrative_region)
-        cantons, villages = get_cascade_administrative_levels_by_administrative_level_id(administrative_region)
-        
         cantons_ser = []
         villages_ser = []
         for canton in cantons:
@@ -88,6 +104,7 @@ class RestAdministrativeLevelFilterByADL(APIView):
             ad_ser["prefecture"] = village.parent.parent.parent_id
             ad_ser["region"] = village.parent.parent.parent.parent_id
             villages_ser.append(ad_ser)
+        print(cantons_ser)
         return Response(
             {"cantons": cantons_ser, "villages": villages_ser}, status.HTTP_200_OK
         )

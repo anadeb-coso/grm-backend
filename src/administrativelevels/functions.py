@@ -17,42 +17,45 @@ def get_cascade_administrative_levels_by_administrative_level_id(_id):
             cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id__in=[o.id for o in communes])
             villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id__in=[o.id for o in cantons])
         elif _type == "Prefecture":
-            regions = []
-            prefectures = [ad_obj]
+            # regions = []
+            # prefectures = [ad_obj]
             communes = ads
             cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id__in=[o.id for o in communes])
             villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id__in=[o.id for o in cantons])
         elif _type == "Commune":
-            regions = []
-            prefectures = []
-            communes = [ad_obj]
+            # regions = []
+            # prefectures = []
+            # communes = [ad_obj]
             cantons = ads
             villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id__in=[o.id for o in cantons])
         elif _type == "Canton":
-            regions = []
-            prefectures = []
-            communes = []
+            # regions = []
+            # prefectures = []
+            # communes = []
             cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=ad_obj.id)
             villages = ads
         elif _type == "Village":
-            regions = []
-            prefectures = []
-            communes = []
-            cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=0)
+            # regions = []
+            # prefectures = []
+            # communes = []
+            cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=(ad_obj.parent.id if ad_obj.parent else 0))
             villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(id=ad_obj.id)
         else:
-            regions = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
-            prefectures = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Prefecture")
-            communes = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Commune")
+            # regions = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
+            # prefectures = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Prefecture")
+            # communes = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Commune")
             cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Canton")
             villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Village")
-    else:
-        regions = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
-        prefectures = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Prefecture")
-        communes = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Commune")
+    elif _id and _id in (1, "1"):
+        # regions = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region")
+        # prefectures = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Prefecture")
+        # communes = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Commune")
         cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Canton")
         villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Village")
-
+    else:
+        cantons = []
+        villages = []
+        
     # return list(regions) + list(prefectures) + list(communes) + list(cantons) + list(villages)
     return list(cantons.order_by("name")) , list(villages.order_by("name"))
 

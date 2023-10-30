@@ -205,7 +205,12 @@ class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, Lo
                 governmentworker.department = 1
 
             governmentworker.administrative_id = data['administrative_level']
-            governmentworker.administrative_ids = data['administrative_levels']
+            ids =  data['administrative_levels']
+            if not ids:
+                ids = []
+            if not data['administrative_level'] in ids:
+                ids.append(data['administrative_level'])
+            governmentworker.administrative_ids = ids
             governmentworker.save()
 
             msg = _("The profile information was successfully edited.")

@@ -114,8 +114,16 @@ class GovernmentWorkerForm(forms.ModelForm):
 
     def clean_administrative_ids(self):
         administrative_ids = self.cleaned_data['administrative_ids']
-        print(administrative_ids)
         if administrative_ids == None or type(administrative_ids) == list:
+            try:
+                administrative_id = self.cleaned_data['administrative_id']
+                if not administrative_ids:
+                    administrative_ids = []
+                if not administrative_id in administrative_ids:
+                    administrative_ids.append(administrative_id)
+            except Exception as exc:
+                print(exc)
+                
             return administrative_ids
         raise ValidationError(
             _("The 'administrative levels' isn't validated"),

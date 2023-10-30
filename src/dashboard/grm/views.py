@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic
 from cryptography.fernet import InvalidToken
 from django.contrib.auth.hashers import check_password
+from django.db.models import Q
 
 from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee
 from client import get_db, upload_file
@@ -195,9 +196,16 @@ class IssueMixin:
         if user.groups.filter(name="Admin").exists():
             permission_to_edit = True
         elif hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
-            parent_id = user.governmentworker.administrative_id
-            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [], self.request.user)
-            allowed_regions = descendants + [parent_id]
+            # parent_id = user.governmentworker.administrative_id
+            # descendants = get_administrative_level_descendants_using_mis(None, parent_id, [], self.request.user)
+            # allowed_regions = descendants + [parent_id]
+
+            parents_id = user.governmentworker.all_administrative_ids
+            descendants = []
+            for _id in parents_id:
+                descendants += get_administrative_level_descendants_using_mis(None, _id, [], self.request.user)
+            allowed_regions = descendants + parents_id
+
             if self.doc["administrative_region"]["administrative_id"] in allowed_regions:
                 permission_to_edit = True
         # elif is_assigned and self.doc['assignee']['id'] == user.id:
@@ -785,7 +793,8 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['publish_option'] = False
-        if user.groups.filter(name="Admin").exists() or hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
+        if user.groups.filter().exists():
+            #user.groups.filter(name="Admin").exists() or (hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1"):
             context['publish_option'] = True
         return context
 
@@ -827,7 +836,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         publish = self.request.GET.get('publish')
         user = self.request.user
 
-        if user.groups.filter(name="Admin").exists():
+        if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
             selector = {
                 "type": "issue",
                 "confirmed": True,
@@ -841,10 +850,18 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             }
             
             if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
-                parent_id = user.governmentworker.administrative_id
-                # descendants = get_administrative_level_descendants(adl_db, parent_id, [])
-                descendants = get_administrative_level_descendants_using_mis(adl_db, parent_id, [], self.request.user)
-                allowed_regions = descendants + [parent_id]
+                parent_ids = user.governmentworker.all_administrative_ids
+                # descendants = get_administrative_level_descendants(adl_db, parent_id, []) 
+                
+                # parent_id = user.governmentworker.administrative_id
+                # descendants = get_administrative_level_descendants_using_mis(adl_db, parent_id, [], self.request.user)
+                # allowed_regions = descendants + [parent_id]
+                
+                descendants = []
+                for p_id in parent_ids:
+                    descendants += get_administrative_level_descendants_using_mis(adl_db, p_id, [], self.request.user)
+                allowed_regions = descendants + parent_ids
+
                 selector["$or"] = [
                     {"assignee.id": user.id},
                     {"$and": [
@@ -857,6 +874,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                     "type": "issue",
                     "publish": True,
                     "confirmed": True,
+                    "auto_increment_id": {"$ne": ""},
                 }
 
         date_range = {}
@@ -891,7 +909,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         if region:
             # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
             filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], self.request.user) + [region]
-            print(filter_regions)
+            
             selector["administrative_region.administrative_id"] = {
                 "$in": filter_regions
             }
@@ -940,14 +958,11 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         user_id = self.request.user.id
         user = self.request.user
 
-        if user.groups.filter(name="Admin").exists():
+        if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
             pass
         else:
-            if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
-                pass
-            else:
-                if not self.doc.get('publish'):
-                    raise PermissionDenied
+            if not self.doc.get('publish'):
+                raise PermissionDenied
 
 
         self.specific_permissions()
@@ -956,9 +971,16 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
             'head']['id'] or user.groups.filter(name="Admin").exists()
 
         if not context['enable_add_comment'] and hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
-            parent_id = user.governmentworker.administrative_id
-            descendants = get_administrative_level_descendants_using_mis(None, parent_id, [], self.request.user)
-            allowed_regions = descendants + [parent_id]
+            # parent_id = user.governmentworker.administrative_id
+            # descendants = get_administrative_level_descendants_using_mis(None, parent_id, [], self.request.user)
+            # allowed_regions = descendants + [parent_id]
+
+            parent_ids = user.governmentworker.all_administrative_ids
+            descendants = []
+            for _id in parent_ids:
+                descendants += get_administrative_level_descendants_using_mis(None, _id, [], self.request.user)
+            allowed_regions = descendants + parent_ids
+
             if self.doc["administrative_region"]["administrative_id"] in allowed_regions:
                 context['enable_add_comment'] = True
 

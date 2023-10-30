@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save, post_delete
+from django.db.models import Q
 
 from grm.utils import (
     belongs_to_region, get_parent_administrative_level, get_related_region_with_specific_level,
@@ -94,10 +95,15 @@ class GovernmentWorker(models.Model):
                 if self.department != issue_department_id:
                     return False
             # belongs = belongs_to_region(adl_db, issue_administrative_id, self.administrative_id)
-            belongs = belongs_to_region_using_mis(adl_db, issue_administrative_id, self.administrative_id, self.user)
-            return belongs
+            # belongs = belongs_to_region_using_mis(adl_db, issue_administrative_id, self.administrative_id, self.user)
+            for _id in self.all_administrative_ids:
+                belongs = belongs_to_region_using_mis(adl_db, issue_administrative_id, _id, self.user)
+                if belongs:
+                    return belongs
+                
         except Exception:
-            return False
+            pass
+        return False
     
     def administrative_level(self):
         if self.administrative_id == "1":
@@ -112,6 +118,15 @@ class GovernmentWorker(models.Model):
         except Exception as exc:
             print(exc)
             return None
+    
+    @property
+    def all_administrative_ids(self):
+        return list(
+                set(
+                    (self.administrative_ids if self.administrative_ids else list()) \
+                    + ([self.administrative_id] if self.administrative_id else list())
+                )
+            )
 
 
 def get_government_worker_choices(empty_choice=True):
@@ -167,7 +182,10 @@ def get_assignee(grm_db, eadl_db, adl_db, issue_doc, errors=None):
 
         related_workers = set(
             GovernmentWorker.objects.filter(
-                department=department_id, administrative_id=administrative_id).values_list('user', flat=True))
+                Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id),
+                department=department_id
+                # , administrative_id=administrative_id
+                ).values_list('user', flat=True))
 
         startkey = [department_id, None, None]
         endkey = [department_id, {}, {}]
@@ -199,7 +217,10 @@ def get_assignee(grm_db, eadl_db, adl_db, issue_doc, errors=None):
                         break
             elif related_workers:
                 worker = GovernmentWorker.objects.filter(
-                    department=department_id, administrative_id=administrative_id).first()
+                    Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id),
+                    department=department_id
+                    # , administrative_id=administrative_id
+                    ).first()
                 assignee = {
                     "id": worker.user.id,
                     "name": worker.name
@@ -250,7 +271,11 @@ def get_assignee_to_escalate(adl_db, department_id, administrative_id):
             return get_assignee_to_escalate(adl_db, department_id, administrative_id)
         
         else:
-            worker = GovernmentWorker.objects.filter(department=department_id, administrative_id=administrative_id).first()
+            worker = GovernmentWorker.objects.filter(
+                Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id),
+                department=department_id
+                # , administrative_id=administrative_id
+                ).first()
             if worker:
                 assignee = {
                     "id": worker.user.id,

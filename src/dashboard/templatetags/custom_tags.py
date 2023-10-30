@@ -8,6 +8,9 @@ from authentication.utils import get_validation_code
 from client import get_db
 from dashboard.grm import CITIZEN_TYPE_CHOICES, CITIZEN_TYPE_CHOICES_ALT, CONTACT_CHOICES, MEDIUM_CHOICES
 from grm.utils import get_administrative_region_name as get_region_name
+from grm.call_objects_from_other_db import mis_objects_call
+from administrativelevels.models import AdministrativeLevel
+
 
 register = template.Library()
 
@@ -243,3 +246,23 @@ def make_list(parser, token):
         return MakeListNode(items, varname)
     else:
         raise template.TemplateSyntaxError("%r expected format is 'item [item ...] as varname'" % bits[0])
+    
+
+@register.filter(name='adlNames') 
+def adl_names(adl_doc):
+    adl_regions = list(
+        set(
+            (adl_doc['administrative_regions'] if 'administrative_regions' in adl_doc and adl_doc['administrative_regions'] else list()) \
+            + ([adl_doc['administrative_region']] if 'administrative_region' in adl_doc and adl_doc['administrative_region'] else list())
+        )
+    )
+    
+    obj_names = [
+        obj.name for obj in mis_objects_call.filter_objects(AdministrativeLevel, id__in=[int(_id) for _id in adl_regions])
+    ]
+    if 'administrative_region' in adl_doc and adl_doc['administrative_region'] == '1':
+        obj_names.insert(0, 'TOGO')
+
+    if obj_names:
+        return ", ".join(obj_names)
+    return '-'

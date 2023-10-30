@@ -76,6 +76,7 @@ class GovernmentWorker(models.Model):
     department = models.PositiveSmallIntegerField(db_index=True, verbose_name=_('department'))
     administrative_id = models.CharField(
         max_length=255, blank=True, null=True, verbose_name=_('administrative level'))
+    administrative_ids = models.JSONField(blank=True, null=True, verbose_name=_('administrative levels'))
 
     class Meta:
         verbose_name = _('Government Worker')

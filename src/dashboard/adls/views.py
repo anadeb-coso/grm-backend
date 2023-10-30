@@ -7,12 +7,14 @@ from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
+from django.forms import Form
 
 from authentication import ADL
-from authentication.models import User
+from authentication.models import User, GovernmentWorker
 from authentication.utils import get_validation_code
+from authentication.functions import send_code_by_mail
 from client import COUCHDB_ATTACHMENT_DATABASE, get_db, upload_file
-from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm
+from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm, GovernmentWorkerAdlProfileForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from authentication.permissions import SpecificPermissionRequiredMixin
 
@@ -68,6 +70,9 @@ class AdlDetailView(ADLMixin, PageMixin, LoginRequiredMixin, generic.DetailView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['password_confirm_form'] = PasswordConfirmForm()
+        context['government_worker_form'] = GovernmentWorkerAdlProfileForm(
+            initial = {'doc_id': self.doc['_id']}
+        )
         return context
 
     def get_object(self, queryset=None):
@@ -169,4 +174,74 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
             'adl_code': adl_code,
             'photo': photo,
         }
+        return self.render_to_json_response(context, safe=False)
+
+
+
+class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, LoginRequiredMixin, generic.View):
+        
+    def post(self, request, *args, **kwargs):
+        doc_id = kwargs['id']
+        eadl_db = get_db()
+        
+        try:
+            user_doc = eadl_db[doc_id]
+            if user_doc['type'] != ADL:
+                raise Http404
+
+            form = GovernmentWorkerAdlProfileForm(
+                request.POST, initial = {'doc_id': doc_id}
+            )
+            if not form.is_valid():
+                raise PermissionDenied()
+            
+            user_obj = User.objects.get(id=user_doc['representative']['id'])
+            data = form.cleaned_data
+            if hasattr(user_obj, 'governmentworker'):
+                governmentworker = GovernmentWorker.objects.get(id=user_obj.governmentworker.id)
+            else:
+                governmentworker = GovernmentWorker()
+                governmentworker.user = user_obj
+                governmentworker.department = 1
+
+            governmentworker.administrative_id = data['administrative_level']
+            governmentworker.administrative_ids = data['administrative_levels']
+            governmentworker.save()
+
+            msg = _("The profile information was successfully edited.")
+            messages.add_message(request, messages.SUCCESS, msg, extra_tags='success')
+
+        except PermissionDenied:
+            msg = _("An error has occurred...")
+            messages.add_message(request, messages.ERROR, msg, extra_tags='danger')
+        except Exception:
+            raise Http404
+
+        return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[doc_id]))
+
+    
+
+
+class SendUserCodeConfirmationView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, 
+                                   JSONResponseMixin, generic.FormView):
+    form_class = Form
+    title = _('Send the confirmation code to this user')
+    submit_button = _('Send')
+    permissions = ('read',)
+    id_form = "send_code_form"
+
+    def post(self, request, *args, **kwargs):
+        try:
+            send_code_by_mail(
+                User.objects.get(email=self.doc['representative']['email']), 
+                get_validation_code(self.doc['representative']['email'])
+            ) # Send user account code on their Email
+            msg = _("Code was successfully sent.")
+            messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
+        except:
+            msg = _("An error occurred during transmission.")
+            messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
+
+        
+        context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)

@@ -6,6 +6,7 @@ from django.contrib.auth.forms import UserChangeForm
 from django.forms.fields import EmailField
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 
 from authentication.models import GovernmentWorker, User, Pdata, Cdata
 # from grm.my_librairies.mail.send_mail import send_email
@@ -87,11 +88,47 @@ class UserAdmin(BaseUserAdmin):
     list_display = ('id', 'email', 'username', 'first_name', 'last_name', 'is_staff')
 
 
+class GovernmentWorkerForm(forms.ModelForm):
+    class Meta:
+        model = GovernmentWorker
+        fields = '__all__'
+
+    # def save(self, commit=True):
+        
+    #     instance = super(GovernmentWorkerForm, self).save(commit=False)
+        
+    #     try:
+    #        instance.administrative_ids = list(
+    #            set(
+    #                (instance.administrative_ids if instance.administrative_ids else list()) + [instance.administrative_id]
+    #            )
+    #        )
+    #     except Exception as exc:
+    #         print(exc)
+
+    #     if commit:
+    #         self.save_m2m()
+    #         instance.save()
+
+    #     return instance
+
+    def clean_administrative_ids(self):
+        administrative_ids = self.cleaned_data['administrative_ids']
+        print(administrative_ids)
+        if administrative_ids == None or type(administrative_ids) == list:
+            return administrative_ids
+        raise ValidationError(
+            _("The 'administrative levels' isn't validated"),
+            code="wrong_administrative_ids",
+        )
+    
 class GovernmentWorkerAdmin(admin.ModelAdmin):
+    form = GovernmentWorkerForm
     fields = (
         'user',
         'department',
         'administrative_id',
+        'administrative_ids',
     )
     raw_id_fields = (
         'user',
@@ -111,6 +148,7 @@ class GovernmentWorkerAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
+
 
 
 class LogEntryAdmin(admin.ModelAdmin):

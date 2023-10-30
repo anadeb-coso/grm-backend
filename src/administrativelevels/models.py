@@ -40,16 +40,25 @@ class CustomQuerySet(models.QuerySet):
     
     def filter_by_government_worker(self, user, ascendant=True, descendant=True) -> _QS:
         if user and hasattr(user, 'governmentworker') and user.governmentworker.administrative_id not in (None, '', '1', 1) and descendant and descendant:
-            ids = list(self.get_administrative_level_ascendants_using_mis(None, user.governmentworker.administrative_id, [], user)) if ascendant else []
-            
-            ids += list(self.get_administrative_level_descendants_using_mis(None, user.governmentworker.administrative_id, [], user)) if descendant else []
-            ids += [str(user.governmentworker.administrative_id)]
+            adl_regions = list(
+                set(
+                    (user.governmentworker.administrative_ids if user.governmentworker.administrative_ids else list()) \
+                    + ([user.governmentworker.administrative_id] if user.governmentworker.administrative_id else list())
+                )
+            )
+            ids = []
+            print(adl_regions)
+            for _id in adl_regions:
+                ids += list(self.get_administrative_level_ascendants_using_mis(None, _id, [], user)) if ascendant else []
+                
+                ids += list(self.get_administrative_level_descendants_using_mis(None, _id, [], user)) if descendant else []
+                ids += [str(_id)]
             ids = list(set(ids))
             l = []
             for o in self:
                 if str(o.id) in ids:
                     l.append(o)
-                    
+            print(l)
             return l
             
             

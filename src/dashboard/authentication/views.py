@@ -61,7 +61,7 @@ class RegisterADLView(PageMixin, FormView):
 class ConfirmCodeADLView(PageMixin, FormView):
     template_name = 'authentication/confirm_code.html'
     form_class = ConfirmCodeForm
-    success_url = reverse_lazy('dashboard:diagnostics:home')
+    success_url = reverse_lazy('dashboard:grm:review_issues')
     password = None
     email = None
 

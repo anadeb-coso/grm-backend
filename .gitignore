@@ -1,4 +1,5 @@
 src/db.sqlite3
+grm/constants.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

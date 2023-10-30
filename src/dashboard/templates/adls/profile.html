@@ -31,20 +31,33 @@
                                     <span {% if not profile %}class="text-warning"{% endif %} id="name">
                                         {{ profile.name|default:not_assigned }}
                                     </span>
+                                    {% if user|has_group:'Admin' or user.is_superuser %}
                                     <button id="edit_profile" class="btn float-right p-0
                                             {% if profile %}text-primary{% else %}text-muted{% endif %}"
                                             {% if not profile %}disabled{% endif %}>
                                         <i class="fas fa-edit fs17"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                                 <span class="text-muted fs17">{% translate 'Administrative Level' %}:</span>
                                 <span class="text-bold-family fs17">
                                     {% if adl.name %}
-                                        {{ adl.name }}
+                                        {{ adl.name }}{% if adl.name != "Pays" and adl.administrative_regions|length > 1 %}s{% endif %}
                                     {% else %}
                                         {% translate 'No administrative level assigned' %}
                                     {% endif %}
                                 </span>
+
+                                {% if user|has_group:'Admin' or user.is_superuser %}
+                                <button class="btn  p-0
+                                            {% if profile %}text-primary{% else %}text-muted{% endif %}" 
+                                            data-toggle="modal"
+                                                data-target="#edit_user_government_worker_modal"
+                                            {% if not profile %}disabled{% endif %}>
+                                        <i class="fas fa-edit fs17"></i>
+                                    </button>
+                                {% endif %}
+                                    
                                 <p class="mt-2 lh14 text-gray-light">
                                     {% translate 'Tel' %}: <span id="phone">{{ profile.phone }}</span>
                                     <br>
@@ -80,7 +93,16 @@
                 </div>
                 <div class="card h-100">
                     <div class="card-body">
-                        <div class="text-bold-family fs17">{% translate 'Facilitator Code' %}</div>
+                        <div class="text-bold-family fs17">{% translate 'Facilitator Code' %} 
+                        {% if user|has_group:'Admin' or user.is_superuser %}
+                        <button id="send_user_confirmation_code" class="btn float-right p-0
+                                            {% if profile %}text-primary{% else %}text-muted{% endif %}"
+                                            {% if not profile %}disabled{% endif %}>
+                                        <i class="fas fa-envelope fs17"></i>
+                                    </button>
+                        {% endif %}
+                        
+                        </div>
                         <div class="adl-code mt-3" id="adl_code">{% get_code profile.email %}</div>
                     </div>
                 </div>
@@ -261,7 +283,47 @@
         </div>
     </div>
 
+
+    <div class="modal fade modal-confirmation" id="edit_user_government_worker_modal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form class="form-horizontal" action="{% url 'dashboard:adls:edit_user_government_worker' adl|get:'_id' %}"
+                      method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title mx-auto">
+                            <img src="{% static 'images/icon.png' %}" height="254">
+                        </h5>
+                        <button type="button" class="border-0 bg-transparent" data-dismiss="modal"
+                                aria-label="Close">
+                            <div class="circle-icon bg-primary">
+                                <div class="center-27">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-primary text-center fs17 lh19 text-bold mb-4"
+                             style="padding: 0 45px 0 45px;">
+                            {% translate "Assigning intervention locations" %}
+                        </div>
+                        {% bootstrap_form government_worker_form layout='horizontal' %}
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button id="edit-government-worker-btn" type="submit" class="btn btn-lg btn-primary text-right"
+                                disabled>
+                            {% translate "Save" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
     <div id="editProfileFormModal" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
+
 {% endblock modals %}
 
 {% block javascript %}
@@ -420,11 +482,82 @@
         }
 
         let profile_form_ajax = new ProfileFormAjaxSubmit();
+
+
+        class SendCodeFormAjaxSubmit extends FormAjaxSubmit {
+             submitted_form(xhr) {
+                if (xhr.msg) {
+                    $(".modal-confirmation").modal("hide");
+                    showPopupMessage(xhr.msg);
+                }
+            };
+        }
+        let send_code_form_ajax = new SendCodeFormAjaxSubmit();
+
+
+        class GovernmentWorkerFormAjaxSubmit extends FormAjaxSubmit {
+             submitted_form(xhr) {
+                if (xhr.msg) {
+                    showPopupMessage(xhr.msg);
+                }
+            };
+        }
+        let government_worker_form_ajax = new GovernmentWorkerFormAjaxSubmit();
+
+
         let modal = $('#editProfileFormModal');
 
         $('#edit_profile').click(function () {
             let url = "{% url 'dashboard:adls:edit_profile' adl|get:'_id' %}";
             profile_form_ajax.load_form('#form', modal, url, false, true);
         });
+
+
+        $('#id_administrative_level').on('change', function () {
+            let submit = $('#edit-government-worker-btn');
+
+            let _length = $(this).val().trim().length;
+            if (_length > 0) {
+                submit.prop('disabled', false);
+            } else {
+                submit.prop('disabled', true);
+            }
+        });
+
+        $('#id_administrative_levels').on('change', function () {
+            let submit = $('#edit-government-worker-btn');
+            let _length = $(this).val().length;
+            if (_length > 0) {
+                submit.prop('disabled', false);
+            } else {
+                submit.prop('disabled', true);
+            }
+        });
+
+        $('#send_user_confirmation_code').click(function () {
+            let url = "{% url 'dashboard:adls:send_user_confirmation_code' adl|get:'_id' %}";
+            send_code_form_ajax.load_form('#send_code_form', modal, url, false, true);
+        });
     </script>
 {% endblock javascript %}
+
+
+{% block select2 %}
+    <script src="{% static 'js/dynamicRegionSelector.js' %}"></script>
+    <script type="text/javascript">
+        $("#id_administrative_levels").select2({
+            placeholder: "{% translate 'Click to select location' %}",
+            allowClear: true,
+            width: '100%'
+        });
+        $("#id_administrative_level").select2({
+            placeholder: "{% translate 'Click to select location' %}",
+            allowClear: true,
+            width: '100%'
+        });
+        $('b[role="presentation"]').hide();
+        $('.select2-selection__arrow').append(
+            '<i class="fas fa-chevron-circle-down text-primary" style="margin-top:12px;"></i>');
+
+    </script>
+{% endblock select2 %}

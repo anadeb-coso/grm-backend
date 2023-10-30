@@ -78,6 +78,13 @@ class DashboardTemplateView(PageMixin, LoginRequiredMixin, generic.TemplateView)
             'title': title
         },
     ]
+    
+    def dispatch(self, request, *args, **kwargs):
+        check_issues()
+        escalate_issues()
+        send_sms_message()
+        send_a_new_issue_notification()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class StartNewIssueView(LoginRequiredMixin, generic.View):
@@ -689,6 +696,11 @@ class NewIssueConfirmFormView(PageMixin, NewIssueMixin):
             self.set_details_fields(data)
             self.set_location_fields(data)
             self.set_assignee()
+
+            try:
+                send_a_new_issue_notification()
+            except:
+                pass
         except Exception as e:
             raise e
 

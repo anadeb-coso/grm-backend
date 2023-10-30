@@ -22,6 +22,7 @@ class SaveIssueDatas(APIView):
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         user_id = serializer.validated_data['user_id']
         has_error = False
+        print(serializer.validated_data['issues'])
         for issue in serializer.validated_data['issues']:
             if issue['reporter']['id'] == user_id or issue['assignee']['id'] == user_id:
                 issue_id = issue['_id']
@@ -42,4 +43,4 @@ class SaveIssueDatas(APIView):
                     except Exception as exc:
                         has_error = True
         
-        return Response({'status': 'ok', 'has_error': has_error, 'save_new': _pass}, status=status.HTTP_200_OK)
+        return Response({'status': 'ok', 'has_error': has_error}, status=status.HTTP_200_OK)

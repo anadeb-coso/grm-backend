@@ -1448,4 +1448,38 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
+#: dashboard/privacy
+msgid "Mr./Mrs."
+msgstr ""
 
+#: dashboard/privacy
+msgid "Code was successfully sent."
+msgstr ""
+
+#: dashboard/privacy
+msgid "An error occurred during transmission."
+msgstr ""
+
+#: dashboard/privacy
+msgid "The user has not been found."
+msgstr ""
+
+#: dashboard/privacy
+msgid "Send the confirmation code to this user"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Send"
+msgstr ""
+
+#: dashboard/privacy
+msgid "administrative levels"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Assigning intervention locations"
+msgstr ""
+
+#: dashboard/privacy
+msgid "The 'administrative levels' isn't validated"
+msgstr ""

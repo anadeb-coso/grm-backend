@@ -29,8 +29,6 @@ def create_or_update_adl_user_adl(user, updated=False):
     
     doc_user = {
         "type": "adl",
-        "name": None,
-        "location_name": None,
         "photo": user.photo.url if user.photo else "https://via.placeholder.com/150",
         "location": {
             "lat": 0,
@@ -48,15 +46,22 @@ def create_or_update_adl_user_adl(user, updated=False):
             "groups": [g.name for g in user.groups.all()]
         },
         "phases": [],
-        "administrative_region": None,
         "department": 1,
         "unique_region": 0,
         "village_secretary": 1
     }
-    if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id:
-        doc_user['name'] = user.governmentworker.administrative_level().type
-        doc_user['location_name'] = user.governmentworker.administrative_level().name
-        doc_user['administrative_region'] = user.governmentworker.administrative_id
+
+    if not updated:
+        doc_user['name'] = None
+        doc_user['location_name'] = None
+        doc_user['administrative_region'] = None
+        doc_user['administrative_regions'] = []
+
+    # if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id:
+    #     doc_user['name'] = user.governmentworker.administrative_level().type
+    #     doc_user['location_name'] = user.governmentworker.administrative_level().name
+    #     doc_user['administrative_region'] = user.governmentworker.administrative_id
+    #     doc_user['administrative_regions'] = user.governmentworker.administrative_ids
 
     if updated:
         for k, v in doc_user.items():
@@ -77,11 +82,12 @@ def set_user_government_worker_adl(government_worker):
         doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
     except Exception as exc:
         pass
-    print(government_worker.administrative_level())
+    
     doc_user = {
         "name": government_worker.administrative_level().type,
         "location_name": government_worker.administrative_level().name,
         "administrative_region": government_worker.administrative_id,
+        "administrative_regions": government_worker.administrative_ids
     }
 
     for k, v in doc_user.items():

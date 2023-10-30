@@ -4,6 +4,10 @@ from django.utils.translation import gettext_lazy as _
 from authentication import ADL, MAJOR
 from client import get_db
 from dashboard.forms.forms import FileForm
+from dashboard.customers_fields import CustomerIntegerRangeField
+from authentication.models import User
+from administrativelevels.models import AdministrativeLevel
+from grm.call_objects_from_other_db import mis_objects_call
 
 
 class PasswordConfirmForm(forms.Form):
@@ -49,3 +53,32 @@ class AdlProfileForm(FileForm):
         if doc and doc['_id'] != self.doc_id:
             self.add_error('email', _("This email is already registered."))
         return email
+
+
+class GovernmentWorkerAdlProfileForm(forms.Form):
+    department = CustomerIntegerRangeField(min_value=1, default=1)
+    administrative_level = forms.ChoiceField(required=True, label=_('administrative level'))
+    administrative_levels = forms.MultipleChoiceField(required=True, label=_('administrative levels'))
+
+    doc_id = ""
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial')
+        self.doc_id = initial.get('doc_id')
+        super().__init__(*args, **kwargs)
+
+        user_doc = get_db()[self.doc_id]
+        user_obj = User.objects.get(id=user_doc['representative']['id'])
+        
+        adls = [(str(obj.id), f'{obj.type}: {obj.name} {f"({obj.parent})" if obj.parent else "(TOGO)"}') for obj in mis_objects_call.get_all_objects(AdministrativeLevel)]
+
+        self.fields['administrative_level'].choices = adls
+        self.fields['administrative_levels'].choices = adls
+        
+        if hasattr(user_obj, 'governmentworker'):
+            if user_obj.governmentworker.administrative_id:
+                self.fields['administrative_level'].initial = user_obj.governmentworker.administrative_id
+            if user_obj.governmentworker.administrative_ids:
+                self.fields['administrative_levels'].initial = user_obj.governmentworker.administrative_ids
+        
+        

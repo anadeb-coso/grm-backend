@@ -1521,3 +1521,35 @@ msgstr "Tel"
 #: dashboard/privacy
 msgid "Mr./Mrs."
 msgstr "M./Mme"
+
+#: dashboard/privacy
+msgid "Code was successfully sent."
+msgstr "Le code a été envoyé avec succès."
+
+#: dashboard/privacy
+msgid "An error occurred during transmission."
+msgstr "Une erreur s'est produite lors de l'envoi."
+
+#: dashboard/privacy
+msgid "The user has not been found."
+msgstr "L'utilisateur n'a pas été trouvé."
+
+#: dashboard/privacy
+msgid "Send the confirmation code to this user"
+msgstr "Envoyer le code de confirmation à cet utilisateur"
+
+#: dashboard/privacy
+msgid "Send"
+msgstr "Envoyer"
+
+#: dashboard/privacy
+msgid "administrative levels"
+msgstr "niveaux administratifs"
+
+#: dashboard/privacy
+msgid "Assigning intervention locations"
+msgstr "Affectation de lieux d'interventions"
+
+#: dashboard/privacy
+msgid "The 'administrative levels' isn't validated"
+msgstr "Les 'niveaux administratifs' ne sont pas validés"

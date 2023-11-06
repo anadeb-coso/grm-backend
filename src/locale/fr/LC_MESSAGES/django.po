@@ -1223,6 +1223,10 @@ msgid "Unpublish"
 msgstr "Non publier"
 
 #: dashboard/grm/views.py
+msgid "Unpublished"
+msgstr "Non publiée"
+
+#: dashboard/grm/views.py
 msgid "Password used to view original description"
 msgstr "Mot de passe qui sera utilisé pour voir la description originale"
 
@@ -1373,6 +1377,10 @@ msgstr "L'information n'a pas été enregistré. Le mot de pas ne correspond pas
 #: dashboard/privacy
 msgid "Set to publish"
 msgstr "Mettre à publier"
+
+#: dashboard/privacy
+msgid "Publish the issue"
+msgstr "Publier la plainte"
 
 #: dashboard/privacy
 msgid "Set to unpublish"
@@ -1553,3 +1561,11 @@ msgstr "Affectation de lieux d'interventions"
 #: dashboard/privacy
 msgid "The 'administrative levels' isn't validated"
 msgstr "Les 'niveaux administratifs' ne sont pas validés"
+
+#: dashboard/privacy
+msgid "Categories password"
+msgstr "Mot de passe des categories"
+
+#: dashboard/privacy
+msgid "Category Password"
+msgstr "Mot de passe de la categorie"

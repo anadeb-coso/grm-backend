@@ -58,22 +58,38 @@
         var password_fields_parent = [issue_password_file_parent, issue_password_parent]
         
         password_fields.forEach(function(elt){
-            {% if not doc.category %}
-                elt.attr('required', false);
-            {% elif doc.category.id == 4 or doc.category.id == 7 %}
-                elt.attr('required', true);
-            {% else %}
-                elt.attr('required', false);
-            {% endif %}
+            if(elt){
+                let form_id = elt.parent().parent().parent().parent().attr('id');
+                
+                if(form_id == 'issue_publish_form'){
+                    elt.attr('required', true);
+                }else{
+                    {% if not doc.category %}
+                        elt.attr('required', false);
+                    {% elif doc.category.id == 4 or doc.category.id == 7 %}
+                        elt.attr('required', true);
+                    {% else %}
+                        elt.attr('required', false);
+                    {% endif %}
+                }
+            }
         });
         password_fields_parent.forEach(function(elt){
-            {% if not doc.category %}
-                elt.show();
-            {% elif doc.category.id == 4 or doc.category.id == 7 %}
-                elt.show();
-            {% else %}
-                elt.hide();
-            {% endif %}
+            if(elt){
+                let form_id = elt.parent().parent().parent().attr('id');
+                
+                if(form_id == 'issue_publish_form'){
+                    elt.show();
+                }else{
+                    {% if not doc.category %}
+                        elt.show();
+                    {% elif doc.category.id == 4 or doc.category.id == 7 %}
+                        elt.show();
+                    {% else %}
+                        elt.hide();
+                    {% endif %}
+                }
+            }
         });
 
 

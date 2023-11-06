@@ -5,16 +5,16 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
-from privacy.models import IssueCategpryPassword
+from privacy.models import IssueCategoryPassword
 from grm.utils import cryptography_fernet_encrypt
 from client import get_db
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 
 
-# class IssueCategpryPasswordForm(forms.ModelForm):
+# class IssueCategoryPasswordForm(forms.ModelForm):
 #     class Meta:
-#         model = IssueCategpryPassword
+#         model = IssueCategoryPassword
 #         fields = (
 #             "issue_category_id", "password", "user"
 #         )
@@ -33,12 +33,12 @@ COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 #         return make_password(password)
 
 
-class CustomIssueCategpryPasswordFormChangeForm(forms.ModelForm):
+class CustomIssueCategoryPasswordFormChangeForm(forms.ModelForm):
     password = forms.CharField(label='', max_length=7, min_length=7,widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
     _password = None
     _issue_category_key = None
     class Meta:
-        model = IssueCategpryPassword
+        model = IssueCategoryPassword
         fields = (
             "issue_category_id", "password", "user"
         )
@@ -88,7 +88,7 @@ class CustomIssueCategpryPasswordFormChangeForm(forms.ModelForm):
     
     def save(self, commit=True):
         
-        instance = super(CustomIssueCategpryPasswordFormChangeForm, self).save(commit=False)
+        instance = super(CustomIssueCategoryPasswordFormChangeForm, self).save(commit=False)
  
         instance.key = self._issue_category_key
         instance.password_data_encrypt = cryptography_fernet_encrypt(self._password, instance.key)
@@ -101,9 +101,9 @@ class CustomIssueCategpryPasswordFormChangeForm(forms.ModelForm):
         return instance
     
 
-class CustomIssueCategpryPasswordAdmin(admin.ModelAdmin):
-    form = CustomIssueCategpryPasswordFormChangeForm
-    # add_form = IssueCategpryPasswordForm
+class CustomIssueCategoryPasswordAdmin(admin.ModelAdmin):
+    form = CustomIssueCategoryPasswordFormChangeForm
+    # add_form = IssueCategoryPasswordForm
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -118,9 +118,13 @@ class CustomIssueCategpryPasswordAdmin(admin.ModelAdmin):
     list_display = ("issue_category_id", "user")
 
     search_fields = ('id', "issue_category_id", "user__email")
+    
+    raw_id_fields = (
+        'user',
+    )
 
 
 
 
 
-admin.site.register(IssueCategpryPassword, CustomIssueCategpryPasswordAdmin)
+admin.site.register(IssueCategoryPassword, CustomIssueCategoryPasswordAdmin)

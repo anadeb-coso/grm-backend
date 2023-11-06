@@ -9,6 +9,9 @@
                     <div class="card-title">
                         <div class="pt-1 fs20 lh25 text-bold-family">
                             {{ doc.internal_code }}
+                            {% if not doc.publish %}
+                            <span class="text-warning" style="font-size: 10px !important;">({% translate 'Unpublished' %})</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

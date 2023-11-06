@@ -24,6 +24,9 @@
         {% else %}
             {{ current_adl_obj.escalate_to.administrative_level }}
         {% endif %}
+        {% if current_adl_obj.escalate_to.name %}
+            ({{ current_adl_obj.escalate_to.name }})
+        {% endif %}
     </div>
 </div>
 
@@ -31,7 +34,7 @@
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
-            {% translate 'Set to publish' %}
+            {% translate 'Publish the issue' %}
         </label>
     </div>
     <div class="col-4">
@@ -51,7 +54,7 @@
     </div>
     <div class="col-4">
         <button type="button" class="{% if not doc.publish %}btn-status {% endif %}
-         btn btn-primary pull-right" id="unpublish_issue" {% if not doc.publish %}disabled{% endif %}>
+         btn btn-warning pull-right" id="unpublish_issue" {% if not doc.publish %}disabled{% endif %}>
             <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
         </button>
     </div>

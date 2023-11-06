@@ -4,6 +4,3 @@
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
-
-#
-grm/constants.py

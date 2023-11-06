@@ -1181,6 +1181,10 @@ msgid "Unpublish"
 msgstr ""
 
 #: dashboard/grm/views.py
+msgid "Unpublished"
+msgstr ""
+
+#: dashboard/grm/views.py
 msgid "Password used to view original description"
 msgstr ""
 
@@ -1302,6 +1306,10 @@ msgstr ""
 
 #: dashboard/privacy
 msgid "Set to publish"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Publish the issue"
 msgstr ""
 
 #: dashboard/privacy
@@ -1482,4 +1490,12 @@ msgstr ""
 
 #: dashboard/privacy
 msgid "The 'administrative levels' isn't validated"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Categories password"
+msgstr ""
+
+#: dashboard/privacy
+msgid "Category Password"
 msgstr ""

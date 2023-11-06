@@ -7,9 +7,13 @@ from grm.constants import ISSUES_CATEGORY
 # Create your models here.
 
 
-class IssueCategpryPassword(BaseModel):
+class IssueCategoryPassword(BaseModel):
     issue_category_id = models.IntegerField(choices=ISSUES_CATEGORY, verbose_name=_("Category"))
     password = models.CharField(verbose_name=_("Password"), max_length=255)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, verbose_name=_("User"), null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
     password_data_encrypt = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        verbose_name = _('Category Password')
+        verbose_name_plural = _('Categories password')

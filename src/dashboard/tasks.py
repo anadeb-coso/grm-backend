@@ -3,7 +3,7 @@ from django.utils.translation import gettext as _
 from twilio.base.exceptions import TwilioRestException
 from datetime import datetime
 
-from authentication.models import anonymize_issue_data, get_assignee, get_assignee_to_escalate
+from authentication.models import anonymize_issue_data, get_assignee, get_assignee_to_escalate, get_adl_to_escalate
 from client import get_db
 from dashboard.grm import CHOICE_CONTACT, CHOICE_PHONE
 from grm.celery import app
@@ -241,10 +241,14 @@ def escalate_issues():
                 administrative_id = escalation_administrativelevels[0]['escalate_to']['administrative_id']
                 
             adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-            assignee, escalate_to_administrative = get_assignee_to_escalate(adl_db, department_id, administrative_id)
-            
-            if assignee:
-                # issue_doc['assignee'] = assignee
+
+            #"""Comment to be able to report a issue even if the administrative level does not have a issue manager"""
+            # assignee, escalate_to_administrative = get_assignee_to_escalate(adl_db, department_id, administrative_id)
+            # if assignee:
+            #     issue_doc['assignee'] = assignee
+
+            escalate_to_administrative = get_adl_to_escalate(adl_db, administrative_id)
+            if escalate_to_administrative:
                 issue_doc['escalate_flag'] = False
                 escalation_administrativelevels.insert(0, {
                     "escalate_to": escalate_to_administrative,

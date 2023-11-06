@@ -69,6 +69,15 @@
                         <p>{% translate "GRM" %}</p>
                     </a>
                 </li>
+                {% if user.is_superuser %}
+                <li class="nav-item">
+                    <a href="{% url 'admin:index' %}"
+                       class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <p>{% translate "Administrator" %}</p>
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
 

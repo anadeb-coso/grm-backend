@@ -289,6 +289,30 @@ def get_assignee_to_escalate(adl_db, department_id, administrative_id):
         # return get_assignee_to_escalate(adl_db, department_id, administrative_id)
     return None, None
 
+def get_adl_to_escalate(adl_db, administrative_id):
+    try:
+        parent = get_parent_administrative_level(adl_db, administrative_id)
+    except Exception:
+        raise
+    if parent:
+        
+        administrative_id = parent['administrative_id']
+        parent_obj = mis_objects_call.filter_objects(AdministrativeLevel, id=administrative_id).first()
+        
+        if parent['administrative_level'] == 'Commune' or \
+            (parent['administrative_level'] == 'Region' and parent_obj and parent_obj.name.upper() in ('KARA', 'CENTRALE')) or \
+            (parent['administrative_level'] == 'Prefecture' and parent_obj and parent_obj.parent and parent_obj.parent.name.upper() == 'SAVANES'): #Specially for COSO TOGO
+        
+            return get_adl_to_escalate(adl_db, administrative_id)
+        
+        else:
+            return {
+                "administrative_id": parent['administrative_id'],
+                "name": parent['name'],
+                "administrative_level": parent['administrative_level']
+            }
+        
+    return None
 
 def anonymize_issue_data(issue_doc):
     key = issue_doc['_id']

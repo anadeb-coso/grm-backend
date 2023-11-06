@@ -17,7 +17,7 @@ from django.db.models import Q
 
 from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee
 from client import get_db, upload_file
-from dashboard.adls.forms import PasswordConfirmForm
+from dashboard.grm.forms import CheckPasswordForm
 from dashboard.forms.forms import FileForm
 from dashboard.grm import CHOICE_CONTACT
 from dashboard.grm.forms import (
@@ -994,7 +994,7 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
         except Exception:
             raise Http404
         context['doc_status'] = doc_status
-        context['password_confirm_form'] = PasswordConfirmForm()
+        context['password_confirm_form'] = CheckPasswordForm()
         context['category_form'] = IssueCategoryForm(
             initial= {'doc_id': self.doc['_id'], 'user': self.request.user}
         )

@@ -21,6 +21,11 @@ COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE
 MAX_LENGTH = 65000
 
 
+
+class CheckPasswordForm(forms.Form):
+    password = forms.CharField(max_length=7, min_length=7, widget=forms.PasswordInput(), label=_("Password"))
+
+
 class NewIssueContactForm(forms.Form):
     contact_medium = forms.ChoiceField(label=_('How does the citizen wish to be contacted?'), widget=RadioSelect,
                                        choices=MEDIUM_CHOICES)

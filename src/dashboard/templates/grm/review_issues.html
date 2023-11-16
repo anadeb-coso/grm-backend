@@ -21,10 +21,10 @@
                         </div>
                         <div class="col-8 border-left">
                             <div class="row issues-filter">
-                                <div class="col-2">
+                                {% comment %} <div class="col-2">
                                     <label class="label-align">{% translate 'Filter by' %}</label>
-                                </div>
-                                <div class="col-5">
+                                </div> {% endcomment %}
+                                <div class="col-6">
                                     {% bootstrap_field form.code show_label=False %}
                                     {% comment %} {% if not user.governmentworker %}
                                         {% bootstrap_field form.assigned_to show_label=False %}
@@ -33,7 +33,7 @@
                                     {% bootstrap_field form.assigned_to show_label=False %}
                                     {% bootstrap_field form.reported_by show_label=False %}
                                 </div>
-                                <div class="col-5">
+                                <div class="col-6">
                                     {% comment %} {% bootstrap_field form.type show_label=False %} {% endcomment %}
                                     {% bootstrap_field form.status show_label=False %}
                                     {% bootstrap_field form.category show_label=False %}
@@ -42,10 +42,36 @@
                             </div>
                         </div>
                     </div>
-                    <a class="btn fs12 text-bold-family text-primary pull-right p-0"
-                       id="clear_all_filters">
-                        {% translate "Clear all filters" %}
-                    </a>
+
+                    <div class="row">
+                        <div class="col-3">
+                        </div>
+                        <div class="col-5">
+                            {% if user.is_superuser %}
+                            <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard:grm:file:file_save_issues' %}">
+                                {% csrf_token %}
+                                
+                                <div class="file-field big">
+                                    <a class="btn-floating btn-lg amber darken-2 mt-0 float-left">
+                                        <i class="fas fa-cloud-upload-alt" aria-hidden="true" style="font-size: 17px;"></i>
+                                        <input type="file" name="file" required id="file"  style="font-size: 7px;"
+                                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" style="font-size: 12px; margin-top: 12px;">{% translate 'Save issues imported' %}</button>
+                                </div>
+                                 
+                                
+                            </form>
+                            {% endif %}
+                        </div>
+                        <div class="col-4">
+                            <a class="btn fs12 text-bold-family text-primary pull-right p-0"
+                                id="clear_all_filters">
+                                {% translate "Clear all filters" %}
+                            </a>
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
             <div class="card">

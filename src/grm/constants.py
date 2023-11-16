@@ -10,21 +10,21 @@ ISSUES_CATEGORY = (
 
 
 SAFEGUARD_SPECIALIST_EMAILS = [
-    "yiroko777@gmail.com", "kegbaof@gmail.com"
-    # "adaboubvincent@gmail.com"
+    # "yiroko777@gmail.com", "kegbaof@gmail.com"
+    "adaboubvincent@gmail.com"
 ]
 
 ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS = [
-    "badassan13@gmail.com", "ourorachid2013@gmail.com", "estherdjallo@gmail.com"
+    # "badassan13@gmail.com", "ourorachid2013@gmail.com", "estherdjallo@gmail.com"
 ]
 
 COORDINATORS_EMAILS_ON_COPY = [
-    "dametouglet@hotmail.com", "tdametougle@gmail.com"
+    # "dametouglet@hotmail.com", "tdametougle@gmail.com"
 ]
 
 OTHER_SPECIALIST_ON_MAIL_COPY = [
-    "palerbo@gmail.com", #Evaluator
-    "gounsougleyename@yahoo.fr", "mass.zato36@gmail.com" #CDDSpecialist
+    # "palerbo@gmail.com", #Evaluator
+    # "gounsougleyename@yahoo.fr", "mass.zato36@gmail.com" #CDDSpecialist
 ]
 
 ANADEB_EMAILS_ON_COPY = [
@@ -32,5 +32,5 @@ ANADEB_EMAILS_ON_COPY = [
 ]
 
 OTHERS_EMAILS_ON_COPY = [
-    "sig.anadeb@gmail.com", "cosotogosig@gmail.com"
+    # "sig.anadeb@gmail.com", "cosotogosig@gmail.com"
 ]

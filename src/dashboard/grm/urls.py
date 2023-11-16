@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 
 from dashboard.grm import views
 
@@ -51,4 +51,6 @@ urlpatterns = [
          name='get_choices_for_next_administrative_level'),
     path('get-ancestor-administrative-levels', views.GetAncestorAdministrativeLevelsView.as_view(),
          name='get_ancestor_administrative_levels'),
+
+     path('file/', include('dashboard.grm.urls_issues_mangement_file'))
 ]

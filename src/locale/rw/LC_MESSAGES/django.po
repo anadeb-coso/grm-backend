@@ -1499,3 +1499,10 @@ msgstr ""
 #: dashboard/privacy
 msgid "Category Password"
 msgstr ""
+
+#: dashboard/privacy
+msgid "COSO GRM - You have been assigned a issue"
+msgstr ""
+#: dashboard/privacy
+msgid "Please find below the information concerning the new issue that has just been assigned to you."
+msgstr ""

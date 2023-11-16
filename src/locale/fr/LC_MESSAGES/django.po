@@ -1569,3 +1569,15 @@ msgstr "Mot de passe des categories"
 #: dashboard/privacy
 msgid "Category Password"
 msgstr "Mot de passe de la categorie"
+
+#: dashboard/privacy
+msgid "Save issues imported"
+msgstr "Sauvegarder les plaintes importées"
+
+#: dashboard/privacy
+msgid "COSO GRM - You have been assigned a issue"
+msgstr "COSO MGP - Une plainte vous est assignée"
+
+#: dashboard/privacy
+msgid "Please find below the information concerning the new issue that has just been assigned to you."
+msgstr "Nous vous prions de troucer ci-dessous les informations concernant la nouvelle plainte qui vient d'être assignée à vous."

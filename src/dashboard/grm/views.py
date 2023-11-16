@@ -33,7 +33,7 @@ from grm.utils import (
     get_child_administrative_regions_using_mis, cryptography_fernet_encrypt,
     cryptography_fernet_decrypt, delete_file_on_download_file
 )
-from dashboard.grm.functions import get_issue_status_stories
+from dashboard.grm.functions import get_issue_status_stories, send_assignee_notification_by_mail
 from dashboard.tasks import check_issues, send_sms_message, escalate_issues, send_a_new_issue_notification
 from authentication.permissions import AdminPermissionRequiredMixin
 from privacy.functions import get_last_category_password, get_all_privacy_passwords
@@ -1016,6 +1016,9 @@ class EditIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONRespon
             "id": worker.user.id,
             "name": worker.name
         }
+
+        send_assignee_notification_by_mail(self.doc, worker.user) #Send mail to follower
+
         self.doc.save()
         msg = _("The issue was successfully edited.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')

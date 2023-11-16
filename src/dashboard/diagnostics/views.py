@@ -8,7 +8,10 @@ from django.views import generic
 from client import get_db
 from dashboard.grm.forms import SearchIssueForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, PageMixin
-from grm.utils import get_administrative_level_descendants, get_base_administrative_id, get_administrative_level_descendants_using_mis
+from grm.utils import (
+    get_administrative_level_descendants, get_base_administrative_id, 
+    get_administrative_level_descendants_using_mis, get_base_administrative_id_using_mis
+)
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -22,13 +25,13 @@ class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['access_token'] = settings.MAPBOX_ACCESS_TOKEN
-        context['lat'] = settings.DIAGNOSTIC_MAP_LATITUDE
-        context['lng'] = settings.DIAGNOSTIC_MAP_LONGITUDE
-        context['zoom'] = settings.DIAGNOSTIC_MAP_ZOOM
-        context['ws_bound'] = settings.DIAGNOSTIC_MAP_WS_BOUND
-        context['en_bound'] = settings.DIAGNOSTIC_MAP_EN_BOUND
-        context['country_iso_code'] = settings.DIAGNOSTIC_MAP_ISO_CODE
+        # context['access_token'] = settings.MAPBOX_ACCESS_TOKEN
+        # context['lat'] = settings.DIAGNOSTIC_MAP_LATITUDE
+        # context['lng'] = settings.DIAGNOSTIC_MAP_LONGITUDE
+        # context['zoom'] = settings.DIAGNOSTIC_MAP_ZOOM
+        # context['ws_bound'] = settings.DIAGNOSTIC_MAP_WS_BOUND
+        # context['en_bound'] = settings.DIAGNOSTIC_MAP_EN_BOUND
+        # context['country_iso_code'] = settings.DIAGNOSTIC_MAP_ISO_CODE
         return context
 
 
@@ -95,7 +98,9 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
                 stats[k]['issues'] = stats[k]['count']
 
         for doc in issues:
-            region_key = get_base_administrative_id(adl_db, doc['administrative_region']['administrative_id'], region)
+            # region_key = get_base_administrative_id(adl_db, doc['administrative_region']['administrative_id'], region)
+            region_key = get_base_administrative_id_using_mis(doc['administrative_region']['administrative_id'], region)
+            
             fill_count(region_key, region_stats)
 
             status_key = doc['status']['id']

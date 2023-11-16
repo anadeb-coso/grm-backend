@@ -12,6 +12,7 @@ from django.template.defaultfilters import date as _date
 from administrativelevels import models as administrativelevels_models
 from administrativelevels.serializers import AdministrativeLevelSerializer
 from grm.my_librairies import get_download_folder, download_file
+from grm.call_objects_from_other_db import mis_objects_call
 
 
 def sort_dictionary_list_by_field(list_to_be_sorted, field, reverse=False):
@@ -130,6 +131,19 @@ def get_base_administrative_id(adl_db, administrative_id, base_parent_id=None):
             break
     return base_administrative_id
 
+def get_base_administrative_id_using_mis(administrative_id, base_parent_id=None):
+    base_administrative_id = administrative_id
+    while True:
+        parent = get_parent_administrative_level_using_mis(administrative_id)
+        
+        if parent:
+            base_administrative_id = administrative_id
+            administrative_id = parent['administrative_id']
+            if base_parent_id and parent['administrative_id'] == base_parent_id:
+                break
+        else:
+            break
+    return base_administrative_id
 
 def get_child_administrative_regions(adl_db, parent_id):
     data = adl_db.get_query_result(
@@ -195,6 +209,23 @@ def get_parent_administrative_level(adl_db, administrative_id):
         pass
     return parent
 
+def get_parent_administrative_level_using_mis(administrative_id):
+    parent = None
+    
+    obj = mis_objects_call.filter_objects(administrativelevels_models.AdministrativeLevel, id=administrative_id).first()
+    
+    if obj and obj.parent:
+        parent = {
+            "administrative_id": str(obj.parent.id),
+            "name": obj.parent.name,
+            "administrative_level": obj.parent.type,
+            "type": "administrative_level",
+            "parent_id": str(obj.parent.parent.id) if obj.parent.parent else None,
+            "latitude": None,
+            "longitude": None
+        }
+
+    return parent
 
 def get_related_region_with_specific_level(adl_db, region_doc, level):
     """

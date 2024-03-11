@@ -21,7 +21,11 @@
                         <div class="d-inline-block padding-6-0">
                             <a 
                                 {% if attachment.uploaded %}
-                                href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm" 
+                                    {% if "s3.amazonaws" in attachment.url %}
+                                    href="{{ attachment.url }}" 
+                                    {% else %}
+                                    href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm" 
+                                    {% endif %}
                                 target="_blank"
                                 {% else %}
                                 href="#!"

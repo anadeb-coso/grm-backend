@@ -62,7 +62,11 @@
                             {% if reason.type == "file" %}
                                     <a 
                                     {% if reason.uploaded %}
-                                    href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
+                                        {% if "s3.amazonaws" in reason.url %}
+                                        href="{{ reason.url }}" 
+                                        {% else %}
+                                        href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
+                                        {% endif %}
                                     target="_blank"
                                     {% else %}
                                     href="#!"

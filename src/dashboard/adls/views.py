@@ -17,6 +17,8 @@ from client import COUCHDB_ATTACHMENT_DATABASE, get_db, upload_file
 from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm, GovernmentWorkerAdlProfileForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from authentication.permissions import SpecificPermissionRequiredMixin
+from administrativelevels.models import AdministrativeLevel
+from grm.call_objects_from_other_db import mis_objects_call
 
 
 class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin, generic.ListView):
@@ -146,8 +148,8 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
             if response['ok']:
                 if photo:
                     attachment_db = get_db(COUCHDB_ATTACHMENT_DATABASE)
-                    attachment_id = photo.split('/')[2]
                     try:
+                        attachment_id = photo.split('/')[2]
                         attachment_db[attachment_id].delete()
                     except Exception:
                         pass
@@ -166,6 +168,20 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
             messages.add_message(self.request, messages.INFO, msg, extra_tags='info')
         doc['representative']['email'] = email
         doc.save()
+        
+        """Edit User"""
+        user = User.objects.filter(id=doc['representative']['id']).first()
+        if user:
+            user.email = doc['representative']['email']
+            user.photo = doc['representative']['photo']
+            user.phone_number = doc['representative']['phone']
+            
+            last_name = doc['representative']['name'].split(' ')[-1]
+            first_name = ' '.join(doc['representative']['name'].split(' ')[:-1])
+            user.first_name = first_name
+            user.last_name = last_name
+            
+            user.save()
 
         msg = _("The profile information was successfully edited.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
@@ -210,7 +226,19 @@ class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, Lo
                 ids = []
             if not data['administrative_level'] in ids:
                 ids.append(data['administrative_level'])
-            governmentworker.administrative_ids = ids
+            
+            """Search all villages with same cvd"""
+            all_adl_on_cvd = []
+            for _id in ids:
+                _obj = mis_objects_call.filter_objects(AdministrativeLevel, id=int(_id)).first()
+                if _obj and _obj.cvd:
+                    for _village in _obj.cvd.get_villages():
+                        if str(_village.id) not in all_adl_on_cvd:
+                            all_adl_on_cvd.append(str(_village.id))
+                else:
+                     all_adl_on_cvd.append(_id)
+                            
+            governmentworker.administrative_ids = list(set(all_adl_on_cvd))
             governmentworker.save()
 
             msg = _("The profile information was successfully edited.")

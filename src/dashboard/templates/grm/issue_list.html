@@ -1,5 +1,8 @@
 {% load static i18n custom_tags %}
-
+<p>
+    <b>{% translate "Total complaints in your administrative level" %} : </b>
+    {{ total_issues }}
+</p>
 <table id="table" class="table">
     <thead class="primary">
     <tr>

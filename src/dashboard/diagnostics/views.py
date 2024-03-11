@@ -32,6 +32,14 @@ class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         # context['ws_bound'] = settings.DIAGNOSTIC_MAP_WS_BOUND
         # context['en_bound'] = settings.DIAGNOSTIC_MAP_EN_BOUND
         # context['country_iso_code'] = settings.DIAGNOSTIC_MAP_ISO_CODE
+        
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        context['all_total_issues'] = len(list(grm_db.get_query_result({
+                "type": "issue",
+                "confirmed": True,
+                "auto_increment_id": {"$ne": ""},
+            })))
+        
         return context
 
 
@@ -98,10 +106,11 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
                 stats[k]['issues'] = stats[k]['count']
 
         for doc in issues:
-            # region_key = get_base_administrative_id(adl_db, doc['administrative_region']['administrative_id'], region)
-            region_key = get_base_administrative_id_using_mis(doc['administrative_region']['administrative_id'], region)
-            
-            fill_count(region_key, region_stats)
+            if 'administrative_region' in doc and 'administrative_id' in doc['administrative_region']:
+                # region_key = get_base_administrative_id(adl_db, doc['administrative_region']['administrative_id'], region)
+                region_key = get_base_administrative_id_using_mis(doc['administrative_region']['administrative_id'], region)
+                
+                fill_count(region_key, region_stats)
 
             status_key = doc['status']['id']
             fill_count(status_key, status_stats, doc['status']['name'])
@@ -140,5 +149,6 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             'status_stats': status_stats,
             'type_stats': type_stats,
             'category_stats': category_stats,
+            'total_issues': total_issues,
         }
         return self.render_to_json_response(statistics)

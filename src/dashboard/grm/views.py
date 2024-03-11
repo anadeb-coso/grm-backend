@@ -263,11 +263,12 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
                         "subject": "issue"
                     }
                     
+                    attachment["user_id"] = self.request.user.id
+                    attachment["user_name"] = self.request.user.name
+                    
                     if reason:
                         attachment["type"] = "file"
                         attachment["subject"] = "reason"
-                        attachment["user_id"] = self.request.user.id
-                        attachment["user_name"] = self.request.user.name
                         reasons.insert(0, attachment)
                         self.doc['reasons'] = reasons
                     else:
@@ -793,6 +794,14 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['publish_option'] = False
+        
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        context['all_total_issues'] = len(list(grm_db.get_query_result({
+                "type": "issue",
+                "confirmed": True,
+                "auto_increment_id": {"$ne": ""},
+            })))
+        
         if user.groups.filter().exists():
             #user.groups.filter(name="Admin").exists() or (hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1"):
             context['publish_option'] = True
@@ -1017,7 +1026,7 @@ class EditIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONRespon
             "name": worker.name
         }
 
-        send_assignee_notification_by_mail(self.doc, worker.user) #Send mail to follower
+        # send_assignee_notification_by_mail(self.doc, worker.user) #Send mail to follower
 
         self.doc.save()
         msg = _("The issue was successfully edited.")

@@ -27,6 +27,7 @@
                     <div class="card-title">
                         <div class="pt-1 fs20 lh25 text-primary text-bold-family">
                             {% translate 'Filter by' %}
+                            <span style="font-size: 12px;">(T: {{ all_total_issues }})</span>
                         </div>
                     </div>
                 </div>
@@ -44,6 +45,10 @@
                             {% bootstrap_field form.administrative_region layout='horizontal' %}
                         </div>
                     </div>
+                    <p class="pull-left p-0">
+                        <b>{% translate "Total complaints in your administrative level" %} : </b>
+                        <span id="id_total_issues">-<span>
+                    </p>
                     <a class="btn fs12 text-bold-family text-primary pull-right p-0"
                        id="clear_all_filters">
                         {% translate "Clear all filters" %}
@@ -283,9 +288,9 @@
         ];
         let colors_array = {
             'Résolue': '#008000',
-            'Non Résolue': '#ff0000',
-            'En cours de traitement': '#0000ff',
-            'Enregistrée': '#ffff00'
+            'Non Résolue': '#ffff00',
+            'En cours de traitement': '#800080',
+            'Enregistrée': '#ff0000'
         };
         colors_keys = Object.keys(colors_array);
         console.log(colors_keys);
@@ -406,6 +411,9 @@
                     region: current_region_id,
                 },
                 success: function (data) {
+
+                    $('#id_total_issues').text(data.total_issues);
+
                     let region_stats = data.region_stats;
                     let status_stats = data.status_stats;
                     {% comment %} let type_stats = data.type_stats; {% endcomment %}

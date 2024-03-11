@@ -153,6 +153,13 @@ def check_issues():
                 result['errors'].append(error)
 
         if 'assignee' not in issue_doc or not issue_doc['assignee']:
+            # Implement for training | 25.02.2024
+            # if issue_doc['category']['id'] != 2: #Don't be "Relative à un autre programme ou projet" issue
+            #     assignee = issue_doc['reporter'].copy()
+            #     issue_doc['assignee'] = assignee
+            #     assignee_updated = True
+            #     result['assignee_updated'].append(issue_id)
+            # Comment for training | 25.02.2024
             try:
                 eadl_db = get_db()
                 adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
@@ -166,6 +173,7 @@ def check_issues():
                 result['errors'].append(error)
 
         if auto_increment_id_updated or internal_code_updated or anonymized_data or assignee_updated:
+        # if assignee_updated:
             issue_doc.save()
             updated_issues += 1
             grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
@@ -263,8 +271,6 @@ def escalate_issues():
                 result['issues_updated'].append(issue_id)
                 issues_updated = True
 
-                send_notification_on_escalation_by_mail(issue_doc) #Send mail
-
             else:
                 result['scale_is_not_available'].append(issue_id)
 
@@ -287,6 +293,8 @@ def escalate_issues():
             issue_doc.save()
             updated_issues += 1
             grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
+
+            # send_notification_on_escalation_by_mail(issue_doc) #Send mail
 
     result['updated_issues'] = updated_issues
     return result
@@ -440,7 +448,7 @@ def send_a_new_issue_notification():
     for issue in issues:
         try:
             issue_doc = grm_db[issue['_id']]
-            send_notification_by_mail(issue)
+            # send_notification_by_mail(issue)
             issue_doc['notification_send'] = True
             issue_doc.save()
         except Exception:
@@ -450,16 +458,28 @@ def send_a_new_issue_notification():
 
 
 
-@app.on_after_finalize.connect
-def setup_periodic_tasks(sender, **kwargs):
-    # Calls check_issues() every 5 minutes.
-    sender.add_periodic_task(300, check_issues.s(), name='check issues every 5 minutes')
+# @app.on_after_finalize.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     # Calls check_issues() every 5 minutes.
+#     sender.add_periodic_task(300, check_issues.s(), name='check issues every 5 minutes')
 
-    # Calls escalate_issues() every 5 minutes.
-    sender.add_periodic_task(300, escalate_issues.s(), name='escalate issues every 5 minutes')
+#     # Calls escalate_issues() every 5 minutes.
+#     sender.add_periodic_task(300, escalate_issues.s(), name='escalate issues every 5 minutes')
 
-    # Calls send_sms_message() every 5 minutes.
-    sender.add_periodic_task(300, send_sms_message.s(), name='send sms every 5 minutes')
+#     # Calls send_sms_message() every 5 minutes.
+#     sender.add_periodic_task(300, send_sms_message.s(), name='send sms every 5 minutes')
     
-    # Calls send_a_new_issue_notification() every 5 minutes.
-    sender.add_periodic_task(300, send_a_new_issue_notification.s(), name='send sms every 5 minutes')
+#     # Calls send_a_new_issue_notification() every 5 minutes.
+#     sender.add_periodic_task(300, send_a_new_issue_notification.s(), name='send sms every 5 minutes')
+
+
+# your_app/tasks.py
+# from celery import shared_task
+
+# @shared_task
+@app.task
+def your_task_name():
+    # Your task logic here
+    print("hello hello")
+    
+    return "Hello hello 111"

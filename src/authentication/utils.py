@@ -5,6 +5,9 @@ import shortuuid as uuid
 
 from client import get_db
 from authentication.functions import send_code_by_mail
+from administrativelevels.functions import get_cascade_administrative_levels_by_administrative_level_id
+from administrativelevels.serializers import AdministrativeLevelSerializer
+
 
 def photo_path(instance, filename):
     filename, file_extension = os.path.splitext(filename)
@@ -14,6 +17,42 @@ def photo_path(instance, filename):
 
 def get_validation_code(seed):
     return str(zlib.adler32(str(seed).encode('utf-8')))[:6]
+
+def generate_administrative_regions_objects(government_worker):
+    try:
+        administrative_regions = list(
+            set(
+                (government_worker.administrative_ids if government_worker.administrative_ids else list()) + \
+                ([government_worker.administrative_id] if government_worker.administrative_id else [])
+            )
+        )
+        print(administrative_regions)
+    except Exception as exc:
+        administrative_regions = [government_worker.administrative_id] if government_worker.administrative_id else []
+        
+    cantons, villages = [], []
+    for adm_region in administrative_regions:
+        if adm_region not in (1, "1"):
+            _cantons, _villages = get_cascade_administrative_levels_by_administrative_level_id(adm_region)
+            cantons += _cantons
+            villages += _villages
+    
+    cantons = set(list(cantons))
+    villages = set(list(villages))
+    
+    administrative_regions_objects = []
+    for canton in cantons:
+        ad_ser = AdministrativeLevelSerializer(canton).data
+        ad_ser["country"] = "1"
+        ad_ser["commune"] = canton.parent_id
+        ad_ser["prefecture"] = canton.parent.parent_id
+        ad_ser["region"] = canton.parent.parent.parent_id
+        ad_ser["villages"] = [
+           AdministrativeLevelSerializer(village).data for village in villages if village.parent_id == canton.id
+        ]
+        administrative_regions_objects.append(ad_ser)
+
+    return administrative_regions_objects
 
 
 def create_or_update_adl_user_adl(user, updated=False):
@@ -82,12 +121,13 @@ def set_user_government_worker_adl(government_worker):
         doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
     except Exception as exc:
         pass
-    
+        
     doc_user = {
         "name": government_worker.administrative_level().type,
         "location_name": government_worker.administrative_level().name,
         "administrative_region": government_worker.administrative_id,
-        "administrative_regions": government_worker.administrative_ids
+        "administrative_regions": government_worker.administrative_ids,
+        "administrative_regions_objects": generate_administrative_regions_objects(government_worker)
     }
 
     for k, v in doc_user.items():

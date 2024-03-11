@@ -1506,3 +1506,11 @@ msgstr ""
 #: dashboard/privacy
 msgid "Please find below the information concerning the new issue that has just been assigned to you."
 msgstr ""
+
+#: dashboard
+msgid "Investigations"
+msgstr ""
+
+#: dashboard
+msgid "Total complaints in your administrative level"
+msgstr ""

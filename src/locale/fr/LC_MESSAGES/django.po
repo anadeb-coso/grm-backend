@@ -1581,3 +1581,11 @@ msgstr "COSO MGP - Une plainte vous est assignée"
 #: dashboard/privacy
 msgid "Please find below the information concerning the new issue that has just been assigned to you."
 msgstr "Nous vous prions de troucer ci-dessous les informations concernant la nouvelle plainte qui vient d'être assignée à vous."
+
+#: dashboard
+msgid "Investigations"
+msgstr "Investigations"
+
+#: dashboard
+msgid "Total complaints in your administrative level"
+msgstr "Total des plaintes dans votre niveau administratif"

@@ -134,3 +134,7 @@ dmypy.json
 
 # SO
 .DS_Store
+
+
+#Celery File
+celerybeat-schedule*

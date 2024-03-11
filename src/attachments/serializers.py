@@ -26,13 +26,13 @@ class FileSerializer(serializers.Serializer):
     file = serializers.FileField()
 
     def validate_file(self, value):
-        # max_upload_size = settings.MAX_UPLOAD_SIZE
-        # if value.size > max_upload_size:
-        #     raise serializers.ValidationError(
-        #         self.default_error_messages['file_size'] % {
-        #             'max_size': filesizeformat(max_upload_size),
-        #             'size': filesizeformat(value.size)})
-        print(value)
+        max_upload_size = settings.MAX_UPLOAD_SIZE
+        if value.size > max_upload_size:
+            raise serializers.ValidationError(
+                self.default_error_messages['file_size'] % {
+                    'max_size': filesizeformat(max_upload_size),
+                    'size': filesizeformat(value.size)})
+        # print(value)
         return value
 
     def __init__(self, *args, **kwargs):

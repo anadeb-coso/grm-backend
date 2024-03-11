@@ -1,11 +1,13 @@
 from django.contrib.auth.models import Group, Permission
 from django.conf import settings
 import requests
+from datetime import datetime, timedelta
 
 from authentication.models import User, GovernmentWorker
 from administrativelevels.models import AdministrativeLevel
 from grm.call_objects_from_other_db import mis_objects_call
-from authentication.utils import create_or_update_adl_user_adl
+from authentication.utils import create_or_update_adl_user_adl, get_validation_code, set_user_government_worker_adl
+from authentication.functions import send_code_by_mail
 from client import get_db, get_dbs_name
 from grm.my_librairies.functions import strip_accents
 
@@ -257,3 +259,167 @@ def create_facilitators_on_grm():
     print()
     print(f"Account created : {account_created}")
     print(f"Skip : {nbr_skip}")
+    
+    
+    
+def delete_issues(text="testtest", start_date=None, end_date=None):
+    grm_db = get_db('grm')
+    
+    selector = {
+        "type": "issue",
+        "description": {"$regex": f"^{text}"},
+    }
+    date_range = {}
+    if start_date:
+        start_date = datetime.strptime(start_date, '%d/%m/%Y').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        date_range["$gte"] = start_date
+        selector["intake_date"] = date_range
+    if end_date:
+        end_date = (datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        date_range["$lte"] = end_date
+        selector["intake_date"] = date_range
+        
+    resultats = grm_db.get_query_result(selector)
+    _ = resultats[:].copy()
+    for resultat in resultats:
+        print(resultat.get('description'))
+        grm_db[resultat.get('_id')].delete()
+    
+    return _
+
+
+
+def send_facilitators_code():
+    couchdb_dbs_name = get_dbs_name()
+    dbs_name = [db_name for db_name in couchdb_dbs_name if 'facilitator' in db_name]
+    nbr_mail_send = 0
+    accounts_not_exist = 0
+    nbr_skip = 0
+    for db_name in dbs_name:
+        facilitator_db = get_db(db_name)
+        skip = False
+        try:
+            doc_facilitator = facilitator_db[facilitator_db.get_query_result({
+                "type": "facilitator",
+                "develop_mode": False,
+                "training_mode": False,
+                "sql_id": {
+                    "$exists": True
+                },
+                "total_number_of_tasks": {
+                    "$exists": True
+                },
+                "sex": {
+                    "$exists": True
+                },
+                "geographical_units": {
+                    "$exists": True
+                }
+            })[0][0]["_id"]]
+
+            if doc_facilitator.get("geographical_units"):
+                for _n in ['DAMTARE Tchably', 'LAMBONI Kitchéssoa', 'GOBINE Nimome']:
+                    if strip_accents(_n) == strip_accents(doc_facilitator['name']):
+                        skip = True
+            
+                if not skip:
+                    users = User.objects.filter(email=doc_facilitator['email'])
+                    if users.exists():
+                        user = users.first()
+                        send_code_by_mail(user, get_validation_code(user.email)) # Send user account code on their Email
+                        nbr_mail_send += 1
+                        print(doc_facilitator)
+                    else:
+                        accounts_not_exist += 1
+                else:
+                    nbr_skip += 1
+        except Exception as exc:
+            pass
+
+    print()
+    print(f"Mail send : {nbr_mail_send}")
+    print(f"Accounts not exist : {accounts_not_exist}")
+    print(f"Skip : {nbr_skip}")
+    
+    
+def generate_user_adl_with_cvd():
+    print("generate_user_adl_with_cvd")
+    couchdb_dbs_name = get_dbs_name()
+    dbs_name = [db_name for db_name in couchdb_dbs_name if 'facilitator' in db_name]
+    nbr_success = 0
+    accounts_not_exist = 0
+    nbr_skip = 0
+    for db_name in dbs_name:
+        facilitator_db = get_db(db_name)
+        skip = False
+        try:
+            doc_facilitator = facilitator_db[facilitator_db.get_query_result({
+                "type": "facilitator",
+                "develop_mode": False,
+                "training_mode": False,
+                "sql_id": {
+                    "$exists": True
+                },
+                "total_number_of_tasks": {
+                    "$exists": True
+                },
+                "sex": {
+                    "$exists": True
+                },
+                "geographical_units": {
+                    "$exists": True
+                }
+            })[0][0]["_id"]]
+            
+            if doc_facilitator.get("geographical_units"):
+                for _n in ['DAMTARE Tchably', 'LAMBONI Kitchéssoa', 'GOBINE Nimome']:
+                    if strip_accents(_n) == strip_accents(doc_facilitator['name']):
+                        skip = True
+            
+                if not skip:
+                    user_obj = User.objects.filter(email=doc_facilitator['email']).first()
+                    if user_obj and hasattr(user_obj, 'governmentworker'):
+                        
+                        governmentworker = GovernmentWorker.objects.get(id=user_obj.governmentworker.id)
+
+                        ids =  governmentworker.administrative_ids
+                        if not ids:
+                            ids = []
+                        
+                        """Search all villages with same cvd"""
+                        all_adl_on_cvd = []
+                        for _id in ids:
+                            _obj = mis_objects_call.filter_objects(AdministrativeLevel, id=int(_id)).first()
+                            if _obj and _obj.cvd:
+                                for _village in _obj.cvd.get_villages():
+                                    if str(_village.id) not in all_adl_on_cvd:
+                                        all_adl_on_cvd.append(str(_village.id))
+                            else:
+                                all_adl_on_cvd.append(_id)
+                                        
+                        governmentworker.administrative_ids = list(set(all_adl_on_cvd))
+                        governmentworker.save()
+            
+                        
+                        nbr_success += 1
+                        print(doc_facilitator)
+                    else:
+                        accounts_not_exist += 1
+                else:
+                    nbr_skip += 1
+        except Exception as exc:
+            print(exc)
+            pass
+        
+    print()
+    print(f"Success send : {nbr_success}")
+    print(f"Accounts not exist : {accounts_not_exist}")
+    print(f"Skip : {nbr_skip}")
+    
+    
+    
+def generate_adl_regions_objects():
+    for user in User.objects.all():
+        if user and hasattr(user, 'governmentworker') and user.governmentworker.administrative_id not in (None, '', '1', 1):
+            set_user_government_worker_adl(user.governmentworker)
+            

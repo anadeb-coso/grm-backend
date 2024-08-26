@@ -7,72 +7,78 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-4 text-left">
-                            <div class="fs28 lh35 text-primary text-bold-family mb-4">
+                        
+                        <div class="col-3 border-left">
+
+                            <div class="fs28 lh35 text-primary text-bold-family">
                                 {% translate 'Search Results' %} 
                                 <span style="font-size: 12px;">(T: {{ all_total_issues }})</span>
                                 <br>
                             </div>
-                            <div class="row mr-5 issues-filter">
-                                <div class="col-12">
-                                    {% bootstrap_field form.start_date layout='horizontal' %}
-                                    {% bootstrap_field form.end_date layout='horizontal' %}
-                                    {% if publish_option %}{% bootstrap_field form.publish layout='horizontal' %}{% endif %}
-                                </div>
+
+                            <div class="issues-filter">
+                            {% bootstrap_field form.start_date layout='horizontal' %}
+                            {% bootstrap_field form.end_date layout='horizontal' %}
                             </div>
+
+                            {% if user.is_superuser %}
+                            <div style="clear: both;"></div>
+                            <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard:grm:file:file_save_issues' %}">
+                                {% csrf_token %}
+                                
+                                <div class="row file-field big" style="margin-top: 22px">
+                                    <a class="btn-floating amber col-8 darken-2" style="display: inline;">
+                                        <i class="fas fa-cloud-upload-alt" aria-hidden="true" style="font-size: 15px;"></i>
+                                        <input type="file" name="file" required id="file"  style="font-size: 6px;"
+                                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                    </a>
+                                    <button type="submit" class="btn btn-primary col-4" style="font-size: 9px; padding: -10px">{% translate 'Save' %}</button>
+                                </div>
+                                
+                            </form>
+                            <div style="clear: both;"></div>
+                            {% endif %}
+
                         </div>
-                        <div class="col-8 border-left">
-                            <div class="row issues-filter">
-                                {% comment %} <div class="col-2">
-                                    <label class="label-align">{% translate 'Filter by' %}</label>
-                                </div> {% endcomment %}
-                                <div class="col-6">
-                                    {% bootstrap_field form.code show_label=False %}
-                                    {% comment %} {% if not user.governmentworker %}
-                                        {% bootstrap_field form.assigned_to show_label=False %}
-                                    {% endif %} {% endcomment %}
-                                    {% bootstrap_field form.other show_label=False %}
-                                    {% bootstrap_field form.assigned_to show_label=False %}
-                                    {% bootstrap_field form.reported_by show_label=False %}
-                                </div>
-                                <div class="col-6">
-                                    {% comment %} {% bootstrap_field form.type show_label=False %} {% endcomment %}
-                                    {% bootstrap_field form.status show_label=False %}
-                                    {% bootstrap_field form.category show_label=False %}
-                                    {% bootstrap_field form.administrative_region layout='horizontal' %}
-                                </div>
+                        <div class="col-3 text-left issues-filter">
+                                    
+                            {% bootstrap_field form.code show_label=False %}
+                            {% comment %} {% if not user.governmentworker %}
+                                {% bootstrap_field form.assigned_to show_label=False %}
+                            {% endif %} {% endcomment %}
+                            {% bootstrap_field form.other show_label=False %}
+
+                            {% if publish_option %}{% bootstrap_field form.publish layout='horizontal' show_label=False %}{% endif %}
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="see_all" />
+                                <label class="form-check-label fa-bold" for="see_all">
+                                    {% translate "See All" %}
+                                </label>
+                            </div>
+                            <div style="clear: both;"></div>
+
+                        </div>
+                        <div class="col-3 border-left issues-filter">
+                            {% bootstrap_field form.status show_label=False %}
+                            {% bootstrap_field form.assigned_to show_label=False %}
+                            {% bootstrap_field form.reported_by show_label=False %}
+                        </div>
+                        <div class="col-3 border-left issues-filter">
+                            {% comment %} {% bootstrap_field form.type show_label=False %} {% endcomment %}
+                            {% bootstrap_field form.category show_label=False %}
+                            {% bootstrap_field form.administrative_region layout='horizontal' %}
+                                    
+                            <div>
+                                <a class="btn fs12 text-bold-family text-primary pull-right"
+                                    id="clear_all_filters">
+                                    {% translate "Clear all filters" %}
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-3">
-                        </div>
-                        <div class="col-5">
-                            {% if user.is_superuser %}
-                            <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard:grm:file:file_save_issues' %}">
-                                {% csrf_token %}
-                                
-                                <div class="file-field big">
-                                    <a class="btn-floating btn-lg amber darken-2 mt-0 float-left">
-                                        <i class="fas fa-cloud-upload-alt" aria-hidden="true" style="font-size: 17px;"></i>
-                                        <input type="file" name="file" required id="file"  style="font-size: 7px;"
-                                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
-                                    </a>
-                                    <button type="submit" class="btn btn-primary" style="font-size: 12px; margin-top: 12px;">{% translate 'Save issues imported' %}</button>
-                                </div>
-                                 
-                                
-                            </form>
-                            {% endif %}
-                        </div>
-                        <div class="col-4">
-                            <a class="btn fs12 text-bold-family text-primary pull-right p-0"
-                                id="clear_all_filters">
-                                {% translate "Clear all filters" %}
-                            </a>
-                        </div>
-                    </div>
+                    
                     
                 </div>
             </div>
@@ -103,7 +109,8 @@
     <script type="text/javascript">
         let spin = $('#spin');
         let index = 0;
-        const offset = 10;
+        const default_offset = 100;
+        let offset = default_offset;
         let previous = $('#previous');
         let next = $('#next');
         let issues = $('#issue-list');
@@ -119,11 +126,12 @@
         let other = $('#id_other');
         let administrative_region = $('#id_administrative_region');
         let reported_by = $('#id_reported_by');
+        let see_all = $('#see_all');
         {% if publish_option %}let publish = $('#id_publish');{% endif %}
         let current_region_id;
 
         function loadIssues() {
-            console.log(current_region_id);
+            
             spin.show();
             $.ajax({
                 type: "GET",
@@ -141,9 +149,19 @@
                     other: other.val(),
                     region: current_region_id,
                     {% if publish_option %}publish: publish.val(),{% endif %}
-                    reported_by: reported_by.val()
+                    reported_by: reported_by.val(),
+                    see_all: see_all.is(":checked"),
+                    total_issues: parseInt("{{ all_total_issues }}"),
                 },
                 success: function (response) {
+                    if(see_all.is(":checked")){
+                        index = 0;
+                        {% if all_total_issues %}
+                        offset = parseInt("{{ all_total_issues }}");
+                        {% endif %}
+                    }else{
+                        offset = default_offset;
+                    }
                     issues.html(response);
                     spin.hide();
                     if (index - offset >= 0) {
@@ -237,6 +255,13 @@
             }
         }, 500));
         $('.issues-filter select').on('change', function () {
+            if($(this).attr('id') != 'id_administrative_region'){
+                loadIssues();
+            }
+            
+        });
+
+        $('#see_all').on('change', function () {
             loadIssues();
         });
 
@@ -266,8 +291,8 @@
             $('.issues-filter input').val('');
             $('.issues-filter select').val(null).trigger('change.select2');
             $('.regions-filter select').val(null).trigger('change.select2');
-            loadIssues();
             current_region_id = null;
+            loadIssues();
             loadNextLevelRegions($("#id_administrative_region"), '', '');
         });
 

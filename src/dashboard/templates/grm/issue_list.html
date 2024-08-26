@@ -3,15 +3,17 @@
     <b>{% translate "Total complaints in your administrative level" %} : </b>
     {{ total_issues }}
 </p>
-<table id="table" class="table">
+<div class="table-responsive">
+<table id="table" class="table table-sm">
     <thead class="primary">
-    <tr>
+    <tr class="table-active">
         <th>{% translate 'ID Number' %}</th>
-        <th>{% translate 'Access Code' %}</th>
+        {% comment %} <th>{% translate 'Access Code' %}</th> {% endcomment %}
         <th>{% translate 'Summary' %}</th>
         <th>{% translate 'Assigned to' %}</th>
         <th>{% translate 'Days Open' %}</th>
         <th>{% translate 'Category' %}</th>
+        <th>{% translate 'Locality' %}</th>
         {% comment %} <th>{% translate 'Type' %}</th> {% endcomment %}
         <th>{% translate 'Status' %}</th>
     </tr>
@@ -41,8 +43,8 @@
                     {% endif %}
                 </a>
             </td>
-            <td>{{ issue.tracking_code }}</td>
-            <td>
+            {% comment %} <td>{{ issue.tracking_code }}</td> {% endcomment %}
+            <td align="left">
                 {% if "b'" in issue.description %}
                     ***
                 {% else %}
@@ -52,6 +54,7 @@
             <td>{{ issue.assignee.name }}</td>
             <td>{% get_days_until_today issue.created_date %}</td>
             <td>{{ issue.category.name }}</td>
+            <td>{% if issue.administrative_region %}{{ issue.administrative_region.name }}{% else %} - {% endif %}</td>
             {% comment %} <td>{{ issue.issue_type.name }}</td> {% endcomment %}
             <td>{{ issue.status.name }}</td>
         </tr>
@@ -62,7 +65,11 @@
     {% endfor %}
     </tbody>
 </table>
+</div>
 
+
+<!-- DataTables export files -->
+{% include 'layouts/datatable-js.html' %}
 
 <script>
     try{
@@ -71,4 +78,43 @@
     }catch(e){
         console.log(e);
     }
+
+    $(document).ready(function () {
+        {% get_current_language as lang %}
+
+        jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+            "numeric-comma-pre": function (a) {
+                var x = parseFloat(a.replace(/\s+/g, '').replace(',', '.'));
+                return isNaN(x) ? 0 : x;
+            },
+            "numeric-comma-asc": function (a, b) {
+                return a - b;
+            },
+            "numeric-comma-desc": function (a, b) {
+                return b - a;
+            }
+        });
+
+        if ($.fn.DataTable.isDataTable('#table')) {
+            $('#table').DataTable().destroy();
+            $('#table').empty(); 
+        }
+
+        let table = $('#table').DataTable({
+            language: {
+                url: '{% static 'AdminLTE/plugins/datatables/locale/lang.json' %}'.replace('lang', '{{ lang }}')
+            },
+            columnDefs: [
+                { 
+                    type: 'numeric-comma', targets: [3]
+                }
+            ],
+            dom: 'Blfrtip',
+            buttons: ['copy', 'excel', 'pdf', 'colvis'],
+            lengthMenu: [10, 20, 30, 40, 43, 50, 60, 70, 80, 90, 100],
+            pageLength: 10,
+            order: []
+        });
+
+    });
 </script>

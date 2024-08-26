@@ -1,0 +1,9 @@
+{
+    "_id": "_design/created_date_index",
+    "index": {
+        "fields": ["created_date"]
+    },
+    "name": "created_date_index",
+    "type": "json",
+    "ddoc": "_design/created_date_index"
+}

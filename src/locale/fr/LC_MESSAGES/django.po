@@ -1589,3 +1589,19 @@ msgstr "Investigations"
 #: dashboard
 msgid "Total complaints in your administrative level"
 msgstr "Total des plaintes dans votre niveau administratif"
+
+#: dashboard
+msgid "Date of registration"
+msgstr "Date d'enregistrement"
+
+#: dashboard
+msgid "Date of incident/complaint"
+msgstr "Date de l'incident/plainte"
+
+#: dashboard
+msgid "See All"
+msgstr "Voir tout"
+
+#: dashboard
+msgid "Locality"
+msgstr "Localité"

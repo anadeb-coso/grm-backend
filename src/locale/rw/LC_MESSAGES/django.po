@@ -1514,3 +1514,19 @@ msgstr ""
 #: dashboard
 msgid "Total complaints in your administrative level"
 msgstr ""
+
+#: dashboard
+msgid "Date of registration"
+msgstr ""
+
+#: dashboard
+msgid "Date of incident/complaint"
+msgstr ""
+
+#: dashboard
+msgid "See All"
+msgstr ""
+
+#: dashboard
+msgid "Locality"
+msgstr ""

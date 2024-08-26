@@ -294,7 +294,7 @@ def escalate_issues():
             updated_issues += 1
             grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
 
-            # send_notification_on_escalation_by_mail(issue_doc) #Send mail
+            send_notification_on_escalation_by_mail(issue_doc) #Send mail
 
     result['updated_issues'] = updated_issues
     return result
@@ -448,7 +448,7 @@ def send_a_new_issue_notification():
     for issue in issues:
         try:
             issue_doc = grm_db[issue['_id']]
-            # send_notification_by_mail(issue)
+            send_notification_by_mail(issue)
             issue_doc['notification_send'] = True
             issue_doc.save()
         except Exception:

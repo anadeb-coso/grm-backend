@@ -11,12 +11,13 @@ ISSUES_CATEGORY = (
 
 SAFEGUARD_SPECIALIST_EMAILS = [
     # "yiroko777@gmail.com", 
-    "kegbaof@gmail.com"
+    "kegbaof@gmail.com",
     # "adaboubvincent@gmail.com"
+    "gtchilingatolbert@yahoo.fr",
 ]
 
 ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS = [
-    "badassan13@gmail.com", "ourorachid2013@gmail.com", "estherdjallo@gmail.com"
+    "badassan13@gmail.com", "ourorachid2013@gmail.com", "estherdjallo@gmail.com", "aholouvitt@gmail.com"
 ]
 
 COORDINATORS_EMAILS_ON_COPY = [

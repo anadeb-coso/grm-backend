@@ -3,7 +3,7 @@ from grm.call_objects_from_other_db import mis_objects_call
 from administrativelevels.models import AdministrativeLevel
 
 def get_cascade_administrative_levels_by_administrative_level_id(_id):
-    print(_id)
+    
     if _id and _id not in (1, "1"): #1 == Country
         ad_obj = administrativelevels_models.AdministrativeLevel.objects.using('mis').get(id=int(_id))
 

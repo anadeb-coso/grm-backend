@@ -41,6 +41,8 @@ def send_notification_by_mail(issue):
                     _("Code"): issue['tracking_code'],
                     _("Category"): issue['category']['name'],
                     _("Description"): issue['description'],
+                    _("Date of incident/complaint"): issue.get('issue_date'),
+                    _("Date of registration"): issue.get('created_date'),
                     _("Level"): issue['category']['administrative_level'],
                     _("Source"): issue['source'],
                 },

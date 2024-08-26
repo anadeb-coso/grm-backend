@@ -71,7 +71,7 @@ class RestAdministrativeLevelFilterByADL(APIView):
                     ([administrative_region] if administrative_region else [])
                 )
             )
-            print(administrative_regions)
+            
         except Exception as exc:
             administrative_regions = [administrative_region] if administrative_region else []
             # return Response({
@@ -104,7 +104,7 @@ class RestAdministrativeLevelFilterByADL(APIView):
             ad_ser["prefecture"] = village.parent.parent.parent_id
             ad_ser["region"] = village.parent.parent.parent.parent_id
             villages_ser.append(ad_ser)
-        print(cantons_ser)
+        
         return Response(
             {"cantons": cantons_ser, "villages": villages_ser}, status.HTTP_200_OK
         )

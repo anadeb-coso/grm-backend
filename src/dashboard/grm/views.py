@@ -14,6 +14,7 @@ from django.views import generic
 from cryptography.fernet import InvalidToken
 from django.contrib.auth.hashers import check_password
 from django.db.models import Q
+from cloudant.query import Query
 
 from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee
 from client import get_db, upload_file
@@ -346,7 +347,7 @@ class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
         self.specific_permissions()
         
         password = request.GET.get('password')
-        print(password)
+        
         if not password:
             raise Http404
         else:
@@ -677,9 +678,9 @@ class NewIssueLocationFormView(PageMixin, NewIssueMixin):
     def form_valid(self, form):
         data = form.cleaned_data
         self.set_location_fields(data)
-        print(7)
+        
         self.set_assignee()
-        print(8)
+        
         self.doc.save()
         if not self.doc['assignee']:
             return HttpResponseRedirect(
@@ -794,6 +795,7 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['publish_option'] = False
+        context['breadcrumb'] = False
         
         grm_db = get_db(COUCHDB_GRM_DATABASE)
         context['all_total_issues'] = len(list(grm_db.get_query_result({
@@ -817,8 +819,11 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         index = int(self.request.GET.get('index'))
         offset = int(self.request.GET.get('offset'))
         issues = self.get_results()
-        context['total_issues'] = len(list(issues))
-        context['issues'] = issues[index:index + offset]
+        context['total_issues'] = len(list(issues)) # self.request.GET.get('total_issues', 0) #
+        # context['total_issues'] = context['total_issues'] if context['total_issues'] not in ('None', 'null', 'NaN', '') else 0
+
+        context['issues'] = issues if self.request.GET.get('see_all') in (True, 'true') else issues[index:index + offset] #issues #
+        
         return context
     
     def get_queryset(self):
@@ -850,12 +855,14 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                 "type": "issue",
                 "confirmed": True,
                 "auto_increment_id": {"$ne": ""},
+                "created_date": {"$exists": True},
             }
         else:
             selector = {
                 "type": "issue",
                 "confirmed": True,
                 "auto_increment_id": {"$ne": ""},
+                "created_date": {"$exists": True},
             }
             
             if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
@@ -896,7 +903,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             date_range["$lte"] = end_date
             selector["intake_date"] = date_range
         if code:
-            code_filter = {"$regex": f"^{code}"}
+            code_filter = {"$regex": f"(?i){code}"} #{"$regex": f"^{code}"}
             selector['$or'] = [{"internal_code": code_filter}, {"tracking_code": code_filter},
                                {"description": code_filter}]
         if assigned_to:
@@ -918,7 +925,6 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         if region:
             # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
             filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], self.request.user) + [region]
-            
             selector["administrative_region.administrative_id"] = {
                 "$in": filter_regions
             }
@@ -927,7 +933,18 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         # for elt in _query_governmentworker:
         #     if elt not in _query_result:
         #         _.append(elt)
-        return grm_db.get_query_result(selector)
+
+        # n = index
+        # m = index + offset
+        # limit = m - n
+
+        # query = Query(
+        #     grm_db,
+        #     selector=selector,
+        # )
+
+        return grm_db.get_query_result(selector, sort=[{'created_date': 'desc'}])
+        # return query(skip=n, limit=limit, sort=[{'created_date': 'asc'}])['docs']
 
 
 
@@ -1026,7 +1043,7 @@ class EditIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JSONRespon
             "name": worker.name
         }
 
-        # send_assignee_notification_by_mail(self.doc, worker.user) #Send mail to follower
+        send_assignee_notification_by_mail(self.doc, worker.user) #Send mail to follower
 
         self.doc.save()
         msg = _("The issue was successfully edited.")

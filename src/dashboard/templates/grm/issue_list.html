@@ -1,21 +1,33 @@
-{% load static i18n custom_tags %}
+{% load bootstrap4 static i18n custom_tags %}
+
+<style>
+    .dataTables_wrapper table {
+        width: 100%;
+    }
+    #table tbody tr td {
+        font-size: 10px !important;
+    }
+</style>
 <p>
     <b>{% translate "Total complaints in your administrative level" %} : </b>
     {{ total_issues }}
 </p>
-<div class="table-responsive">
+{% comment %} <div class="table-responsive"> {% endcomment %}
 <table id="table" class="table table-sm">
     <thead class="primary">
     <tr class="table-active">
-        <th>{% translate 'ID Number' %}</th>
-        {% comment %} <th>{% translate 'Access Code' %}</th> {% endcomment %}
-        <th>{% translate 'Summary' %}</th>
-        <th>{% translate 'Assigned to' %}</th>
-        <th>{% translate 'Days Open' %}</th>
-        <th>{% translate 'Category' %}</th>
-        <th>{% translate 'Locality' %}</th>
+        {% comment %} <th width="7%">{% translate 'ID Number' %}</th> {% endcomment %}
+        <th width="7%">{% translate 'Access Code' %}</th>
+        <th width="30%">{% translate 'Summary' %}</th>
+        <th width="10%">{% translate 'Category' %}</th>
+        <th width="8%">{% translate 'Reported by' %}</th>
+        <th width="8%">{% translate 'Assigned to' %}</th>
+        <th width="6%">{% translate 'Days Open' %}</th>
+        <th width="8%">{% translate 'Date of complaint' %}</th>
+        <th width="8%">{% translate 'Date of registration' %}</th>
+        <th width="8%">{% translate 'Locality' %}</th>
         {% comment %} <th>{% translate 'Type' %}</th> {% endcomment %}
-        <th>{% translate 'Status' %}</th>
+        <th width="7%">{% translate 'Status' %}</th>
     </tr>
     </thead>
     <tbody>
@@ -34,7 +46,7 @@
         "
         
         >
-            <td>
+            {% comment %} <td>
                 <a href="{% url 'dashboard:grm:issue_detail' issue.auto_increment_id %}">
                     {% if issue.internal_code %}
                         {{ issue.internal_code }}
@@ -42,18 +54,30 @@
                         {{ issue.tracking_code }}
                     {% endif %}
                 </a>
+            </td> {% endcomment %}
+            <td>
+                <a href="{% url 'dashboard:grm:issue_detail' issue.auto_increment_id %}">
+                    {{ issue.tracking_code }}
+                </a>
             </td>
-            {% comment %} <td>{{ issue.tracking_code }}</td> {% endcomment %}
             <td align="left">
                 {% if "b'" in issue.description %}
                     ***
                 {% else %}
                     {{ issue.description }}
+                    {% comment %} {% if issue.description|length > 100 %}
+                        {{ issue.description|slice:":100" }}...
+                    {% else %}
+                        {{ issue.description }}
+                    {% endif %} {% endcomment %}
                 {% endif %}
             </td>
+            <td>{{ issue.category.name }}</td>
+            <td>{{ issue.reporter.name }}</td>
             <td>{{ issue.assignee.name }}</td>
             <td>{% get_days_until_today issue.created_date %}</td>
-            <td>{{ issue.category.name }}</td>
+            <td>{{ issue.issue_date|string_to_date|date:'d/m/Y' }}</td>
+            <td>{{ issue.created_date|string_to_date|date:'d/m/Y' }}</td>
             <td>{% if issue.administrative_region %}{{ issue.administrative_region.name }}{% else %} - {% endif %}</td>
             {% comment %} <td>{{ issue.issue_type.name }}</td> {% endcomment %}
             <td>{{ issue.status.name }}</td>
@@ -65,7 +89,7 @@
     {% endfor %}
     </tbody>
 </table>
-</div>
+{% comment %} </div> {% endcomment %}
 
 
 <!-- DataTables export files -->
@@ -107,7 +131,29 @@
             columnDefs: [
                 { 
                     type: 'numeric-comma', targets: [3]
-                }
+                },
+                { "width": "7%", "targets": 0 },
+                { "width": "30%", "targets": 1 },
+                { "width": "10%", "targets": 2 },
+                { "width": "8%", "targets": 3 },
+                { "width": "8%", "targets": 4 },
+                { "width": "6%", "targets": 5 },
+                { "width": "8%", "targets": 6 },
+                { "width": "8%", "targets": 7 },
+                { "width": "8%", "targets": 8 },
+                { "width": "7%", "targets": 9 }
+            ],
+            columns: [
+                { "width": "7%" },
+                { "width": "30%" },
+                { "width": "10%" },
+                { "width": "8%" },
+                { "width": "8%" },
+                { "width": "6%" },
+                { "width": "8%" },
+                { "width": "8%" },
+                { "width": "8%" },
+                { "width": "7%" }
             ],
             dom: 'Blfrtip',
             buttons: ['copy', 'excel', 'pdf', 'colvis'],

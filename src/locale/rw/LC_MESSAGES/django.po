@@ -1530,3 +1530,11 @@ msgstr ""
 #: dashboard
 msgid "Locality"
 msgstr ""
+
+#: dashboard
+msgid "Date of complaint"
+msgstr ""
+
+#: dashboard
+msgid "Delete issue"
+msgstr ""

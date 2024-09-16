@@ -1605,3 +1605,11 @@ msgstr "Voir tout"
 #: dashboard
 msgid "Locality"
 msgstr "Localité"
+
+#: dashboard
+msgid "Date of complaint"
+msgstr "Date de la plainte"
+
+#: dashboard
+msgid "Delete issue"
+msgstr "Supprimer la plainte"

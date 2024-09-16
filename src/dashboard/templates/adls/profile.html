@@ -48,7 +48,7 @@
                                     {% endif %}
                                 </span>
 
-                                {% if user|has_group:'Admin' or user.is_superuser %}
+                                {% if user|has_group:'Admin' or user.is_superuser or user|has_group:"ADLAssigner" %}
                                 <button class="btn  p-0
                                             {% if profile %}text-primary{% else %}text-muted{% endif %}" 
                                             data-toggle="modal"

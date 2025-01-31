@@ -55,6 +55,8 @@
                             </button>
                             <br />
                             <p>{% translate "No I don't have an account" %}. <a href="{% url 'dashboard:authentication:register' %}"> {% translate "Create an account" %} <a/></p>
+                            
+                            <p>{% translate "Password forgotten?" %}<a href="{{CDD_URL_BASE}}/reset-password-ask-email/?redirection_url={{GRM_URL_BASE}}"> {% translate "Reset" %} <a/></p>
                         </div>
                         <!-- /.col -->
                     </div>

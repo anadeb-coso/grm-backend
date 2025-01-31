@@ -188,26 +188,39 @@ def get_group_high(user):
     
     if user.groups.filter(name="Admin").exists():
         return gettext_lazy("Administrator").__str__()
-    if user.groups.filter(name="CDDSpecialist").exists():
-        return gettext_lazy("CDD Specialist").__str__()
-    if user.groups.filter(name="Evaluator").exists():
-        return gettext_lazy("Evaluator").__str__()
-    if user.groups.filter(name="Accountant").exists():
-        return gettext_lazy("Accountant").__str__()
-    if user.groups.filter(name="RegionalCoordinator").exists():
-        return gettext_lazy("Regional Coordinator").__str__()
-    if user.groups.filter(name="NationalCoordinator").exists():
-        return gettext_lazy("National Coordinator").__str__()
-    if user.groups.filter(name="GeneralManager").exists():
-        return gettext_lazy("General Manager").__str__()
-    if user.groups.filter(name="Director").exists():
-        return gettext_lazy("Director").__str__()
-    if user.groups.filter(name="Advisor").exists():
-        return gettext_lazy("Advisor").__str__()
+    
     if user.groups.filter(name="Minister").exists():
         return gettext_lazy("Minister").__str__()
-    if user.groups.filter(name="Safeguard").exists():
-        return gettext_lazy("Safeguard").__str__()
+    if user.groups.filter(name="Advisor").exists():
+        return gettext_lazy("Advisor").__str__()
+    if user.groups.filter(name="GeneralManager").exists():
+        return gettext_lazy("General Manager").__str__()
+    if user.groups.filter(name="NationalCoordinator").exists():
+        return gettext_lazy("National Coordinator").__str__()
+    if user.groups.filter(name="RegionalCoordinator").exists():
+        return gettext_lazy("Regional Coordinator").__str__()
+    if user.groups.filter(name="Director").exists():
+        return gettext_lazy("Director").__str__()
+    
+    if user.groups.filter(name="Evaluator").exists():
+        return gettext_lazy("Evaluator").__str__()
+    if user.groups.filter(name="Financial").exists():
+        return gettext_lazy("Financial ").__str__()
+    if user.groups.filter(name="ProcurementSpecialist").exists():
+        return gettext_lazy("Procurement Specialist").__str__()
+    if user.groups.filter(name="KnowledgeManager").exists():
+        return gettext_lazy("Knowledge manager").__str__()
+    if user.groups.filter(name="CDDSpecialist").exists():
+        return gettext_lazy("CDD Specialist").__str__()
+    if user.groups.filter(name="Accountant").exists():
+        return gettext_lazy("Accountant").__str__()
+    if user.groups.filter(name="Infra").exists():
+        return gettext_lazy("Infra").__str__()
+    if user.groups.filter(name="Supervisor").exists():
+        return gettext_lazy("Supervisor").__str__()
+    
+    if user.groups.filter(name="Validator").exists():
+        return gettext_lazy("Validator").__str__()
 
 
     return gettext_lazy("User").__str__()

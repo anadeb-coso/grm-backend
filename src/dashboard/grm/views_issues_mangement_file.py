@@ -23,7 +23,7 @@ from grm.my_librairies.convert_file_to_dict import (
     )
 from grm.my_librairies.functions import strip_accents
 from grm.call_objects_from_other_db import mis_objects_call
-from dashboard.grm.functions import filter_adminstrative_level_by_name
+from dashboard.grm.functions import filter_adminstrative_level_by_name, export_issues
 from grm.utils import get_auto_increment_id
 from client import get_db
 from administrativelevels.models import AdministrativeLevel
@@ -332,3 +332,37 @@ class SaveIssuesByFileView(PageMixin, LoginRequiredMixin, generic.TemplateView):
             print(count_issues)
             print(len(issues_found))
         return HttpResponseRedirect(reverse('dashboard:grm:review_issues'))
+    
+
+class IssuesCSVView(PageMixin, LoginRequiredMixin, generic.TemplateView):
+    """Class to download statistic under excel file"""
+
+    template_name = 'grm/issue_list.html'
+    context_object_name = 'Download'
+    title = _("Download")
+    active_level1 = 'issues'
+    breadcrumb = [
+        {
+            'url': '',
+            'title': title
+        },
+    ]
+
+    def get(self, request, *args, **kwargs):
+
+        file_path = ""
+        # try:
+        file_path = export_issues(self.request)
+
+        # except Exception as exc:
+        #     messages.info(request, gettext_lazy("An error has occurred..."))
+
+        if not file_path:
+            return redirect('dashboard:grm:review_issues')
+        else:
+            # return download_file.download(
+            #     request, 
+            #     file_path,
+            #     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            # )
+            return HttpResponse(file_path)

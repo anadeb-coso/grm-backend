@@ -121,13 +121,15 @@ def delete_users(is_superuser=False):
 
 
 
-def create_users_mis_on_grm():
+def create_users_mis_on_grm(emails=[]):
     response = requests.get(f'{settings.BASE_URL_COSO_MIS}/api/users')
     if response.status_code == 200:
         # Parse the JSON data from the response
         users = response.json()
             
         account_created = 0
+        account_updated = 0
+        account_skiped = 0
         if not users:
             print(f"Any users objects exists")
         else:
@@ -135,67 +137,73 @@ def create_users_mis_on_grm():
             print()
 
             for _user in users:
-                # not _user.get('is_superuser') and 
-                if _user.get('email') and \
-                    not [\
-                        _g for _g in _user['groups'] \
-                            if _g['name'] in ['GeneralManager', 'Director', 'Advisor', 'Minister']\
-                        ]:
-                    
-                    user = User.objects.filter(email=_user['email']).first()
-                    if not user:
-                        user = User()
-                        user.email = _user['email']
-                        user.first_name = _user['first_name']
-                        user.last_name = _user['last_name']
-                        user.phone_number = "22800000000"
+                if not emails or (emails and _user.get('email') in emails):
+                    # not _user.get('is_superuser') and 
+                    if _user.get('email') and \
+                        not [\
+                            _g for _g in _user['groups'] \
+                                if _g['name'] in ['GeneralManager', 'Director', 'Advisor', 'Minister']\
+                            ]:
+                        
+                        user = User.objects.filter(email=_user['email']).first()
+                        if not user:
+                            user = User()
+                            user.email = _user['email']
+                            user.first_name = _user['first_name']
+                            user.last_name = _user['last_name']
+                            user.phone_number = "22800000000"
 
-                        user.save()
-                        user = User.objects.get(email=_user['email'])
+                            user.save()
+                            user = User.objects.get(email=_user['email'])
 
 
-                        user.groups.set([])
-                        user.user_permissions.set([])
-                        for g in _user['groups']:
-                            if Group.objects.filter(name=g['name']).exists():
-                                user.groups.add(Group.objects.get(name=g['name']))
-                        for u_p in _user['user_permissions']:
-                            if Permission.objects.filter(name=u_p['name']).exists():
-                                user.user_permissions.add(Permission.objects.get(name=u_p['name']))
-                            
-                        government_worker = GovernmentWorker()
-
-                        government_worker.user = user
-                        government_worker.department = 1
-                        government_worker.administrative_id = "1"
-
-                        government_worker.save()
-                        user.save()
-                        print(f"{_user['email']}. Okay")
-                        account_created += 1
-                    else:
-                        user.groups.set([])
-                        user.user_permissions.set([])
-                        for g in _user['groups']:
-                            if Group.objects.filter(name=g['name']).exists():
-                                user.groups.add(Group.objects.get(name=g['name']))
-                        for u_p in _user['user_permissions']:
-                            if Permission.objects.filter(name=u_p['name']).exists():
-                                user.user_permissions.add(Permission.objects.get(name=u_p['name']))
-
-                        if not hasattr(user, 'governmentworker'):
+                            user.groups.set([])
+                            user.user_permissions.set([])
+                            for g in _user['groups']:
+                                if Group.objects.filter(name=g['name']).exists():
+                                    user.groups.add(Group.objects.get(name=g['name']))
+                            for u_p in _user['user_permissions']:
+                                if Permission.objects.filter(name=u_p['name']).exists():
+                                    user.user_permissions.add(Permission.objects.get(name=u_p['name']))
+                                
                             government_worker = GovernmentWorker()
+
                             government_worker.user = user
                             government_worker.department = 1
                             government_worker.administrative_id = "1"
 
                             government_worker.save()
-                            
-                        user.save()
+                            user.save()
+                            print(f"{_user['email']}. Okay")
+                            account_created += 1
+                        else:
+                            user.groups.set([])
+                            user.user_permissions.set([])
+                            for g in _user['groups']:
+                                if Group.objects.filter(name=g['name']).exists():
+                                    user.groups.add(Group.objects.get(name=g['name']))
+                            for u_p in _user['user_permissions']:
+                                if Permission.objects.filter(name=u_p['name']).exists():
+                                    user.user_permissions.add(Permission.objects.get(name=u_p['name']))
 
+                            if not hasattr(user, 'governmentworker'):
+                                government_worker = GovernmentWorker()
+                                government_worker.user = user
+                                government_worker.department = 1
+                                government_worker.administrative_id = "1"
+
+                                government_worker.save()
+                            
+                            account_updated += 1
+
+                            user.save()
+                else:
+                    account_skiped += 1
 
             print()
             print(f"Account created : {account_created}")
+            print(f"Account updated : {account_updated}")
+            print(f"Account created : {account_skiped}")
             print()
             print("End saving")
     else:

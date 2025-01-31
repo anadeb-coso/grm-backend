@@ -9,9 +9,22 @@
     }
 </style>
 <p>
-    <b>{% translate "Total complaints in your administrative level" %} : </b>
-    {{ total_issues }}
+    <span class="float-md-left">
+        <b>{% translate "Total complaints in your administrative level" %} : </b>
+        {{ total_issues }}
+    </span>
+
+    
+    <span id="id_download_file" class="float-md-right text-primary text-bold" style="cursor: pointer;">{% translate "Download full database datas" %}</span>
+
+    <span class="float-md-right">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span id="download-message" class="float-md-right" style="display:none;">{% translate "Download in progress..." %}</span>
+    <span id="download-complete-message" class="float-md-right" style="display:none;">{% translate "Download complete!" %}</span>
+
+    <span class="float-md-right">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <div class="clearfix"></div>
 </p>
+<div class="clearfix"></div>
 {% comment %} <div class="table-responsive"> {% endcomment %}
 <table id="table" class="table table-sm">
     <thead class="primary">
@@ -162,5 +175,18 @@
             order: []
         });
 
-    });
+        
+        
+        $("#id_download_file").on("click", function(event) {
+            event.preventDefault(); // Empêche le comportement par défaut du lien
+      
+            download_issues_datas();
+          });
+
+
+
+      
+      });
+
+
 </script>

@@ -16,6 +16,7 @@ import django.conf.locale
 import environ
 from django.conf import global_settings
 from django.utils.translation import gettext_lazy as _
+from corsheaders.defaults import default_headers
 
 # https://django-environ.readthedocs.io/en/latest/
 env = environ.Env()
@@ -59,7 +60,8 @@ THIRD_PARTY_APPS = [
     'bootstrap4',
     'drf_yasg',
     'rest_framework',
-    'django_celery_results'
+    'django_celery_results',
+    'corsheaders',
 ]
 
 INSTALLED_APPS += CREATED_APPS + THIRD_PARTY_APPS
@@ -68,6 +70,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'grm.config_functions.CORSMiddleware',
+    'grm.config_functions.CustomCORSMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -270,4 +275,25 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 
 # BASE URL COSO MIS
-BASE_URL_COSO_MIS = env('BASE_URL_COSO_MIS')
+BASE_URL_COSO_MIS = env('MIS_URL_BASE')
+
+CDD_URL_BASE = env('CDD_URL_BASE')
+MIS_URL_BASE = env('MIS_URL_BASE')
+GRM_URL_BASE = env('GRM_URL_BASE')
+
+CSRF_TRUSTED_ORIGINS = [
+    CDD_URL_BASE, MIS_URL_BASE, GRM_URL_BASE,
+    # "http://localhost",
+    # "http://localhost:8002",
+    # "http://localhost:8001",
+    # "http://localhost:8000",
+    # "http://127.0.0.1"
+]
+CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+
+CORS_ALLOW_ALL_ORIGINS = False  # Assure que seules les origines spécifiées sont autorisées
+CORS_ALLOW_CREDENTIALS = True  # Autorise les cookies/session
+CORS_ALLOW_METHODS = ["GET", "POST", "OPTIONS", "PATCH"]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'Access-Control-Allow-Origin',
+]

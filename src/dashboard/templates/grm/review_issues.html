@@ -296,6 +296,59 @@
             loadNextLevelRegions($("#id_administrative_region"), '', '');
         });
 
+
+
+        function download_issues_datas () {
+                $("#download-message").show();
+                $("#download-complete-message").hide();
+    
+                data = {
+                    index: index,
+                    offset: offset,
+                    start_date: start_date.val(),
+                    end_date: end_date.val(),
+                    code: code.val(),
+                    assigned_to: assigned_to.val(),
+                    category: category.val(),
+                    type: type.val(),
+                    status: status.val(),
+                    other: other.val(),
+                    region: current_region_id,
+                    {% if publish_option %}publish: publish.val(),{% endif %}
+                    reported_by: reported_by.val(),
+                    see_all: see_all.is(":checked"),
+                    total_issues: parseInt("{{ all_total_issues }}"),
+                }
+          
+                var url = "{% url 'dashboard:grm:file:export_issues_excel' %}"; // L'URL de téléchargement
+                
+                $.ajax({
+                  url: url,
+                  type: 'GET',
+                  data: data,
+                  success: function(response) {
+                    console.log("response")
+                    console.log(response)
+                    let path = response.replaceAll('/', '___').replaceAll('\\', '___');
+                    let download_file_view_url = "{% url 'download_file_view' 'path' 'content_type' %}";
+                    window.location.href = download_file_view_url.replace('path', path).replace('content_type', 'None');
+                    
+        
+                    $("#download-message").hide();
+                    $("#download-complete-message").show();
+    
+    
+                    setTimeout(function() {
+                        $("#download-message").hide();
+                        $("#download-complete-message").hide();
+                      }, 5000);
+                  },
+                  error: function(xhr, status, error) {
+                    alert("Erreur lors du téléchargement du fichier.");
+                  }
+                });
+        }
+
     </script>
 {% endblock %}
 

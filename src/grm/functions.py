@@ -1,6 +1,7 @@
 from PIL import Image, ImageFilter
 from io import BytesIO
 import gzip
+import zlib
 
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -104,3 +105,7 @@ def compress_file(file_content, target_size_mb: float=1):
             break
 
     return compressed_file
+
+
+def get_validation_code(seed):
+    return str(zlib.adler32(str(seed).encode('utf-8')))[:6]

@@ -23,7 +23,8 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.conf.urls.i18n import i18n_patterns
-from .views import set_language
+from . import views
+from grm.my_librairies.download_file import download_file_view
 
 handler400 = 'dashboard.authentication.views.handler400'
 handler403 = 'dashboard.authentication.views.handler403'
@@ -31,7 +32,8 @@ handler404 = 'dashboard.authentication.views.handler404'
 handler500 = 'dashboard.authentication.views.handler500'
 
 urlpatterns = [
-    path('set-language/', set_language, name='set_language'),
+    path('set-language/', views.set_language, name='set_language'),
+    path('profile/', views.profile, name='profile'),
     # path('admin/', admin.site.urls),
     path('attachments/', include('attachments.urls')),
     path('authentication/', include('authentication.urls')),
@@ -40,6 +42,8 @@ urlpatterns = [
     path('administrative-levels/', include('administrativelevels.urls')),
     path('privacy/', include('privacy.urls')),
     path('issue/', include('issue.urls')),
+    
+    path('download-file-view/<str:path>/<str:content_type>/', download_file_view, name='download_file_view'),
 ]
 
 schema_view = get_schema_view(

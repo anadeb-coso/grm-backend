@@ -1,6 +1,11 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.conf import settings
 from django.utils.translation import get_language
+from django.contrib.auth.decorators import login_required
+import requests
+from django.http import Http404
+
+from grm.functions import get_validation_code
 
 def set_language(request):
     response = HttpResponseRedirect('/')
@@ -29,3 +34,58 @@ def set_language(request):
         except Exception as exc:
             pass
     return response
+
+
+
+
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        try:
+            scheme = request.scheme
+            domain = request.get_host()
+            full_url = f"{scheme}://{domain}"
+            language = get_language()
+
+            previous_url = request.headers.get('Referer', full_url)
+
+            #Recuperation de Token
+            session = requests.Session()
+            response = session.get(f"{settings.CDD_URL_BASE}/authentication/get-csrf-token/")
+
+            if response.status_code == 200:
+                data = response.json()
+                token = data.get("csrfToken")
+            else:
+                raise Http404
+            
+            cookies = session.cookies.get_dict()
+            headers = {
+                "X-CSRFToken": token
+            }
+            post_data = {
+                'email': request.user.email,
+                'code': get_validation_code(request.user.email),
+                'redirection_url': full_url,
+                'csrfmiddlewaretoken': token,
+                'language': language,
+                'previous_url': previous_url,
+            }
+            
+            response_post = session.post(f"{settings.CDD_URL_BASE}/{language}/user-manager/", headers=headers, cookies=cookies, data=post_data)
+
+            content = response_post.text\
+                .replace('/static/', f'{settings.CDD_URL_BASE}/static/')\
+                .replace(f'url: "/{language}/', f'url: "{settings.CDD_URL_BASE}/{language}/')\
+                .replace('action="/i18n/', f'action="{settings.CDD_URL_BASE}/i18n/')
+
+
+            return HttpResponse(content)
+
+
+        except Exception as e:
+            print("Erreur :", e)
+            raise Http404
+        
+    raise Http404

@@ -1,0 +1,10 @@
+<form id="postForm" action="{{ url }}" method="POST">
+    {% for key, value in post_data.items %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endfor %}
+  </form>
+  
+  <script>
+    document.getElementById('postForm').submit();
+  </script>
+  

@@ -1613,3 +1613,39 @@ msgstr "Date de la plainte"
 #: dashboard
 msgid "Delete issue"
 msgstr "Supprimer la plainte"
+
+#: .\dashboard
+msgid "Financial "
+msgstr "Financier"
+
+#: .\dashboard
+msgid "Procurement Specialist"
+msgstr "Passation de marché"
+
+#: .\dashboard
+msgid "Knowledge manager"
+msgstr "Gestionnaire de connaissanes"
+
+#: .\dashboard
+msgid "Download full database datas"
+msgstr "Télécharger les données complètes de la base"
+
+#: .\dashboard
+msgid "Download in progress..."
+msgstr "Téléchargement en cours..."
+
+#: .\dashboard
+msgid "Download complete!"
+msgstr "Téléchargement terminé !"
+
+#: .\dashboard
+msgid "Reset"
+msgstr "Réinitialiser"
+
+#: .\dashboard
+msgid "Password forgotten"
+msgstr "Mot de passe oublié"
+
+#: .\dashboard
+msgid "Password forgotten?"
+msgstr "Mot de passe oublié ?"

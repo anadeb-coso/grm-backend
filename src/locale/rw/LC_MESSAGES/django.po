@@ -1538,3 +1538,39 @@ msgstr ""
 #: dashboard
 msgid "Delete issue"
 msgstr ""
+
+#: .\dashboard
+msgid "Financial "
+msgstr ""
+
+#: .\dashboard
+msgid "Procurement Specialist"
+msgstr ""
+
+#: .\dashboard
+msgid "Knowledge manager"
+msgstr ""
+
+#: .\dashboard
+msgid "Download full database datas"
+msgstr ""
+
+#: .\dashboard
+msgid "Download in progress..."
+msgstr ""
+
+#: .\dashboard
+msgid "Download complete!"
+msgstr ""
+
+#: .\dashboard
+msgid "Reset"
+msgstr ""
+
+#: .\dashboard
+msgid "Password forgotten"
+msgstr ""
+
+#: .\dashboard
+msgid "Password forgotten?"
+msgstr ""

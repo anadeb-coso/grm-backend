@@ -78,6 +78,43 @@
                     </a>
                 </li>
                 {% endif %}
+
+
+                
+                
+                <style>
+                    #nav-profile form, #nav-profile button {
+                        display: inline !important;
+                    }
+                #nav-profile button {
+                        display: flex; /* Utilise flexbox pour aligner les éléments */
+                        justify-content: flex-start; /* Aligne les éléments horizontalement à gauche */
+                        align-items: center; /* Aligne les éléments verticalement au centre */
+                        background-color: white; /* Arrière-plan blanc */
+                        border: 1px solid white; /* Bordure blanche */
+                        color: gray; /* Couleur du texte */
+                        padding: 10px 15px; /* Espacement interne */
+                        text-align: left; /* Alignement du texte à gauche */
+                        width: auto; /* Ajuste la largeur automatiquement */
+                        cursor: pointer; /* Curseur au survol */
+                    }
+                    #nav-profile, #nav-profile button, #nav-profile form {
+                        width: 100%;
+                    }
+                </style>
+                <li class="nav-item" id="nav-profile">
+                    <form action="{% url 'profile' %}" method="POST">
+                        {% csrf_token %}
+                        <button
+                            class="nav-link">
+                            <i class="nav-icon fa fa-user"></i>
+                            <p>{% translate "Profile" %}</p>
+                        </button>
+                    </form>
+                </li>
+
+
+
             </ul>
         </nav>
 

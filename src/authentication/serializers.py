@@ -14,6 +14,7 @@ class CredentialSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
     doc_id = serializers.CharField()
+    eadl = serializers.JSONField()
 
 
 class UserAuthSerializer(serializers.Serializer):
@@ -65,6 +66,7 @@ class UserAuthSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authorization')
 
         attrs['doc_id'] = doc['_id'] if '_id' in doc else None
+        attrs['eadl'] = doc
         return attrs
 
 
@@ -148,6 +150,7 @@ class RegisterSerializer(serializers.Serializer):
         user.save()
 
         attrs['doc_id'] = doc['_id'] if '_id' in doc else None
+        attrs['eadl'] = doc
         return attrs
 
 

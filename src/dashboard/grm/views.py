@@ -1107,7 +1107,7 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
         except Exception:
             raise Http404
         user_id = request.user.id
-        if self.doc['assignee'] and user_id != self.doc['assignee']['id'] and user_id != doc_department['head']['id']:
+        if (self.doc['assignee'] and user_id != self.doc['assignee']['id'] and user_id != doc_department['head']['id']) and not request.user.groups.filter(name__in=["Admin", "Commentator", "Safeguard"]).exists():
             raise PermissionDenied()
 
         reason = self.request.GET.get('reason', '')
@@ -1364,6 +1364,10 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
             comments.insert(0, comment_obj)
             self.doc['comments'] = comments
 
+            reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+            reasons.insert(0, comment_obj)
+            self.doc['reasons'] = reasons
+
 
             # File
             reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
@@ -1448,6 +1452,10 @@ class SubmitIssueSetUnresolvedFormView(AJAXRequestMixin, ModalFormMixin, LoginRe
         }
         comments.insert(0, comment_obj)
         self.doc['comments'] = comments
+
+        reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
+        reasons.insert(0, comment_obj)
+        self.doc['reasons'] = reasons
 
         self.doc.save()
         msg = _("The issue status was successfully updated.")

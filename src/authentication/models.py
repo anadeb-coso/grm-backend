@@ -152,7 +152,10 @@ def get_assignee(grm_db, eadl_db, adl_db, issue_doc, errors=None):
     assigned_department = doc_category['assigned_department']
     department_id = assigned_department['id']
 
-    if doc_category['redirection_protocol']:
+    if doc_category['confidentiality_level'] != 'Very_sensitive' and issue_doc.get('reporter'): # Only if the complaint is not sensitive
+        assignee = issue_doc['reporter'] # Assign non-sensitive complaints to those who have registered them
+
+    elif doc_category['redirection_protocol']:
         assigned_department_level = assigned_department[
             'administrative_level'] if 'administrative_level' in assigned_department else None
         assigned_department_level = assigned_department_level.strip() if assigned_department_level else None

@@ -73,6 +73,7 @@ MIDDLEWARE = [
     'grm.config_functions.CORSMiddleware',
     'grm.config_functions.CustomCORSMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

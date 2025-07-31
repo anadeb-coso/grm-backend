@@ -8,8 +8,9 @@ from sys import platform
 from grm.utils import datetime_str
 from grm.my_librairies.mail.send_mail import send_email
 from grm.constants import (
-    SAFEGUARD_SPECIALIST_EMAILS, OTHER_SPECIALIST_ON_MAIL_COPY, ANADEB_EMAILS_ON_COPY,
-    OTHERS_EMAILS_ON_COPY, ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS, COORDINATORS_EMAILS_ON_COPY
+    SAFEGUARD_SPECIALIST_EMAILS, OTHER_SPECIALISTS_MAILS, ANADEB_EMAILS,
+    OTHERS_EMAILS, ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS, COORDINATORS_EMAILS,
+    REGIONAL_COORDINATORS_EMAILS
 )
 from administrativelevels.models import AdministrativeLevel
 from grm.my_librairies.functions import strip_accents
@@ -58,10 +59,11 @@ def send_notification_by_mail(issue):
                 "user": {
                     _("Reporter"): issue['reporter']['name']
                 },
-                "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/"
+                "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/",
+                'current_year': datetime.now().year,
             },
             SAFEGUARD_SPECIALIST_EMAILS,
-            cc= COORDINATORS_EMAILS_ON_COPY + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALIST_ON_MAIL_COPY + ANADEB_EMAILS_ON_COPY + OTHERS_EMAILS_ON_COPY
+            cc= COORDINATORS_EMAILS + REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALISTS_MAILS + ANADEB_EMAILS + OTHERS_EMAILS
         )
     except:
         return None
@@ -86,10 +88,11 @@ def send_notification_on_escalation_by_mail(issue):
                 "user": {
                     _("Assigned to"): issue['assignee']['name']
                 },
-                "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/"
+                "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/",
+                'current_year': datetime.now().year,
             },
             SAFEGUARD_SPECIALIST_EMAILS,
-            cc= COORDINATORS_EMAILS_ON_COPY + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALIST_ON_MAIL_COPY + ANADEB_EMAILS_ON_COPY + OTHERS_EMAILS_ON_COPY
+            cc= COORDINATORS_EMAILS + REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALISTS_MAILS + ANADEB_EMAILS + OTHERS_EMAILS
         )
     except:
         return None
@@ -120,10 +123,11 @@ def send_assignee_notification_by_mail(issue, user):
                 "comment":  _("Please find below the information concerning the new issue that has just been assigned to you."), 
                 "greeting":  _("Hello"),
                 "all_sex":  _("Mr./Mrs."),
-                "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/"
+                "url": f"http://grm-2-env.eba-speiyafz.us-west-1.elasticbeanstalk.com/fr/grm/issue-detail/{issue['auto_increment_id']}/",
+                'current_year': datetime.now().year,
             },
             [user.email],
-            cc=ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHERS_EMAILS_ON_COPY
+            cc=REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHERS_EMAILS
         )
     except:
         return None

@@ -104,102 +104,120 @@ class UploadIssueAttachmentAPIView(generics.GenericAPIView):
         # serializer.is_valid(raise_exception=True)
         data = request.data #serializer.validated_data
         grm_db = get_db(COUCHDB_GRM_DATABASE)
-        try:
-            doc = grm_db[data['doc_id']]
-        except Exception:
-            raise Http404
-        attachments = doc['attachments'] if 'attachments' in doc else list()
-        
-        if 'file' in data:
-            file = data['file']
-            if file and file.content_type and 'image' in str(file.content_type).lower():
-                file = compress_image(file, 0.7 if file.size > (1 * 1024 * 1024) else (0.5 if file.size > (0.5 * 1024 * 1024) else (file.size/(1024 * 1024))))
+        print(data.get('doc_id'))
+        if data.get('doc_id'):
+            try:
+                doc = grm_db[data['doc_id']]
+            except Exception:
+                raise Http404
+            attachments = doc['attachments'] if 'attachments' in doc else list()
             
-            if file:
-                for attachment in attachments:
-                    if attachment['id'] == data['attachment_id'] and not attachment.get('uploaded'):
-                        # file = data['file']
-                        
-                        """CouchDB"""
-                        response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
-                        attachment['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                        attachment['uploaded'] = True
-                        attachment['bd_id'] = response["id"]
-                        doc.save()
-                        return Response(response, status=201)
-                        
-                        
-                        """S3"""
-                        # file_url = upload_file_s3(file)
-                        # # print(file_url)
-                        # if file_url:
-                        #     attachment['url'] = file_url
-                        #     attachment['uploaded'] = True
-                        #     attachment['bd_id'] = str(int(time.time()))
-                        #     doc.save()
-                        
-                        #     return Response({
-                        #                 'status': 201,
-                        #                 'fileUrl': file_url,
-                        #             }, status=201)
+            if 'file' in data:
+                file = data['file']
+                # if file and file.content_type and 'image' in str(file.content_type).lower():
+                #     file = compress_image(file, 0.7 if file.size > (1 * 1024 * 1024) else (0.5 if file.size > (0.5 * 1024 * 1024) else (file.size/(1024 * 1024))))
                 
-                reasons = doc['reasons'] if 'reasons' in doc else list()
-                resolution_files = doc['resolution_files'] if 'resolution_files' in doc else list()
-                escalation_reasons = doc['escalation_reasons'] if 'escalation_reasons' in doc else list()
-                for reason in reasons:
-                    if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
-                        # file = data['file']
-                        
-                        """CouchDB"""
-                        response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
-                        reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                        reason['uploaded'] = True
-                        reason['bd_id'] = response["id"]
-                        
-                        """S3"""
-                        # file_url = upload_file_s3(file)
-                        # # print(file_url)
-                        # if file_url:
-                        #     reason['url'] = file_url
-                        #     reason['uploaded'] = True
-                        #     reason['bd_id'] = str(int(time.time()))
+                if file:
+                    for attachment in attachments:
+                        if attachment['id'] == data['attachment_id'] and not attachment.get('uploaded'):
+                            # file = data['file']
                             
-
-                        for r_file in resolution_files:
-                            if r_file.get('id') == reason.get('id'):
-                                
-                                """CouchDB"""
-                                r_file['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                                r_file['uploaded'] = True
-                                r_file['bd_id'] = response["id"]
-                                
-                                """S3"""
-                                # r_file['url'] = file_url
-                                # r_file['uploaded'] = True
-                                # r_file['bd_id'] = reason['bd_id']
-                        
-                        for e_file in escalation_reasons:
-                            if e_file.get('attachment') and e_file.get('attachment').get('id') == reason.get('id'):
-                                
-                                """CouchDB"""
-                                e_file['attachment']['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
-                                e_file['attachment']['uploaded'] = True
-                                e_file['attachment']['bd_id'] = response["id"]
-                                
-                                """S3"""
-                                # e_file['attachment']['url'] = file_url
-                                # e_file['attachment']['uploaded'] = True
-                                # e_file['attachment']['bd_id'] = reason['bd_id']
-
-                        doc.save()
-                        
-                        """CouchDB"""
-                        return Response(response, status=201)
+                            """CouchDB"""
+                            response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                            attachment['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                            attachment['uploaded'] = True
+                            attachment['bd_id'] = response["id"]
+                            doc.save()
+                            return Response(response, status=201)
+                            
+                            
+                            """S3"""
+                            # file_url = upload_file_s3(file)
+                            # # print(file_url)
+                            # if file_url:
+                            #     attachment['url'] = file_url
+                            #     attachment['uploaded'] = True
+                            #     attachment['bd_id'] = str(int(time.time()))
+                            #     doc.save()
+                            
+                            #     return Response({
+                            #                 'status': 201,
+                            #                 'fileUrl': file_url,
+                            #             }, status=201)
                     
-                        """S3"""
-                        # return Response({
-                        #             'status': 201,
-                        #             'fileUrl': file_url,
-                        #         }, status=201)
-                    
+                    reasons = doc['reasons'] if 'reasons' in doc else list()
+                    resolution_files = doc['resolution_files'] if 'resolution_files' in doc else list()
+                    escalation_reasons = doc['escalation_reasons'] if 'escalation_reasons' in doc else list()
+                    for reason in reasons:
+                        if reason['id'] == data['attachment_id'] and reason.get('type') and reason['type'] == 'file' and not reason.get('uploaded'):
+                            # file = data['file']
+                            
+                            """CouchDB"""
+                            response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                            reason['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                            reason['uploaded'] = True
+                            reason['bd_id'] = response["id"]
+                            
+                            """S3"""
+                            # file_url = upload_file_s3(file)
+                            # # print(file_url)
+                            # if file_url:
+                            #     reason['url'] = file_url
+                            #     reason['uploaded'] = True
+                            #     reason['bd_id'] = str(int(time.time()))
+                                
+
+                            for r_file in resolution_files:
+                                if r_file.get('id') == reason.get('id'):
+                                    
+                                    """CouchDB"""
+                                    r_file['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                                    r_file['uploaded'] = True
+                                    r_file['bd_id'] = response["id"]
+                                    
+                                    """S3"""
+                                    # r_file['url'] = file_url
+                                    # r_file['uploaded'] = True
+                                    # r_file['bd_id'] = reason['bd_id']
+                            
+                            for e_file in escalation_reasons:
+                                if e_file.get('attachment') and e_file.get('attachment').get('id') == reason.get('id'):
+                                    
+                                    """CouchDB"""
+                                    e_file['attachment']['url'] = f'/grm_attachments/{response["id"]}/{file.name}'
+                                    e_file['attachment']['uploaded'] = True
+                                    e_file['attachment']['bd_id'] = response["id"]
+                                    
+                                    """S3"""
+                                    # e_file['attachment']['url'] = file_url
+                                    # e_file['attachment']['uploaded'] = True
+                                    # e_file['attachment']['bd_id'] = reason['bd_id']
+
+                            doc.save()
+                            
+                            """CouchDB"""
+                            return Response(response, status=201)
+                        
+                            """S3"""
+                            # return Response({
+                            #             'status': 201,
+                            #             'fileUrl': file_url,
+                            #         }, status=201)
+        else:
+            print(data)
+            if 'file' in data:
+                file = data['file']
+                # if file and file.content_type and 'image' in str(file.content_type).lower():
+                #     file = compress_image(file, 0.7 if file.size > (1 * 1024 * 1024) else (0.5 if file.size > (0.5 * 1024 * 1024) else (file.size/(1024 * 1024))))
+                
+                if file:
+                    response = upload_file(file, COUCHDB_GRM_ATTACHMENT_DATABASE)
+                    print(response)
+                    return Response({
+                        'message': 'OK',
+                        'fileUrl': f'/grm_attachments/{response["id"]}/{file.name}',
+                        'bd_id': response["id"],
+                        'response': response
+                    }, status=201)
+                        
         raise Http404

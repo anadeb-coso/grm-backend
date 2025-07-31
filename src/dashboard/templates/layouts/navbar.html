@@ -10,7 +10,7 @@
         <li class="nav-item d-none d-sm-inline-block">
             <div class="image">
                 {% if user.photo %}
-                    <img src="{{ user.photo.url }}" class="img-circle" alt="User Image"/>
+                    <img src="{{ user.photo }}" class="img-circle" alt="User Image"/>
                 {% else %}
                     <img src="{% static 'images/default-avatar.jpg' %}" class="img-circle" alt="User Image"/>
                 {% endif %}

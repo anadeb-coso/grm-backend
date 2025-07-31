@@ -210,7 +210,7 @@ def create_users_mis_on_grm(emails=[]):
         print("Error request!")
 
 
-def create_facilitators_on_grm():
+def create_facilitators_on_grm(project_name, emails=[]):
     couchdb_dbs_name = get_dbs_name()
     dbs_name = [db_name for db_name in couchdb_dbs_name if 'facilitator' in db_name]
     account_created = 0
@@ -237,7 +237,7 @@ def create_facilitators_on_grm():
                 }
             })[0][0]["_id"]]
 
-            if doc_facilitator.get("geographical_units"):
+            if project_name in doc_facilitator.get("projects_names", []) and (doc_facilitator.get("geographical_units") or doc_facilitator.get("email") in emails):
                 for _n in ['DAMTARE Tchably', 'LAMBONI Kitchéssoa', 'GOBINE Nimome']:
                     if strip_accents(_n) == strip_accents(doc_facilitator['name']):
                         skip = True

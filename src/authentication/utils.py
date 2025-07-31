@@ -68,7 +68,7 @@ def create_or_update_adl_user_adl(user, updated=False):
     
     doc_user = {
         "type": "adl",
-        "photo": user.photo.url if user.photo else "https://via.placeholder.com/150",
+        "photo": doc_user_update['photo'] if doc_user_update else "https://via.placeholder.com/150",
         "location": {
             "lat": 0,
             "long": 0
@@ -78,9 +78,9 @@ def create_or_update_adl_user_adl(user, updated=False):
             "name": user.get_full_name(),
             "email": user.email,
             "phone": user.phone_number,
-            "photo": user.photo.url if user.photo else "https://via.placeholder.com/150",
+            "photo": doc_user_update['representative']['photo'] if doc_user_update else "https://via.placeholder.com/150",
             "is_active": user.is_active,
-            "last_active": None,
+            "last_active": doc_user_update['representative']['last_active'] if doc_user_update else (user.last_login.strftime('%Y-%m-%dT%H:%M:%S.%fZ') if user and user.last_login else None),
             "password": user.password,
             "groups": [g.name for g in user.groups.all()]
         },

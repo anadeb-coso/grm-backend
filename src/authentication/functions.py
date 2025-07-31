@@ -1,5 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 from grm.my_librairies.mail.send_mail import send_email
+from datetime import datetime
 
 
 def send_code_by_mail(user, code):
@@ -21,7 +22,8 @@ def send_code_by_mail(user, code):
                 "user_full_name": f"{user.first_name} {user.last_name}",
                 "comment":  _("Please find below your account information."), 
                 "greeting":  _("Hello"),
-                "all_sex":  _("Mr./Mrs.")
+                "all_sex":  _("Mr./Mrs."),
+                'current_year': datetime.now().year,
                 
                 # "url": f"{request.scheme}://{request.META['HTTP_HOST']}{reverse_lazy('dashboard:facilitators:detail', args=[no_sql_db_name])}"
             },

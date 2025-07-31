@@ -2,9 +2,11 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils.translation import gettext_lazy as _
 
-from issue.serializers import SaveIssueDatasSerializer
+from issue.serializers import SaveIssueDatasSerializer, CheckSyncIssuesSerializer
 from client import get_db, update_cloudant_document
+from dashboard.tasks import check_issues, send_sms_message, escalate_issues, send_a_new_issue_notification
 
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
@@ -23,7 +25,8 @@ class SaveIssueDatas(APIView):
         user_id = serializer.validated_data['user_id']
         has_error = False
         created = False
-        
+        send_message = False
+
         for issue in serializer.validated_data['issues']:
             # if issue['reporter']['id'] == user_id:
             #     try:
@@ -65,7 +68,10 @@ class SaveIssueDatas(APIView):
                         del issue['_id']
                         del issue['_rev']
                         for k, v in issue.items():
-                            if v or v == False or v == 0:
+                            if k not in ('publish', 'notification_send') and (v or v == False or v == 0):
+                                if k in issue_doc and issue_doc[k] != v:
+                                    send_message = True
+
                                 issue_doc[k] = v
                         issue_doc['_rev'] = latest_revision
                         issue_doc.save()
@@ -77,5 +83,34 @@ class SaveIssueDatas(APIView):
                     pass
             
                 
+        check_issues()
+        escalate_issues()
+        send_sms_message()
+        send_a_new_issue_notification()
+
+        return Response({
+            'status': 'ok', 
+            'has_error': has_error, 
+            'message': _("During this update, we noticed that some data had been stored locally on your phone but were not automatically synced during yours recordings. We want to assure you that this issue has now been resolved. To ensure proper automatic syncing in the future, please clear the MGP app's storage data via your phone settings, or uninstall and reinstall the app.") if send_message else None
+            }, status=status.HTTP_200_OK)
+
+
+
+
+class CheckSyncIssues(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    serializer_class = CheckSyncIssuesSerializer
+    
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        check_issues()
+        escalate_issues()
+        send_sms_message()
+        send_a_new_issue_notification()
         
-        return Response({'status': 'ok', 'has_error': has_error}, status=status.HTTP_200_OK)
+        
+        return Response({'status': 'ok'}, status=status.HTTP_200_OK)

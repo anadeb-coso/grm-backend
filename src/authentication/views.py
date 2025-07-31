@@ -40,11 +40,12 @@ class RegisterAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        doc_id = serializer.validated_data['doc_id']
+        
         credentials = {
             'username': settings.COUCHDB_USERNAME,
             'password': settings.COUCHDB_PASSWORD,
-            'doc_id': doc_id
+            'doc_id': serializer.validated_data['doc_id'],
+            'eadl': serializer.validated_data['eadl']
         }
         credential_serializer = CredentialSerializer(data=credentials)
         credential_serializer.is_valid(raise_exception=True)
@@ -62,11 +63,12 @@ class AuthenticateAPIView(RegisterAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        doc_id = serializer.validated_data['doc_id']
+        
         credentials = {
             'username': settings.COUCHDB_USERNAME,
             'password': settings.COUCHDB_PASSWORD,
-            'doc_id': doc_id
+            'doc_id': serializer.validated_data['doc_id'],
+            'eadl': serializer.validated_data['eadl']
         }
         credential_serializer = CredentialSerializer(data=credentials)
         credential_serializer.is_valid(raise_exception=True)

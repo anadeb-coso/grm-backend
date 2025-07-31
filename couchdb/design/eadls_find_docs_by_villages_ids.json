@@ -1,0 +1,9 @@
+{
+    "_id": "_design/adl_village_filter",
+    "views": {
+      "by_village_id": {
+        "map": "function(doc) { if (doc.type === 'adl' && doc.administrative_regions_objects && doc.representative && doc.representative.email && doc.representative.is_active === true ) { doc.administrative_regions_objects.forEach(function(region) { if (region.villages && Array.isArray(region.villages)) { region.villages.forEach(function(village) { emit(village.id, null); }); } }); }}"
+      }
+    },
+    "language": "javascript"
+}

@@ -14,5 +14,8 @@
       "map": "function (doc) {\n  if(doc.type == 'issue' && doc.confirmed && doc.status.name != 'Closed' && doc.assignee && doc.category) {\n    emit([doc.category.assigned_department, doc.assignee.id, doc.assignee.name]);\n  }\n}"
     }
   },
+  "filters": {
+    "exclude_unrelated_issues": "function(doc, req) {\n if (doc.type !== 'issue') return true;\n var userId = parseInt(req.query.user_id);\n if (doc.assignee && doc.assignee.id === userId) return true;\n if (doc.reporter && doc.reporter.id === userId) return true;\n return false;\n }"
+  },
   "language": "javascript"
 }

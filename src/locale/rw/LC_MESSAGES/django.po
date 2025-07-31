@@ -1574,3 +1574,10 @@ msgstr ""
 #: .\dashboard
 msgid "Password forgotten?"
 msgstr ""
+
+#: .\dashboard
+msgid "See more details"
+msgstr ""
+#: .\dashboard
+msgid "During this update, we noticed that some data had been stored locally on your phone but were not automatically synced during yours recordings. We want to assure you that this issue has now been resolved. To ensure proper automatic syncing in the future, please clear the MGP app's storage data via your phone settings, or uninstall and reinstall the app."
+msgstr ""

@@ -15,6 +15,7 @@ from grm.utils import (
     get_issue_age_group_choices, get_issue_category_choices, get_issue_citizen_group_1_choices,
     get_issue_citizen_group_2_choices, get_issue_status_choices, get_issue_type_choices
 )
+from issue.models import Wave
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -243,6 +244,8 @@ class SearchIssueForm(forms.Form):
     reported_by = forms.ChoiceField()
     publish = forms.ChoiceField()
 
+    wave = forms.ChoiceField()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -259,6 +262,7 @@ class SearchIssueForm(forms.Form):
         self.fields['other'].widget.choices = [('', ''), ('Escalate', _('Escalated'))]
         self.fields['reported_by'].widget.choices = get_government_worker_choices()
         self.fields['publish'].widget.choices = [('', ''), (True, _('Publish')), (False, _('Unpublish'))]
+        self.fields['wave'].widget.choices = [('', '')] + [(w.id, w.description) for w in Wave.objects.all()]
 
         adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()

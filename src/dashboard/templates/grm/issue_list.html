@@ -8,22 +8,33 @@
         font-size: 10px !important;
     }
 </style>
-<p>
-    <span class="float-md-left">
-        <b>{% translate "Total complaints in your administrative level" %} : </b>
-        {{ total_issues }}
-    </span>
+<div class="row mb-2">
+    <div class="col-md-4">
+        <span class="">
+            <b>{% translate "Total complaints in your administrative level" %} : </b>
+            {{ total_issues }}
+        </span>
+    </div>
 
+    <div class="col-md-4">
+        {% if wave_administrative_levels %}
+        <span id="id_show_pilot_localities"
+            data-toggle="modal" data-target="#modal-pilot-localities" 
+            class="text-primary text-bold" style="cursor: pointer; text-align: center;">{% translate "List of Pilot Localities" %}</span>
+        {% endif %}
+    </div>
     
-    <span id="id_download_file" class="float-md-right text-primary text-bold" style="cursor: pointer;">{% translate "Download full database datas" %}</span>
+    <div class="col-md-4">
+        <span id="id_download_file" class=" text-primary text-bold" style="cursor: pointer;">{% translate "Download full database datas" %}</span>
 
-    <span class="float-md-right">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-    <span id="download-message" class="float-md-right" style="display:none;">{% translate "Download in progress..." %}</span>
-    <span id="download-complete-message" class="float-md-right" style="display:none;">{% translate "Download complete!" %}</span>
+        {% comment %} <span class="float-md-right">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> {% endcomment %}
+        <span id="download-message" class="" style="display:none;">{% translate "Download in progress..." %}</span>
+        <span id="download-complete-message" class="" style="display:none;">{% translate "Download complete!" %}</span>
 
-    <span class="float-md-right">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        {% comment %} <span class="float-md-right">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> {% endcomment %}
+    </div>
     <div class="clearfix"></div>
-</p>
+</div>
 <div class="clearfix"></div>
 {% comment %} <div class="table-responsive"> {% endcomment %}
 <table id="table" class="table table-sm">
@@ -105,13 +116,86 @@
 {% comment %} </div> {% endcomment %}
 
 
+
+
+<!-- Modal  modal-dialog pilot-localities -->
+<div class="modal fade" id="modal-pilot-localities" tabindex="-1" role="dialog"
+    aria-labelledby="UploadTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+
+        <div class="modal-header">
+            <h5 class="modal-title">
+                {% translate "List of Pilot Localities" %}
+            </h5>
+
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body table-responsive">
+                    <table id="table-pilot-localities" class="table-bordered" style="width: 100% !important;">
+                        <thead>
+                    <tr>
+                            <th>{% translate 'Region' %}</th>
+                            <th>{% translate 'Prefecture' %}</th>
+                            <th>{% translate 'Commune' %}</th>
+                            <th>{% translate 'Canton' %}</th>
+                            <th>{% translate 'Locality' %}</th>
+                            {% if wave_administrative_levels_with_facilitators %}
+                                <th>{% translate 'AC' %}</th>
+                                <th>{% translate 'AC Phone' %}</th>
+                                <th>{% translate 'AC Email' %}</th>
+                            {% endif %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for pilot_locality in wave_administrative_levels %}
+                            <tr>
+
+                                <td align="left">{{ pilot_locality.parent.parent.parent.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.parent.parent.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.parent.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.name }}</td>
+                                {% if wave_administrative_levels_with_facilitators %}
+                                    {% with wave_administrative_levels_with_facilitators|get:pilot_locality.id as facilitator %}
+                                        {% if facilitator %}
+                                            <td align="left">{{ facilitator.representative.name }}</td>
+                                            <td>{{ facilitator.representative.phone }}</td>
+                                            <td align="left">{{ facilitator.representative.email }}</td>
+                                        {% else %}
+                                            <td align="left">-</td>
+                                            <td>-</td>
+                                            <td align="left">-</td>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        
+        </div>
+    </div>
+</div>
+<!-- End Modal pilot-localities -->
+
+
+
 <!-- DataTables export files -->
 {% include 'layouts/datatable-js.html' %}
 
 <script>
     try{
         total_issues = parseInt("{{ total_issues }}");
-        console.log(total_issues + " ======");
     }catch(e){
         console.log(e);
     }
@@ -185,6 +269,21 @@
 
 
 
+
+        if ($.fn.DataTable.isDataTable('#table-pilot-localities')) {
+            $('#table-pilot-localities').DataTable().destroy();
+            $('#table-pilot-localities').empty(); 
+        }
+        let table_pilot_localities = $('#table-pilot-localities').DataTable({
+            language: {
+                url: '{% static 'AdminLTE/plugins/datatables/locale/lang.json' %}'.replace('lang', '{{ lang }}')
+            },
+            dom: 'Blfrtip',
+            buttons: ['copy', 'excel', 'pdf', 'colvis'],
+            lengthMenu: [10, 20, 30, 40, 43, 50, 60, 70, 80, 90, 100],
+            pageLength: 10,
+            order: []
+        });
       
       });
 

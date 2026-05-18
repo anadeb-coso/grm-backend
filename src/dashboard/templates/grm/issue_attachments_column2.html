@@ -21,6 +21,7 @@
             {% for reason in reasons %}
             
                 {% comment %} {% if reason.type == "file" %}
+                {% if reason.name %}
                 <div class="row">
                     <div class="col-6 border-bottom">
                         <div class="d-inline-block padding-6-0">
@@ -36,6 +37,7 @@
                         </a>
                     </div>
                 </div>
+                {% else %}[{% translate "We can't see the file name" %}]{% endif %}
                 {% else %} {% endcomment %}
                     <div class="row">
                         <div class="col-6">
@@ -60,34 +62,36 @@
                     <div class="row border-bottom mt-2 mb-3">
                         <div class="col-10 mb-2 text-regular-family mb-3">
                             {% if reason.type == "file" %}
-                                    <a 
-                                    {% if reason.uploaded %}
-                                        {% if "s3.amazonaws" in reason.url %}
-                                        href="{{ reason.url }}" 
+                                {% if reason.name %}
+                                        <a 
+                                        {% if reason.uploaded %}
+                                            {% if "s3.amazonaws" in reason.url %}
+                                            href="{{ reason.url }}" 
+                                            {% else %}
+                                            href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
+                                            {% endif %}
+                                        target="_blank"
                                         {% else %}
-                                        href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
+                                        href="#!"
                                         {% endif %}
-                                    target="_blank"
-                                    {% else %}
-                                    href="#!"
-                                    {% endif %}
-                                    >
-                                        <i class="fas fa-paperclip mr-2"></i>
-                                        {{ reason.name }} {% if not reason.uploaded %}({% translate "Unsynchronized" %}){% endif %}
+                                        >
+                                            <i class="fas fa-paperclip mr-2"></i>
+                                            {{ reason.name }} {% if not reason.uploaded %}({% translate "Unsynchronized" %}){% endif %}
+                                        </a>
+                                    {% if user.id == doc.assignee.id %}
+                                    <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
+                                    data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id reason.id %}">
+                                        <i class="far fa-trash-alt text-danger"></i>
                                     </a>
-                                {% if user.id == doc.assignee.id %}
-                                <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
-                                data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id reason.id %}">
-                                    <i class="far fa-trash-alt text-danger"></i>
-                                </a>
-                                {% endif %}
-                                {% if "encrypt_" in reason.name %}
-                                <a class="btn pull-right show-data {% if not permission_to_edit %}disabled{% endif %}"
-                                data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id reason.id %}" 
-                                id="show_data_attachment_{{ doc.auto_increment_id }}_{{ reason.id }}">
-                                    <i class="far fa-eye link show-data"></i>
-                                </a>
-                                {% endif %}
+                                    {% endif %}
+                                    {% if "encrypt_" in reason.name %}
+                                    <a class="btn pull-right show-data {% if not permission_to_edit %}disabled{% endif %}"
+                                    data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id reason.id %}" 
+                                    id="show_data_attachment_{{ doc.auto_increment_id }}_{{ reason.id }}">
+                                        <i class="far fa-eye link show-data"></i>
+                                    </a>
+                                    {% endif %}
+                                {% else %}[{% translate "We can't see the file name" %}]{% endif %}
                             {% else %}
                                 <p id="issue_reason_comment">
                                 {% comment %} {{ reason.comment|safe }} {% endcomment %}

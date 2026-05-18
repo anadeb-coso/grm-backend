@@ -333,11 +333,12 @@
                                 
                                         {% if escalation_reason.attachment %}
                                         
-                                            
+            {% if escalation_reason.attachment.name %}
             <a href="{% url 'attachments:get-attachment' escalation_reason.attachment.bd_id escalation_reason.attachment.name %}?db=grm"
                 target="_blank">
                 {% translate 'Transfer file' %}
             </a>
+            {% else %}[{% translate "We can't see the file name" %}]{% endif %}
             
             {% if user.id == doc.assignee.id %}
             <a class="btn delete-attachment {% if not permission_to_edit %}disabled{% endif %}"

@@ -1,6 +1,142 @@
 {% extends 'layouts/base.html' %}
 {% load bootstrap4 static i18n %}
 
+{% block extracss %}
+    {{ block.super }}
+    <style>
+        #table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 0;
+            border-radius: 10px 0 0 0 !important;
+
+            & thead th {
+                border: 1px solid #f2f2f2 !important;
+
+                font-weight: bolder !important;;
+                height: 36px;
+                padding: 0 25px 0 10px;
+
+                &:not([class^="bg-"]) {
+                    background-color: #f2f2f2 !important;
+                }
+
+                &:after, &:before {
+                    top: 30%;
+                }
+
+                &:last-of-type {
+
+                    border-radius: 0 10px 0 0 !important;
+                }
+
+                &:not(&:last-child) {
+                    border-right-color: #c1c1c1 !important;
+                }
+
+                &:last-child {
+                    border-right-color: transparent !important;
+                }
+
+                &:first-child {
+                    border-left-color: transparent !important;
+                }
+            }
+
+
+            & thead th:first-of-type {
+
+                border-radius: 10px 0 0 0 !important;
+            }
+
+            & tbody td {
+                border-bottom-width: 1px !important;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+
+            & tbody tr:last-of-type {
+                border-radius: 0 10px 0 0 !important;
+            }
+
+            & tbody tr:not(.even):not(.odd):last-of-type, & tbody tr:not(.even):not(.odd):last-of-type td[colspan="8"] {
+                border-radius: 0 0 10px 10px !important;
+            }
+
+            & tbody td:first-of-type {
+                border-left: 1px solid #e2e1e1 !important;
+            }
+
+            & tbody td:last-of-type td {
+                border-left: 1px solid #e2e1e1 !important;
+            }
+
+            & tbody td:not(:first-of-type) {
+                border-left: 0;
+
+            }
+
+            & tbody td:not(:last-of-type) {
+                padding: 0 25px 0 10px;
+                border-right: 0;
+            }
+
+            & tbody tr {
+                border-bottom: 1px solid #e2e1e1 !important;
+                border-right: 1px solid #e2e1e1 !important;
+                border-left: 1px solid #e2e1e1 !important;
+
+                &:last-of-type td:first-of-type {
+                    border-radius: 0 0 0 10px !important;
+
+                }
+
+                &:last-of-type td:last-of-type {
+                    border-radius: 0 0 10px 0 !important;
+
+                }
+            }
+
+        }
+
+        .search-bar {
+            height: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+            margin-top: 1px;
+        }
+
+        .dt-buttons, #table_length {
+            display: inline-flex;
+            max-width: 50%;
+            flex: 0 0 50%;
+            width: 50%;
+        }
+
+        .dt-buttons button {
+            color: #ffffff !important;
+            background-color: #24c38b;
+            border-color: #24c38b;
+            box-shadow: none;
+            border-style: none;
+            margin-right: 5px;
+            padding: 5px;
+            border-radius: 7px !important;
+        }
+
+        #table_length label {
+            margin-left: auto;
+        }
+
+        .no-sort:before, .no-sort:after {
+            display: none !important;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <div class="row">
         <div class="col-12">
@@ -48,7 +184,7 @@
                             {% endif %} {% endcomment %}
                             {% bootstrap_field form.other show_label=False %}
 
-                            {% if publish_option %}{% bootstrap_field form.publish layout='horizontal' show_label=False %}{% endif %}
+                            {% if publish_option %}{% bootstrap_field form.publish show_label=False %}{% endif %}
                             
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" value="" id="see_all" />
@@ -63,6 +199,7 @@
                             {% bootstrap_field form.status show_label=False %}
                             {% bootstrap_field form.assigned_to show_label=False %}
                             {% bootstrap_field form.reported_by show_label=False %}
+                            {% bootstrap_field form.wave show_label=False %}
                         </div>
                         <div class="col-3 border-left issues-filter">
                             {% comment %} {% bootstrap_field form.type show_label=False %} {% endcomment %}
@@ -127,6 +264,7 @@
         let administrative_region = $('#id_administrative_region');
         let reported_by = $('#id_reported_by');
         let see_all = $('#see_all');
+        let wave = $('#id_wave');
         {% if publish_option %}let publish = $('#id_publish');{% endif %}
         let current_region_id;
 
@@ -152,6 +290,7 @@
                     reported_by: reported_by.val(),
                     see_all: see_all.is(":checked"),
                     total_issues: parseInt("{{ all_total_issues }}"),
+                    wave: wave.val(),
                 },
                 success: function (response) {
                     if(see_all.is(":checked")){
@@ -318,6 +457,7 @@
                     reported_by: reported_by.val(),
                     see_all: see_all.is(":checked"),
                     total_issues: parseInt("{{ all_total_issues }}"),
+                    wave: wave.val(),
                 }
           
                 var url = "{% url 'dashboard:grm:file:export_issues_excel' %}"; // L'URL de téléchargement
@@ -381,6 +521,10 @@
         });
         $("#id_reported_by").select2({
             placeholder: "{% translate 'Reported by' %}",
+            allowClear: true,
+        });
+        $("#id_wave").select2({
+            placeholder: "{% translate 'Wave' %}",
             allowClear: true,
         });
         {% if publish_option %}

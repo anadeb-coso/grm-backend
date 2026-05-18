@@ -15,7 +15,7 @@
     </div>
     <div class="row">
         <div class="col-12">
-            {% for attachment in attachments %}
+            {% for attachment in attachments %}{% if attachment.name %}
                 <div class="row">
                     <div class="col-9 border-bottom">
                         <div class="d-inline-block padding-6-0">
@@ -50,7 +50,7 @@
                         {% endif %}
                     </div>
                 </div>
-            {% endfor %}
+            {% else %}[{% translate "We can't see the file name" %}]{% endif %}{% endfor %}
         </div>
     </div>
 {% endif %}

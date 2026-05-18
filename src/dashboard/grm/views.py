@@ -38,6 +38,9 @@ from dashboard.grm.functions import get_issue_status_stories, send_assignee_noti
 from dashboard.tasks import check_issues, send_sms_message, escalate_issues, send_a_new_issue_notification
 from authentication.permissions import AdminPermissionRequiredMixin
 from privacy.functions import get_last_category_password, get_all_privacy_passwords
+from issue.models import Wave
+from grm.call_objects_from_other_db import mis_objects_call
+from administrativelevels.models import AdministrativeLevel
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -818,11 +821,30 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
         index = int(self.request.GET.get('index'))
         offset = int(self.request.GET.get('offset'))
-        issues = self.get_results()
+        issues, wave_administrative_ids = self.get_results()
         context['total_issues'] = len(list(issues)) # self.request.GET.get('total_issues', 0) #
         # context['total_issues'] = context['total_issues'] if context['total_issues'] not in ('None', 'null', 'NaN', '') else 0
 
         context['issues'] = issues if self.request.GET.get('see_all') in (True, 'true') else issues[index:index + offset] #issues #
+
+        context['wave_administrative_levels'] = mis_objects_call.filter_objects(
+            AdministrativeLevel, id__in=wave_administrative_ids
+        )
+
+        eadls_db = get_db()
+        facilitators_stabilized = eadls_db.get_view_result(
+            "_design/adl_village_filter", "by_village_id", 
+            keys=[int(v) for v in wave_administrative_ids], 
+            include_docs=True
+        )
+        if facilitators_stabilized:
+            _f_s = {}
+            for elt in [row["doc"] for row in facilitators_stabilized[:] if "CommunityFacilitator" in row["doc"]["representative"]["groups"] and row["doc"]["representative"]["is_active"] == True]:
+                if elt not in list(_f_s.values()):
+                    for wave_administrative_id in wave_administrative_ids:
+                        if str(wave_administrative_id) in elt['administrative_regions']:
+                            _f_s[int(wave_administrative_id)] = elt
+            context['wave_administrative_levels_with_facilitators'] = _f_s
         
         return context
     
@@ -848,22 +870,40 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         region = self.request.GET.get('region')
         reported_by = self.request.GET.get('reported_by')
         publish = self.request.GET.get('publish')
+        wave = self.request.GET.get('wave')
         user = self.request.user
 
+        selector = {
+            "type": "issue",
+            "confirmed": True,
+            "auto_increment_id": {"$ne": ""},
+            "created_date": {"$exists": True},
+        }
+
+        wave_administrative_ids = []
+        if wave:
+            wave_object = Wave.objects.filter(id=wave).first()
+            if wave_object:
+                wave_administrative_ids = wave_object.administrative_ids
+                selector["administrative_region.administrative_id"] = {
+                    "$in": wave_administrative_ids + [int(elt) for elt in wave_administrative_ids if isinstance(elt, str) and elt.isdigit() and int(elt) not in wave_administrative_ids]
+                }
+
         if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
-            selector = {
-                "type": "issue",
-                "confirmed": True,
-                "auto_increment_id": {"$ne": ""},
-                "created_date": {"$exists": True},
-            }
+            # selector = {
+            #     "type": "issue",
+            #     "confirmed": True,
+            #     "auto_increment_id": {"$ne": ""},
+            #     "created_date": {"$exists": True},
+            # }
+            pass
         else:
-            selector = {
-                "type": "issue",
-                "confirmed": True,
-                "auto_increment_id": {"$ne": ""},
-                "created_date": {"$exists": True},
-            }
+            # selector = {
+            #     "type": "issue",
+            #     "confirmed": True,
+            #     "auto_increment_id": {"$ne": ""},
+            #     "created_date": {"$exists": True},
+            # }
             
             if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
                 parent_ids = user.governmentworker.all_administrative_ids
@@ -878,30 +918,54 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                     descendants += get_administrative_level_descendants_using_mis(adl_db, p_id, [], self.request.user)
                 allowed_regions = descendants + parent_ids
 
+                if wave_administrative_ids:
+                    allowed_regions = list(set(allowed_regions) & set(wave_administrative_ids))
+
                 selector["$or"] = [
                     {"assignee.id": user.id},
                     {"$and": [
                         {"category.assigned_department": user.governmentworker.department},
-                        {"administrative_region.administrative_id": {"$in": allowed_regions}},
+                        {
+                            "administrative_region.administrative_id": {
+                                "$in": allowed_regions + [int(elt) for elt in allowed_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in allowed_regions]
+                            }
+                        },
                     ]}
                 ]
             else:
-                selector = {
-                    "type": "issue",
-                    "publish": True,
-                    "confirmed": True,
-                    "auto_increment_id": {"$ne": ""},
-                }
+                # selector = {
+                #     "type": "issue",
+                #     "publish": True,
+                #     "confirmed": True,
+                #     "auto_increment_id": {"$ne": ""},
+                # }
+                selector["publish"] = True
 
-        date_range = {}
-        if start_date:
-            start_date = datetime.strptime(start_date, '%d/%m/%Y').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            date_range["$gte"] = start_date
-            selector["intake_date"] = date_range
-        if end_date:
-            end_date = (datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            date_range["$lte"] = end_date
-            selector["intake_date"] = date_range
+        if start_date or wave_administrative_ids: #"2026-05-05T20:19:24.616Z"
+            if start_date:
+                start_date = datetime.strptime(start_date, '%d/%m/%Y').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                if wave_administrative_ids:
+                    wave_begin_date = wave_object.begin.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                    if start_date < wave_begin_date:
+                        start_date = wave_begin_date
+            elif wave_administrative_ids:
+                start_date = wave_object.begin.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            selector["intake_date"] = {"$gte": start_date}
+        if end_date or (wave_administrative_ids and wave_object.end):
+            if end_date:
+                end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                if wave_administrative_ids and end_date:
+                    wave_end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
+                    if end_date > wave_end_date:
+                        end_date = wave_end_date
+            elif wave_administrative_ids and wave_object.end:
+                end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
+                
+            if "intake_date" not in selector:
+                selector["intake_date"] = {"$lte": end_date}
+            else:
+                selector["intake_date"]["$lte"] = end_date
+
         if code:
             code_filter = {"$regex": f"(?i){code}"} #{"$regex": f"^{code}"}
             selector['$or'] = [{"internal_code": code_filter}, {"tracking_code": code_filter},
@@ -925,8 +989,10 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         if region:
             # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
             filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], self.request.user) + [region]
+            if wave_administrative_ids:
+                filter_regions = list(set(filter_regions) & set(wave_administrative_ids))
             selector["administrative_region.administrative_id"] = {
-                "$in": filter_regions
+                "$in": filter_regions + [int(elt) for elt in filter_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in filter_regions]
             }
         # _query_result = grm_db.get_query_result(selector)[:]
         # _ = _query_result
@@ -943,7 +1009,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
         #     selector=selector,
         # )
 
-        return grm_db.get_query_result(selector, sort=[{'created_date': 'desc'}])
+        return grm_db.get_query_result(selector, sort=[{'created_date': 'desc'}]), wave_administrative_ids
         # return query(skip=n, limit=limit, sort=[{'created_date': 'asc'}])['docs']
 
 

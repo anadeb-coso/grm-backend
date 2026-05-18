@@ -79,11 +79,13 @@
         <label class="label-align">
             {% translate 'Record Resolution' %}
             {% if doc.resolution_files %}{% for file in doc.resolution_files %}
+            {% if file.name %}
             <br />
             <a href="{% url 'attachments:get-attachment' file.bd_id file.name %}?db=grm"
                 target="_blank">
                 {% translate 'See PV de reconciliation' %}
             </a>
+            {% else %}[{% translate "We can't see the file name" %}]{% endif %}
             
             {% if user.id == doc.assignee.id %}
             <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"

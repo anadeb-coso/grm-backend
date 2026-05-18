@@ -13,7 +13,7 @@
             </small>
         </div>
         <div class="col-md-9">
-            {% for attachment in attachments %}
+            {% for attachment in attachments %}{% if attachment.name %}
                 <div class="row border-bottom">
                     <div class="col-9">
                         <div class="align-self-center mt-2">
@@ -41,7 +41,7 @@
                         </a>
                     </div>
                 </div>
-            {% endfor %}
+            {% else %}[{% translate "We can't see the file name" %}]{% endif %}{% endfor %}
         </div>
     </div>
 {% endif %}

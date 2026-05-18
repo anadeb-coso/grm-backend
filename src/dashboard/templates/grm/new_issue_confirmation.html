@@ -185,6 +185,7 @@
                                         </label>
                                         <div class="col-9">
                                             {% for attachment in doc.attachments %}
+                                            {% if attachment.name %}
                                                 <div class="row mb-2">
                                                     <div class="col-12">
                                                         <a href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm"
@@ -194,6 +195,7 @@
                                                         </a>
                                                     </div>
                                                 </div>
+                                            {% else %}[{% translate "We can't see the file name" %}]{% endif %}
                                             {% endfor %}
                                         </div>
                                     </div>

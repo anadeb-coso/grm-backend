@@ -512,27 +512,25 @@
             profile_form_ajax.load_form('#form', modal, url, false, true);
         });
 
-
-        $('#id_administrative_level').on('change', function () {
+        function check_vals() {
             let submit = $('#edit-government-worker-btn');
+            let _length;
+            try{
+                _length = $(this).val().trim().length;
+            }catch(e){
+                _length = $(this).val().length;
+            }
+            
+            submit.prop('disabled', false);
 
-            let _length = $(this).val().trim().length;
-            if (_length > 0) {
-                submit.prop('disabled', false);
-            } else {
+            if(this.id == "id_administrative_level" && _length <= 0){
                 submit.prop('disabled', true);
             }
-        });
+        }
 
-        $('#id_administrative_levels').on('change', function () {
-            let submit = $('#edit-government-worker-btn');
-            let _length = $(this).val().length;
-            if (_length > 0) {
-                submit.prop('disabled', false);
-            } else {
-                submit.prop('disabled', true);
-            }
-        });
+        $('#id_administrative_level').on('change', check_vals);
+        $('#id_administrative_levels').on('change', check_vals);
+        $('#id_additional_administrative_ids').on('change', check_vals);
 
         $('#send_user_confirmation_code').click(function () {
             let url = "{% url 'dashboard:adls:send_user_confirmation_code' adl|get:'_id' %}";
@@ -551,6 +549,11 @@
             width: '100%'
         });
         $("#id_administrative_level").select2({
+            placeholder: "{% translate 'Click to select location' %}",
+            allowClear: true,
+            width: '100%'
+        });
+        $("#id_additional_administrative_ids").select2({
             placeholder: "{% translate 'Click to select location' %}",
             allowClear: true,
             width: '100%'

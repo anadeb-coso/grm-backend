@@ -1,5 +1,5 @@
 {% extends 'layouts/base.html' %}
-{% load custom_tags static i18n %}
+{% load bootstrap4 custom_tags static i18n %}
 
 {% block content %}
     <div class="row">
@@ -10,7 +10,20 @@
                 </div>
                 <input class="form-control" id="search" placeholder="{% translate 'Search' %}...">
             </div>
+
             <div class="text-right mb-4">
+                {% if user|has_group:'Admin' or user.is_superuser %}
+                    <button class="btn btn-primary btn-xs" type="button" 
+                        data-toggle="modal"
+                        data-target="#create_user_modal"
+                    >
+                        <i class="fa fa-plus"></i> {% translate 'Create an account' %}
+                    </button>
+                    &nbsp; &nbsp; &nbsp; &nbsp; 
+                    {% include 'components/modal_upload_one_sheet.html' with type_object="grm" show_just_villages=False %}
+                {% endif %}
+
+                
                 <button class="btn btn-primary btn-xs" type="button" id="export-information">
                     <i class="fa fa-file-export"></i> {% translate 'Export complete list' %}
                 </button>
@@ -61,6 +74,44 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade modal-confirmation" id="create_user_modal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form class="form-horizontal" action="{% url 'dashboard:adls:create_profile' %}"
+                      method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title mx-auto">
+                            <img src="{% static 'images/icon.png' %}" height="254">
+                        </h5>
+                        <button type="button" class="border-0 bg-transparent" data-dismiss="modal"
+                                aria-label="Close">
+                            <div class="circle-icon bg-primary">
+                                <div class="center-27">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-primary text-center fs17 lh19 text-bold mb-4"
+                             style="padding: 0 45px 0 45px;">
+                            {% translate "Create an account" %}
+                        </div>
+                        {% bootstrap_form government_worker_form layout='horizontal' %}
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button id="create-user-btn" type="submit" class="btn btn-lg btn-primary text-right"
+                                disabled>
+                            {% translate "Save" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block javascript %}
@@ -111,6 +162,63 @@
             $("#export-information").on("click", function () {
                 table.button('.buttons-csv').trigger();
             });
+
+            
+            function encoderEmail(email) {
+                const [partieNom, domaine] = email.split("@");
+
+                const partieMasquee =
+                    partieNom.slice(0, 2) +
+                    "*".repeat(partieNom.length - 2);
+
+                return `${partieMasquee}@${domaine}`;
+            }
+            function check_vals() {
+                let submit = $('#create-user-btn');
+
+                if (
+                    $("#id_administrative_level").val().trim().length > 0 && 
+                    $("#id_email").val().trim().length > 0 && encoderEmail($("#id_email").val().trim()) &&
+                    $("#id_first_name").val().trim().length > 0 && 
+                    $("#id_last_name").val().trim().length > 0
+                ) {
+                    submit.prop('disabled', false);
+                } else {
+                    submit.prop('disabled', true);
+                }
+
+            }
+            $('#id_administrative_level').on('change', check_vals);
+            $('#id_email').on('change', check_vals);
+            $('#id_first_name').on('change', check_vals);
+            $('#id_last_name').on('change', check_vals);
+
+
         });
     </script>
 {% endblock %}
+
+{% block select2 %}
+    <script src="{% static 'js/dynamicRegionSelector.js' %}"></script>
+    <script type="text/javascript">
+        $("#id_administrative_levels").select2({
+            placeholder: "{% translate 'Click to select location' %}",
+            allowClear: true,
+            width: '100%'
+        });
+        $("#id_administrative_level").select2({
+            placeholder: "{% translate 'Click to select location' %}",
+            allowClear: true,
+            width: '100%'
+        });
+        $("#id_additional_administrative_ids").select2({
+            placeholder: "{% translate 'Click to select location' %}",
+            allowClear: true,
+            width: '100%'
+        });
+        $('b[role="presentation"]').hide();
+        $('.select2-selection__arrow').append(
+            '<i class="fas fa-chevron-circle-down text-primary" style="margin-top:12px;"></i>');
+
+    </script>
+{% endblock select2 %}

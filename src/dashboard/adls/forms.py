@@ -58,7 +58,8 @@ class AdlProfileForm(FileForm):
 class GovernmentWorkerAdlProfileForm(forms.Form):
     department = CustomerIntegerRangeField(min_value=1, default=1)
     administrative_level = forms.ChoiceField(required=True, label=_('administrative level'))
-    administrative_levels = forms.MultipleChoiceField(required=True, label=_('administrative levels'))
+    administrative_levels = forms.MultipleChoiceField(required=False, label=_('Area of ​​intervention'))
+    additional_administrative_ids = forms.MultipleChoiceField(required=False, label=_('Additional locations'))
 
     doc_id = ""
 
@@ -72,13 +73,34 @@ class GovernmentWorkerAdlProfileForm(forms.Form):
         
         adls = [(str(obj.id), f'{obj.type}: {obj.name} {f"({obj.parent})" if obj.parent else "(TOGO)"}') for obj in mis_objects_call.get_all_objects(AdministrativeLevel)]
 
-        self.fields['administrative_level'].choices = adls
+        self.fields['administrative_level'].choices = [('', '')] + adls
         self.fields['administrative_levels'].choices = adls
+        self.fields['additional_administrative_ids'].choices = adls
         
         if hasattr(user_obj, 'governmentworker'):
             if user_obj.governmentworker.administrative_id:
                 self.fields['administrative_level'].initial = user_obj.governmentworker.administrative_id
             if user_obj.governmentworker.administrative_ids:
                 self.fields['administrative_levels'].initial = user_obj.governmentworker.administrative_ids
+            if user_obj.governmentworker.additional_administrative_ids:
+                self.fields['additional_administrative_ids'].initial = user_obj.governmentworker.additional_administrative_ids
         
         
+class CreateAdlProfileForm(forms.Form):
+    first_name = forms.CharField(max_length=250, label=_("First name"))
+    last_name = forms.CharField(max_length=250, label=_("Last name"))
+    phone = forms.CharField(required=False, max_length=50, label=_('Tel'), help_text="Ex:. 22890709080")
+    email = forms.EmailField()
+    department = CustomerIntegerRangeField(min_value=1, default=1)
+    administrative_level = forms.ChoiceField(required=True, label=_('administrative level'))
+    administrative_levels = forms.MultipleChoiceField(required=False, label=_('Area of ​​intervention'))
+    additional_administrative_ids = forms.MultipleChoiceField(required=False, label=_('Additional locations'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        adls = [(str(obj.id), f'{obj.type}: {obj.name} {f"({obj.parent})" if obj.parent else "(TOGO)"}') for obj in mis_objects_call.get_all_objects(AdministrativeLevel)]
+
+        self.fields['administrative_level'].choices = [('', '')] + [('1', 'TOGO')] + adls
+        self.fields['administrative_levels'].choices = adls
+        self.fields['additional_administrative_ids'].choices = adls

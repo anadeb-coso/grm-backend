@@ -14,9 +14,9 @@ from authentication.models import User, GovernmentWorker
 from authentication.utils import get_validation_code
 from authentication.functions import send_code_by_mail
 from client import COUCHDB_ATTACHMENT_DATABASE, get_db, upload_file
-from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm, GovernmentWorkerAdlProfileForm
+from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm, GovernmentWorkerAdlProfileForm, CreateAdlProfileForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
-from authentication.permissions import SpecificPermissionRequiredMixin
+from authentication.permissions import SpecificPermissionRequiredMixin, AdminPermissionRequiredMixin
 from administrativelevels.models import AdministrativeLevel
 from grm.call_objects_from_other_db import mis_objects_call
 
@@ -36,6 +36,11 @@ class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin
     def get_queryset(self):
         eadl_db = get_db()
         return eadl_db.get_query_result({"type": {"$eq": ADL}})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['government_worker_form'] = CreateAdlProfileForm()
+        return context
 
 
 class ADLMixin(SpecificPermissionRequiredMixin, object):
@@ -120,6 +125,93 @@ class ToggleAdlStatusView(SpecificPermissionRequiredMixin, LoginRequiredMixin, g
         return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[doc_id]))
 
 
+class CreateAdlGovernmentWorkerProfileFormView(LoginRequiredMixin, generic.View):
+    
+    def _administrative_ids(self, ids, _id=None):
+        if not ids:
+            ids = []
+        if _id and not _id in ids:
+            ids.append(_id)
+        
+        """Search all villages with same cvd"""
+        all_adl_on_cvd = []
+        for _id in ids:
+            _obj = mis_objects_call.filter_objects(AdministrativeLevel, id=int(_id)).first()
+            if _obj and _obj.cvd:
+                for _village in _obj.cvd.get_villages():
+                    if str(_village.id) not in all_adl_on_cvd:
+                        all_adl_on_cvd.append(str(_village.id))
+            else:
+                all_adl_on_cvd.append(_id)
+        
+        return list(set(all_adl_on_cvd))
+    
+
+    def post(self, request, *args, **kwargs):
+        eadl_db = get_db()
+        
+        try:
+
+            form = CreateAdlProfileForm(request.POST)
+            if not form.is_valid():
+                raise PermissionDenied()
+            
+            data = form.cleaned_data
+            email = data['email']
+            first_name = data['first_name']
+            last_name = data['last_name']
+            phone = data['phone']
+
+            if not User.objects.filter(email=email).exists():
+                user = User()
+                user.email = email
+                user.first_name = first_name
+                user.last_name = last_name
+                user.phone_number = phone
+
+                user.save()
+
+                user = User.objects.get(email=email)
+
+                if hasattr(user, 'governmentworker'):
+                    governmentworker = GovernmentWorker.objects.get(id=user.governmentworker.id)
+                else:
+                    governmentworker = GovernmentWorker()
+                    governmentworker.user = user
+                    governmentworker.department = 1
+
+                governmentworker.administrative_id = data['administrative_level']
+                
+                if data['administrative_level'] != "1":
+                    governmentworker.administrative_ids = self._administrative_ids(data['administrative_levels'], data['administrative_level'])
+                    governmentworker.additional_administrative_ids = self._administrative_ids(data['additional_administrative_ids'])
+                else:
+                    governmentworker.administrative_ids = list()
+                    governmentworker.additional_administrative_ids = list()
+
+                governmentworker.save()
+
+                msg = _("The account has been successfully created.")
+                messages.add_message(request, messages.SUCCESS, msg, extra_tags='success')
+                
+                return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[
+                    eadl_db.get_query_result({"type": "adl", "representative.id": user.id})[0][0]["_id"]
+                ]))
+            
+            else:
+                msg = _("There is already a user with this email address.")
+                messages.add_message(request, messages.ERROR, msg, extra_tags='success')
+
+        except PermissionDenied:
+            msg = _("An error has occurred...")
+            messages.add_message(request, messages.ERROR, msg, extra_tags='danger')
+
+        except Exception as exc:
+            messages.add_message(request, messages.ERROR, exc.__str__(), extra_tags='danger')
+        
+        return HttpResponseRedirect(reverse('dashboard:adls:list'))
+
+    
 class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
                              generic.FormView):
     form_class = AdlProfileForm
@@ -195,7 +287,27 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
 
 
 class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, LoginRequiredMixin, generic.View):
+    
+    def _administrative_ids(self, ids, _id=None):
+        if not ids:
+            ids = []
+        if _id and not _id in ids:
+            ids.append(_id)
         
+        """Search all villages with same cvd"""
+        all_adl_on_cvd = []
+        for _id in ids:
+            _obj = mis_objects_call.filter_objects(AdministrativeLevel, id=int(_id)).first()
+            if _obj and _obj.cvd:
+                for _village in _obj.cvd.get_villages():
+                    if str(_village.id) not in all_adl_on_cvd:
+                        all_adl_on_cvd.append(str(_village.id))
+            else:
+                all_adl_on_cvd.append(_id)
+        
+        return list(set(all_adl_on_cvd))
+    
+
     def post(self, request, *args, **kwargs):
         doc_id = kwargs['id']
         eadl_db = get_db()
@@ -221,24 +333,10 @@ class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, Lo
                 governmentworker.department = 1
 
             governmentworker.administrative_id = data['administrative_level']
-            ids =  data['administrative_levels']
-            if not ids:
-                ids = []
-            if not data['administrative_level'] in ids:
-                ids.append(data['administrative_level'])
             
-            """Search all villages with same cvd"""
-            all_adl_on_cvd = []
-            for _id in ids:
-                _obj = mis_objects_call.filter_objects(AdministrativeLevel, id=int(_id)).first()
-                if _obj and _obj.cvd:
-                    for _village in _obj.cvd.get_villages():
-                        if str(_village.id) not in all_adl_on_cvd:
-                            all_adl_on_cvd.append(str(_village.id))
-                else:
-                     all_adl_on_cvd.append(_id)
-                            
-            governmentworker.administrative_ids = list(set(all_adl_on_cvd))
+            governmentworker.administrative_ids = self._administrative_ids(data['administrative_levels'], data['administrative_level'])
+            governmentworker.additional_administrative_ids = self._administrative_ids(data['additional_administrative_ids'])
+
             governmentworker.save()
 
             msg = _("The profile information was successfully edited.")

@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+import itertools
 
 # import cryptocode
 from django.conf import settings
@@ -838,11 +839,16 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             include_docs=True
         )
         if facilitators_stabilized:
-            _f_s = {}
+            _f_s = {} 
             for elt in [row["doc"] for row in facilitators_stabilized[:] if "CommunityFacilitator" in row["doc"]["representative"]["groups"] and row["doc"]["representative"]["is_active"] == True]:
                 if elt not in list(_f_s.values()):
                     for wave_administrative_id in wave_administrative_ids:
-                        if str(wave_administrative_id) in elt['administrative_regions']:
+                        administratives_stabilized = elt['administrative_regions']
+                        administrative_regions_objects = elt.get('administrative_regions_objects')
+                        administratives_stabilized = list(set(
+                            (administratives_stabilized if administratives_stabilized else []) + list(itertools.chain(*[[str(v['id']) for v in ad['villages']] for ad in (administrative_regions_objects if administrative_regions_objects else [])]))
+                        ))
+                        if str(wave_administrative_id) in administratives_stabilized:
                             _f_s[int(wave_administrative_id)] = elt
             context['wave_administrative_levels_with_facilitators'] = _f_s
         

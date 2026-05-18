@@ -102,7 +102,7 @@ def get_administrative_region_name(adl_db, administrative_id):
 
     while has_parent:
         docs = adl_db.get_query_result({
-            "administrative_id": administrative_id,
+            "administrative_id": str(administrative_id),
             "type": 'administrative_level'
         })
 

@@ -9,8 +9,10 @@ from dashboard.grm import CHOICE_CONTACT, CHOICE_PHONE
 from grm.celery import app
 from grm.utils import get_auto_increment_id
 from sms_client import send_sms
+from grm.utils import datetime_str
 from administrativelevels.functions import get_ald_parent_by_type_and_child_id
 from dashboard.grm.functions import send_notification_by_mail, send_notification_on_escalation_by_mail
+from grm.constants import COUNTRY_NAME
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -220,6 +222,7 @@ def escalate_issues():
             #Building the escate list
             escalation_administrativelevels = issue_doc['escalation_administrativelevels'] if 'escalation_administrativelevels' in issue_doc else list()
             
+            at_least_one = False
             for i_escalation in range(len(escalation_administrativelevels)):
                 if not escalation_administrativelevels[i_escalation].get('comment'):
                     # try:
@@ -228,51 +231,66 @@ def escalate_issues():
                         administrative_id
                     )
                     escalate_to_administrative = {
-                        "administrative_id": str(ald_to_escalation.id),
-                        "name": ald_to_escalation.name,
-                        "administrative_level": ald_to_escalation.type
+                        "administrative_id": 0 if not ald_to_escalation and escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country' else str(ald_to_escalation.id),
+                        "name": COUNTRY_NAME if not ald_to_escalation and escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country' else ald_to_escalation.name,
+                        "administrative_level": 'Country' if not ald_to_escalation and escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country' else ald_to_escalation.type
                     }
                     # except:
                     #     ald_to_escalation = None
-                    if ald_to_escalation:
+                    if ald_to_escalation or escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country':
+                        at_least_one = True
                         escalation_administrativelevels[i_escalation] = {
                             "escalate_to": escalate_to_administrative,
-                            "comment": (escalation_administrativelevels[i_escalation-1]['escalate_to']['name'] if \
-                                        (i_escalation > 0) and len(escalation_administrativelevels) > 1 else issue_doc['administrative_region']['name']) \
+                            "comment": (escalation_administrativelevels[i_escalation+1]['escalate_to']['name'] if \
+                                        (len(escalation_administrativelevels) > 1 and i_escalation+1 < len(escalation_administrativelevels)) else issue_doc['administrative_region']['name']) \
                                             + " " + _("to") + " " + escalate_to_administrative['name'] + \
                                                 " (" + escalate_to_administrative['administrative_level'] + ")",
                             "due_at": escalation_administrativelevels[i_escalation]["due_at"]
                         }
 
+            
+            if escalation_administrativelevels and at_least_one:
+                issue_doc['escalate_flag'] = False
+                issue_doc['escalation_administrativelevels'] = escalation_administrativelevels
+                result['issues_updated'].append(issue_id)
+                issues_updated = True
+            else:
+                result['scale_is_not_available'].append(issue_id)
+
             #Search the last escalate
-            if escalation_administrativelevels:
-                administrative_id = escalation_administrativelevels[0]['escalate_to']['administrative_id']
+            # #
+            # if escalation_administrativelevels:
+            #     administrative_id = escalation_administrativelevels[0]['escalate_to']['administrative_id']
                 
-            adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+            # adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+            # #
 
             #"""Comment to be able to report a issue even if the administrative level does not have a issue manager"""
             # assignee, escalate_to_administrative = get_assignee_to_escalate(adl_db, department_id, administrative_id)
             # if assignee:
             #     issue_doc['assignee'] = assignee
 
-            escalate_to_administrative = get_adl_to_escalate(adl_db, administrative_id)
-            if escalate_to_administrative:
-                issue_doc['escalate_flag'] = False
-                escalation_administrativelevels.insert(0, {
-                    "escalate_to": escalate_to_administrative,
-                    "comment": (escalation_administrativelevels[0]['escalate_to']['name'] if \
-                                escalation_administrativelevels else issue_doc['administrative_region']['name']) \
-                                    + " " + _("to") + " " + escalate_to_administrative['name'] + \
-                                        " (" + escalate_to_administrative['administrative_level'] + ")",
-                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                })
-                issue_doc['escalation_administrativelevels'] = escalation_administrativelevels
 
-                result['issues_updated'].append(issue_id)
-                issues_updated = True
+            # #
+            # escalate_to_administrative = get_adl_to_escalate(adl_db, administrative_id)
+            # if escalate_to_administrative:
+            #     issue_doc['escalate_flag'] = False
+            #     escalation_administrativelevels.insert(0, {
+            #         "escalate_to": escalate_to_administrative,
+            #         "comment": (escalation_administrativelevels[0]['escalate_to']['name'] if \
+            #                     escalation_administrativelevels else issue_doc['administrative_region']['name']) \
+            #                         + " " + _("to") + " " + escalate_to_administrative['name'] + \
+            #                             " (" + escalate_to_administrative['administrative_level'] + ")",
+            #         "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            #     })
+            #     issue_doc['escalation_administrativelevels'] = escalation_administrativelevels
 
-            else:
-                result['scale_is_not_available'].append(issue_id)
+            #     result['issues_updated'].append(issue_id)
+            #     issues_updated = True
+
+            # else:
+            #     result['scale_is_not_available'].append(issue_id)
+            # #
 
         except Exception:
             error = f'Error trying to escalate for issue document with id {issue_id}'
@@ -287,6 +305,30 @@ def escalate_issues():
                     "name": doc_status['name'],
                     "id": doc_status['id']
                 }
+
+                issue_status_stories = issue_doc["issue_status_stories"] if issue_doc.get("issue_status_stories") else []
+                issue_status_stories.insert(0, {
+                    'status': issue_doc['status'],
+                    'user': {
+                        'id': 0,
+                        'username': "grm",
+                        'full_name': "GRM System"
+                    },
+                    "comment": _("Automatic update"),
+                    'datetime': datetime_str()
+                })
+
+                comments = issue_doc['comments'] if 'comments' in issue_doc else list()
+                comments.insert(0, {
+                    "name": "GRM System",
+                    "id": 0,
+                    "comment": _("Issue opened").__str__(),
+                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                })
+
+                issue_doc['issue_status_stories'] = issue_status_stories
+                issue_doc['comments'] = comments
+
             except Exception:
                 pass
             

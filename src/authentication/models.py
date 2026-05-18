@@ -78,6 +78,7 @@ class GovernmentWorker(models.Model):
     administrative_id = models.CharField(
         max_length=255, blank=True, null=True, verbose_name=_('administrative level'))
     administrative_ids = models.JSONField(blank=True, null=True, verbose_name=_('administrative levels'))
+    additional_administrative_ids = models.JSONField(blank=True, null=True, verbose_name=_('Additional administrative levels'))
 
     class Meta:
         verbose_name = _('Government Worker')
@@ -124,7 +125,8 @@ class GovernmentWorker(models.Model):
         return list(
                 set(
                     (self.administrative_ids if self.administrative_ids else list()) \
-                    + ([self.administrative_id] if self.administrative_id else list())
+                    + ([self.administrative_id] if self.administrative_id else list()) \
+                    (self.additional_administrative_ids if self.additional_administrative_ids else list())
                 )
             )
 
@@ -185,7 +187,7 @@ def get_assignee(grm_db, eadl_db, adl_db, issue_doc, errors=None):
 
         related_workers = set(
             GovernmentWorker.objects.filter(
-                Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id),
+                Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id) | Q(additional_administrative_ids__contains=administrative_id),
                 department=department_id
                 # , administrative_id=administrative_id
                 ).values_list('user', flat=True))
@@ -220,7 +222,7 @@ def get_assignee(grm_db, eadl_db, adl_db, issue_doc, errors=None):
                         break
             elif related_workers:
                 worker = GovernmentWorker.objects.filter(
-                    Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id),
+                    Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id) | Q(additional_administrative_ids__contains=administrative_id),
                     department=department_id
                     # , administrative_id=administrative_id
                     ).first()
@@ -275,7 +277,7 @@ def get_assignee_to_escalate(adl_db, department_id, administrative_id):
         
         else:
             worker = GovernmentWorker.objects.filter(
-                Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id),
+                Q(administrative_ids__contains=administrative_id) | Q(administrative_id=administrative_id) | Q(additional_administrative_ids__contains=administrative_id),
                 department=department_id
                 # , administrative_id=administrative_id
                 ).first()

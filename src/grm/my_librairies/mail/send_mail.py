@@ -1,4 +1,5 @@
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from datetime import datetime
@@ -15,7 +16,11 @@ def send_email(
         ]):
     
     try:
-        
+
+        if settings.DEBUG:
+            to = [settings.RECIPIENT_EMAIL_DEFAULT]
+            cc = [settings.RECIPIENT_EMAIL_DEFAULT]
+            
         # to = ['adaboubvincent@gmail.com']
         # cc = []
         if type(datas) is dict:

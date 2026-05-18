@@ -23,7 +23,8 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.conf.urls.i18n import i18n_patterns
-from . import views
+from django.http import HttpResponse
+from . import views, upload_views
 from grm.my_librairies.download_file import download_file_view
 
 handler400 = 'dashboard.authentication.views.handler400'
@@ -31,7 +32,12 @@ handler403 = 'dashboard.authentication.views.handler403'
 handler404 = 'dashboard.authentication.views.handler404'
 handler500 = 'dashboard.authentication.views.handler500'
 
+def health(request):
+    return HttpResponse("ok")
+
+
 urlpatterns = [
+    path("health/", health),
     path('set-language/', views.set_language, name='set_language'),
     path('profile/', views.profile, name='profile'),
     # path('admin/', admin.site.urls),
@@ -42,6 +48,7 @@ urlpatterns = [
     path('administrative-levels/', include('administrativelevels.urls')),
     path('privacy/', include('privacy.urls')),
     path('issue/', include('issue.urls')),
+    path('api/issue/', include('issue.urls')),
     
     path('download-file-view/<str:path>/<str:content_type>/', download_file_view, name='download_file_view'),
 ]
@@ -67,4 +74,8 @@ if settings.DEBUG:
 urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     path('', include('dashboard.urls')),
+
+    path('services/', include('grm.libraries.services.urls')),
+
+    path('upload-file/', upload_views.UploadCSVView.as_view(), name='upload_file'),
 )

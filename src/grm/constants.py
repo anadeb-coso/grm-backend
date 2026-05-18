@@ -17,7 +17,10 @@ SAFEGUARD_SPECIALIST_EMAILS = [
 ]
 
 ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS = [
-    "badassan13@gmail.com", "ourorachid2013@gmail.com", "estherdjallo@gmail.com", "aholouvitt@gmail.com"
+    # "badassan13@gmail.com", 
+    "ourorachid2013@gmail.com", 
+    # "estherdjallo@gmail.com", 
+    "aholouvitt@gmail.com"
 ]
 
 COORDINATORS_EMAILS = [
@@ -25,7 +28,9 @@ COORDINATORS_EMAILS = [
 ]
 
 REGIONAL_COORDINATORS_EMAILS = [
-    "nikabouolivier2017@gmail.com", "ayassouhola@gmail.com", "moukeram@yahoo.fr"
+    "nikabouolivier2017@gmail.com", 
+    "ayassouhola@gmail.com", 
+    # "moukeram@yahoo.fr"
 ]
 
 OTHER_SPECIALISTS_MAILS = [
@@ -40,3 +45,6 @@ ANADEB_EMAILS = [
 OTHERS_EMAILS = [
     "sig.anadeb@gmail.com", "cosotogosig@gmail.com"
 ]
+
+COUNTRY_NAME = 'TOGO'
+COUNTRY_CODE = 'TG'

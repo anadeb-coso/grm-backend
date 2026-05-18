@@ -3,13 +3,20 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
+from datetime import datetime, timedelta
 
 from issue.serializers import SaveIssueDatasSerializer, CheckSyncIssuesSerializer
 from client import get_db, update_cloudant_document
 from dashboard.tasks import check_issues, send_sms_message, escalate_issues, send_a_new_issue_notification
+from authentication.api.auth.login import CheckUserSerializer
+from grm.utils import get_administrative_level_descendants_using_mis
+from grm.api.custom import CustomPagination
+from grm.call_objects_from_other_db import mis_objects_call
+from administrativelevels.models import AdministrativeLevel
 
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 
 class SaveIssueDatas(APIView):
     throttle_classes = ()
@@ -114,3 +121,128 @@ class CheckSyncIssues(APIView):
         
         
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+    
+
+
+
+class RestGetIssues(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    serializer_class = CheckUserSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data
+        
+        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
+        
+        start_date = request.data.get('start_date')
+        end_date = request.data.get('end_date')
+        code = request.data.get('code')
+        assigned_to = request.data.get('assigned_to')
+        category = request.data.get('category')
+        status = request.data.get('status')
+        other = request.data.get('other')
+        region = request.data.get('region')
+        region_name = request.data.get('region_name')
+        region_parent_name = request.data.get('region_parent_name')
+        reported_by = request.data.get('reported_by')
+        publish = request.data.get('publish')
+        user = request.user
+
+        if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
+            selector = {
+                "type": "issue",
+                "confirmed": True,
+                "auto_increment_id": {"$ne": ""},
+                "created_date": {"$exists": True},
+            }
+        else:
+            selector = {
+                "type": "issue",
+                "confirmed": True,
+                "auto_increment_id": {"$ne": ""},
+                "created_date": {"$exists": True},
+            }
+            
+            if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
+                parent_ids = user.governmentworker.all_administrative_ids
+                
+                descendants = []
+                for p_id in parent_ids:
+                    descendants += get_administrative_level_descendants_using_mis(adl_db, p_id, [], self.request.user)
+                allowed_regions = descendants + parent_ids
+
+                selector["$or"] = [
+                    {"assignee.id": user.id},
+                    {"$and": [
+                        {"category.assigned_department": user.governmentworker.department},
+                        {"administrative_region.administrative_id": {"$in": allowed_regions + [int(elt) for elt in allowed_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in allowed_regions]}},
+                    ]}
+                ]
+            else:
+                selector = {
+                    "type": "issue",
+                    "publish": True,
+                    "confirmed": True,
+                    "auto_increment_id": {"$ne": ""},
+                }
+
+        date_range = {}
+        if start_date:
+            start_date = datetime.strptime(start_date, '%d/%m/%Y').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            date_range["$gte"] = start_date
+            selector["intake_date"] = date_range
+        if end_date:
+            end_date = (datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            date_range["$lte"] = end_date
+            selector["intake_date"] = date_range
+        if code:
+            code_filter = {"$regex": f"(?i){code}"} #{"$regex": f"^{code}"}
+            selector['$or'] = [{"internal_code": code_filter}, {"tracking_code": code_filter},
+                               {"description": code_filter}]
+        if assigned_to:
+            selector["assignee.id"] = int(assigned_to)
+        if category:
+            selector["category.id"] = int(category)
+        if status:
+            selector["status.id"] = int(status)
+        if other:
+            if other == "Escalate":
+                selector["escalation_reasons"] = {"$exists": True}
+        if reported_by:
+            selector["reporter.id"] = int(reported_by)
+        if publish in ('True', 'False'):
+            selector["publish"] = True if publish == 'True' else False
+
+        if region or region_name:
+            filter_regions = []
+            if region_name:
+                if region_parent_name:
+                    adl_object = mis_objects_call.filter_objects(
+                        AdministrativeLevel,
+                        name=region_name,
+                        parent__name=region_parent_name
+                    ).first()
+                else:
+                    adl_object = mis_objects_call.filter_objects(
+                        AdministrativeLevel,
+                        name=region_name,
+                    ).first()
+                if adl_object:
+                    filter_regions = get_administrative_level_descendants_using_mis(adl_db, adl_object.id, [], self.request.user) + [str(adl_object.id)]
+            else:
+                filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], self.request.user) + [region]
+
+            selector["administrative_region.administrative_id"] = {
+                "$in": filter_regions + [int(elt) for elt in filter_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in filter_regions]
+            }
+        
+        queryset = list(grm_db.get_query_result(selector, sort=[{'created_date': 'desc'}]))
+        
+        paginator = CustomPagination()
+        paginated_data = paginator.paginate_queryset(queryset, request)
+
+        return paginator.get_paginated_response(paginated_data)

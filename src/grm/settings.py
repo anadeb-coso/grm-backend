@@ -86,7 +86,7 @@ ROOT_URLCONF = 'grm.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['grm/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -273,6 +273,7 @@ EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_USE_TLS = env('EMAIL_USE_TLS')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+RECIPIENT_EMAIL_DEFAULT = env('RECIPIENT_EMAIL_DEFAULT')
 
 
 # BASE URL COSO MIS
@@ -298,3 +299,5 @@ CORS_ALLOW_METHODS = ["GET", "POST", "OPTIONS", "PATCH"]
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'Access-Control-Allow-Origin',
 ]
+
+GRM_SECRET_KEY_GENRATE = env('GRM_SECRET_KEY_GENRATE')

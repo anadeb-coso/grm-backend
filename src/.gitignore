@@ -4,7 +4,7 @@
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
-
+media/
 
 #Celery File
 celerybeat-schedule*

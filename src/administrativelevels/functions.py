@@ -5,7 +5,10 @@ from administrativelevels.models import AdministrativeLevel
 def get_cascade_administrative_levels_by_administrative_level_id(_id):
     
     if _id and _id not in (1, "1"): #1 == Country
-        ad_obj = administrativelevels_models.AdministrativeLevel.objects.using('mis').get(id=int(_id))
+        try:
+            ad_obj = administrativelevels_models.AdministrativeLevel.objects.using('mis').get(id=int(_id))
+        except:
+            return [], []
 
         ads = ad_obj.administrativelevel_set.get_queryset()
         _type = ad_obj.type
@@ -53,8 +56,7 @@ def get_cascade_administrative_levels_by_administrative_level_id(_id):
         cantons = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Canton")
         villages = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Village")
     else:
-        cantons = []
-        villages = []
+        return [], []
         
     # return list(regions) + list(prefectures) + list(communes) + list(cantons) + list(villages)
     return list(cantons.order_by("name")) , list(villages.order_by("name"))

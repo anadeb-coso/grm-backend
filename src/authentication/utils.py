@@ -1,10 +1,11 @@
 import os
 import zlib
+from django.conf import settings
 
 import shortuuid as uuid
 
 from client import get_db
-from authentication.functions import send_code_by_mail
+from authentication.functions import send_code_by_mail, update_user_adl_on_cdd_app
 from administrativelevels.functions import get_cascade_administrative_levels_by_administrative_level_id
 from administrativelevels.serializers import AdministrativeLevelSerializer
 
@@ -18,17 +19,17 @@ def photo_path(instance, filename):
 def get_validation_code(seed):
     return str(zlib.adler32(str(seed).encode('utf-8')))[:6]
 
-def generate_administrative_regions_objects(government_worker):
+def generate_administrative_regions_objects(ids, _id=None):
     try:
         administrative_regions = list(
             set(
-                (government_worker.administrative_ids if government_worker.administrative_ids else list()) + \
-                ([government_worker.administrative_id] if government_worker.administrative_id else [])
+                (ids if ids else list()) + \
+                ([_id] if _id else [])
             )
         )
-        print(administrative_regions)
+        # print(administrative_regions)
     except Exception as exc:
-        administrative_regions = [government_worker.administrative_id] if government_worker.administrative_id else []
+        administrative_regions = [_id] if _id else []
         
     cantons, villages = [], []
     for adm_region in administrative_regions:
@@ -52,7 +53,7 @@ def generate_administrative_regions_objects(government_worker):
         ]
         administrative_regions_objects.append(ad_ser)
 
-    return administrative_regions_objects
+    return administrative_regions_objects, [v.id for v in villages]
 
 
 def create_or_update_adl_user_adl(user, updated=False):
@@ -119,33 +120,47 @@ def set_user_government_worker_adl(government_worker):
     doc_user_update = {}
     try:
         doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
-    except Exception as exc:
-        pass
-        
-    doc_user = {
-        "name": government_worker.administrative_level().type,
-        "location_name": government_worker.administrative_level().name,
-        "administrative_region": government_worker.administrative_id,
-        "administrative_regions": government_worker.administrative_ids,
-        "administrative_regions_objects": generate_administrative_regions_objects(government_worker)
-    }
+    
+        _administrative_regions_objects = generate_administrative_regions_objects(government_worker.administrative_ids, government_worker.administrative_id)
+        _additional_administrative_regions_objects = generate_administrative_regions_objects(government_worker.additional_administrative_ids)
 
-    for k, v in doc_user.items():
-        doc_user_update[k] = v
-    doc_user_update.save()
+        doc_user = {
+            "name": government_worker.administrative_level().type,
+            "location_name": government_worker.administrative_level().name,
+            "administrative_region": government_worker.administrative_id,
+            "administrative_regions": government_worker.administrative_ids,
+            "administrative_regions_objects": _administrative_regions_objects[0],
+            "additional_administrative_regions": government_worker.additional_administrative_ids,
+            "additional_administrative_regions_objects": _additional_administrative_regions_objects[0]
+        }
+
+        for k, v in doc_user.items():
+            doc_user_update[k] = v
+        doc_user_update.save()
+
+        update_user_adl_on_cdd_app(
+            doc_user_update['representative']['email'], settings.GRM_SECRET_KEY_GENRATE,
+            _administrative_regions_objects[1], _additional_administrative_regions_objects[1]
+        )
+    except Exception as exc:
+        print(government_worker.user.id)
+        pass
+    
+    
 
 def delete_user_government_worker_adl(government_worker):
     eadl_db = get_db()
     doc_user_update = {}
     try:
         doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
-    except Exception as exc:
-        pass
-    
-    doc_user = {
-        "administrative_region": None
-    }
+        
+        doc_user = {
+            "administrative_region": None
+        }
 
-    for k, v in doc_user.items():
-        doc_user_update[k] = v
-    doc_user_update.save()
+        for k, v in doc_user.items():
+            doc_user_update[k] = v
+        doc_user_update.save()
+    except Exception as exc:
+        print(government_worker.user.id)
+        pass

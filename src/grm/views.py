@@ -62,7 +62,9 @@ def profile(request):
             
             cookies = session.cookies.get_dict()
             headers = {
-                "X-CSRFToken": token
+                "X-CSRFToken": token,
+                "Referer": f"{settings.CDD_URL_BASE}/",
+                "Origin": settings.CDD_URL_BASE
             }
             post_data = {
                 'email': request.user.email,

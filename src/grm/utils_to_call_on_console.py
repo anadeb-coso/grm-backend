@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group, Permission
 from django.conf import settings
 import requests
+import time
 from datetime import datetime, timedelta
 
 from authentication.models import User, GovernmentWorker
@@ -215,6 +216,7 @@ def create_facilitators_on_grm(project_name, emails=[]):
     dbs_name = [db_name for db_name in couchdb_dbs_name if 'facilitator' in db_name]
     account_created = 0
     nbr_skip = 0
+    account_updated = 0
     for db_name in dbs_name:
         facilitator_db = get_db(db_name)
         skip = False
@@ -226,15 +228,28 @@ def create_facilitators_on_grm(project_name, emails=[]):
                 "sql_id": {
                     "$exists": True
                 },
-                "total_number_of_tasks": {
-                    "$exists": True
-                },
+                # "total_number_of_tasks": {
+                #     "$exists": True
+                # },
                 "sex": {
                     "$exists": True
                 },
-                "geographical_units": {
-                    "$exists": True
-                }
+                # "geographical_units": {
+                #     "$exists": True
+                # }
+                "$or": [
+                    {
+                        "total_number_of_tasks": {
+                            "$exists": True
+                        },
+                        "geographical_units": {
+                            "$exists": True
+                        }
+                    },
+                    {
+                        "facilitator_type": "technical_facilitator"
+                    }
+                ]
             })[0][0]["_id"]]
 
             if project_name in doc_facilitator.get("projects_names", []) and (doc_facilitator.get("geographical_units") or doc_facilitator.get("email") in emails):
@@ -243,7 +258,8 @@ def create_facilitators_on_grm(project_name, emails=[]):
                         skip = True
             
                 if not skip:
-                    if not User.objects.filter(email=doc_facilitator['email']).exists():
+                    user = User.objects.filter(email=doc_facilitator['email']).first()
+                    if not user:
                         user = User()
                         user.email = doc_facilitator['email']
                         last_name = doc_facilitator['name'].split(' ')[0]
@@ -251,6 +267,7 @@ def create_facilitators_on_grm(project_name, emails=[]):
                         user.first_name = first_name
                         user.last_name = last_name
                         user.phone_number = doc_facilitator['phone']
+                        user.is_active = doc_facilitator['active']
 
                         user.save()
 
@@ -259,6 +276,23 @@ def create_facilitators_on_grm(project_name, emails=[]):
                         account_created += 1
 
                         print(doc_facilitator)
+                    else:
+                        user.is_active = doc_facilitator['active']
+                        
+                        user.groups.set([])
+
+                        if doc_facilitator.get("facilitator_type") == "technical_facilitator":
+                            for g in ["Facilitator", "TechnicalFacilitator"]:
+                                if Group.objects.filter(name=g).exists():
+                                    user.groups.add(Group.objects.get(name=g))
+                        if doc_facilitator.get("facilitator_type") == "community_facilitator":
+                            for g in ["Facilitator", "CommunityFacilitator"]:
+                                if Group.objects.filter(name=g).exists():
+                                    user.groups.add(Group.objects.get(name=g))
+                        
+                        account_updated += 1
+
+                        user.save()
                 else:
                     nbr_skip += 1
         except Exception as exc:
@@ -266,10 +300,63 @@ def create_facilitators_on_grm(project_name, emails=[]):
 
     print()
     print(f"Account created : {account_created}")
+    print(f"Account updated : {account_updated}")
     print(f"Skip : {nbr_skip}")
     
     
+def delete_facilitators_on_grm(project_name, emails=[]):
+    couchdb_dbs_name = get_dbs_name()
+    dbs_name = [db_name for db_name in couchdb_dbs_name if 'facilitator' in db_name]
+    account_created = 0
+    nbr_skip = 0
+    account_updated = 0
+    emails_deleted = []
+    for db_name in dbs_name:
+        facilitator_db = get_db(db_name)
+        skip = False
+        try:
+            doc_facilitator = facilitator_db[facilitator_db.get_query_result({
+                "type": "facilitator",
+                "develop_mode": False,
+                "training_mode": False,
+                "sql_id": {
+                    "$exists": True
+                },
+                # "total_number_of_tasks": {
+                #     "$exists": True
+                # },
+                "sex": {
+                    "$exists": True
+                },
+                # "geographical_units": {
+                #     "$exists": True
+                # }
+                "$or": [
+                    {
+                        "total_number_of_tasks": {
+                            "$exists": True
+                        },
+                        "geographical_units": {
+                            "$exists": True
+                        }
+                    },
+                    {
+                        "facilitator_type": "technical_facilitator"
+                    }
+                ]
+            })[0][0]["_id"]]
+
+            if project_name in doc_facilitator.get("projects_names", []) and (not emails or doc_facilitator.get("email") in emails):
+                emails_deleted.append(doc_facilitator['email'])
+        except Exception as exc:
+            pass
     
+    if emails_deleted:
+        if input(f"Do you want to delete facilitators with these emails : {emails_deleted} ? (y/n) ") == "y":
+            User.objects.filter(email__in=emails_deleted).first().delete()
+            print(f"Deleted facilitators: {emails_deleted}")
+
+
 def delete_issues(text="testtest", start_date=None, end_date=None):
     grm_db = get_db('grm')
     
@@ -430,4 +517,5 @@ def generate_adl_regions_objects():
     for user in User.objects.all():
         if user and hasattr(user, 'governmentworker') and user.governmentworker.administrative_id not in (None, '', '1', 1):
             set_user_government_worker_adl(user.governmentworker)
+            time.sleep(5)
             

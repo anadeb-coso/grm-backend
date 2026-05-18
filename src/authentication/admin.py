@@ -116,7 +116,7 @@ class GovernmentWorkerForm(forms.ModelForm):
         administrative_ids = self.cleaned_data['administrative_ids']
         if administrative_ids == None or type(administrative_ids) == list:
             try:
-                administrative_id = self.cleaned_data['administrative_id']
+                administrative_id = self.cleaned_data.get('administrative_id')
                 if not administrative_ids:
                     administrative_ids = []
                 if not administrative_id in administrative_ids:

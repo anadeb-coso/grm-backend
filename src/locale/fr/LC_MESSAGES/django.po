@@ -1657,3 +1657,87 @@ msgstr "Voir plus de détails"
 #: .\dashboard
 msgid "During this update, we noticed that some data had been stored locally on your phone but were not automatically synced during yours recordings. We want to assure you that this issue has now been resolved. To ensure proper automatic syncing in the future, please clear the MGP app's storage data via your phone settings, or uninstall and reinstall the app."
 msgstr "Lors de cette mise à jour, nous avons constaté que certaines données avaient été enregistrées localement sur votre téléphone sans être automatiquement synchronisées lors de vos enregistrements. Nous vous assurons que ce problème a été résolu lors de cette synchronisation. Pour garantir le bon fonctionnement de la synchronisation automatique à l’avenir, veuillez vider les données de stockage de l’application MGP dans les paramètres de votre téléphone, ou bien désinstallez puis réinstallez l’application."
+
+#: .\dashboard
+msgid "Automatic update"
+msgstr "Mise à jour automatique"
+
+#: .\dashboard
+msgid "We can't see the file name"
+msgstr "Nous n'arrivons pas voir le nom du fichier"
+
+#: .\dashboard
+msgid "Additional locations"
+msgstr "Localités supplémentaires"
+
+#: .\dashboard
+msgid "Area of ​​intervention"
+msgstr "Zone d'intervention"
+
+#: dashboard/adls/views.py:164
+msgid "The account has been successfully created."
+msgstr "Le compte a été créé avec succès."
+
+#: dashboard/adls/views.py:164
+msgid "There is already a user with this email address."
+msgstr "Il existe déjà un utilisateur avec cet adresse mail."
+
+#: dashboard/adls/views.py:164
+msgid "First name"
+msgstr "Prénoms"
+
+#: dashboard/adls/views.py:164
+msgid "Last name"
+msgstr "Nom de famille"
+
+#: .\administrativelevels\functions.py:62
+msgid "Success!"
+msgstr "Succès!"
+
+#: .\administrativelevels\functions.py:64
+msgid "No items have been saved!"
+msgstr "Aucun élément n'a été enregistré !"
+
+#: .\administrativelevels\functions.py:66
+msgid "A problem has occurred!"
+msgstr "Un problème est survenu !"
+
+#: .\administrativelevels\functions.py
+msgid "A problem has occurred! The name(s) of the village(s) is wrong."
+msgstr "Un problème est survenu ! Les noms de certains villages sont erronés"
+
+#: .\administrativelevels\functions.py:68
+msgid "Some element(s) have not been saved!"
+msgstr "Certain(s) élément(s) n'ont pas été sauvegardé(s) !"
+
+#: .\administrativelevels\functions.py
+msgid "Some element(s) have not been saved! The name(s) of the village(s) is wrong."
+msgstr "Certain(s) élément(s) n'ont pas été sauvegardé(s) ! Les noms de certains villages sont erronés"
+
+#: .\administrativelevels\templates\upload.html
+msgid "Load file"
+msgstr "Charger Fichier"
+
+#: .\administrativelevels\templates\upload.html
+msgid "Upload CSV file"
+msgstr "Téléversez le fichier CSV"
+
+#: .\administrativelevels\templates\upload.html
+msgid "Close"
+msgstr "Fermer"
+
+#: .\administrativelevels\templates\components\modal_upload_one_sheet.html
+msgid "Sheet Name"
+msgstr "Nom de la Feuille"
+
+#: .\administrativelevels\templates\components\modal_upload_one_sheet.html
+msgid "Just this village"
+msgstr "Juste ce village"
+
+#: .\administrativelevels\templates\upload.html
+msgid "Wave"
+msgstr "Vague"
+
+#: .\administrativelevels\templates\upload.html
+msgid "List of Pilot Localities"
+msgstr "Liste des localités pilotes"

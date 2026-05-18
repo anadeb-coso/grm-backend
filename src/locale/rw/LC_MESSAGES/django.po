@@ -1581,3 +1581,87 @@ msgstr ""
 #: .\dashboard
 msgid "During this update, we noticed that some data had been stored locally on your phone but were not automatically synced during yours recordings. We want to assure you that this issue has now been resolved. To ensure proper automatic syncing in the future, please clear the MGP app's storage data via your phone settings, or uninstall and reinstall the app."
 msgstr ""
+
+#: .\dashboard
+msgid "Automatic update"
+msgstr ""
+
+#: .\dashboard
+msgid "We can't see the file name"
+msgstr ""
+
+#: .\dashboard
+msgid "Additional locations"
+msgstr ""
+
+#: .\dashboard
+msgid "Area of ​​intervention"
+msgstr ""
+
+#: dashboard/adls/views.py:164
+msgid "The account has been successfully created."
+msgstr ""
+
+#: dashboard/adls/views.py:164
+msgid "There is already a user with this email address."
+msgstr ""
+
+#: dashboard/adls/views.py:164
+msgid "First name"
+msgstr ""
+
+#: dashboard/adls/views.py:164
+msgid "Last name"
+msgstr ""
+
+#: .\administrativelevels\functions.py:62
+msgid "Success!"
+msgstr ""
+
+#: .\administrativelevels\functions.py:64
+msgid "No items have been saved!"
+msgstr ""
+
+#: .\administrativelevels\functions.py:66
+msgid "A problem has occurred!"
+msgstr ""
+
+#: .\administrativelevels\functions.py
+msgid "A problem has occurred! The name(s) of the village(s) is wrong."
+msgstr ""
+
+#: .\administrativelevels\functions.py:68
+msgid "Some element(s) have not been saved!"
+msgstr ""
+
+#: .\administrativelevels\functions.py
+msgid "Some element(s) have not been saved! The name(s) of the village(s) is wrong."
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "Load file"
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "Upload CSV file"
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "Close"
+msgstr ""
+
+#: .\administrativelevels\templates\components\modal_upload_one_sheet.html
+msgid "Sheet Name"
+msgstr ""
+
+#: .\administrativelevels\templates\components\modal_upload_one_sheet.html
+msgid "Just this village"
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "Wave"
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "List of Pilot Localities"
+msgstr ""

@@ -3,6 +3,12 @@
 
 {% block extracss %}
     {{ block.super }}
+    <!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+
+<!-- Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+
     <link href="{% static 'AdminLTE/plugins/chart.js/Chart.css' %}" rel="stylesheet">
     <link href="{% static 'plugins/mapbox-gl-js/v2.6.1/mapbox-gl.css' %}" rel="stylesheet">
     <style>
@@ -40,6 +46,7 @@
                         <div class="col-4 issues-filter border-left">
                             {% comment %} {% bootstrap_field form.type layout='horizontal' show_label=False %} {% endcomment %}
                             {% bootstrap_field form.category layout='horizontal' show_label=False %}
+                            {% bootstrap_field form.wave layout='horizontal' show_label=False %}
                         </div>
                         <div class="col-4 regions-filter border-left">
                             {% bootstrap_field form.administrative_region layout='horizontal' %}
@@ -70,10 +77,10 @@
                             </div>
                         </div>
                     </div> {% endcomment %}
-                    <div class="col-md-6 display-flex flex-flow-column">
+                    <div class="col-md-6 display-flex flex-flow-column" id="region-stats-container">
                         <div class="card h-100">
                             <div class="card-body table-responsive overflow-y-auto" style="max-height: 650px;">
-                                <table id="table" class="table">
+                                <table id="table-region-stats" class="table">
                                     <thead class="primary">
                                     <tr>
                                         <th id="administrative_level_label"></th>
@@ -82,6 +89,24 @@
                                     </tr>
                                     </thead>
                                     <tbody id="region-stats">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 display-flex flex-flow-column" id="region-stats-wave-container" style="display: none;">
+                        <div class="card h-100">
+                            <div class="card-body table-responsive overflow-y-auto" style="max-height: 650px;">
+                                <table id="table-region-stats-wave" class="table">
+                                    <thead class="primary">
+                                    <tr>
+                                        <th id="administrative_level_label_wave"></th>
+                                        <th>{{ number }}</th>
+                                        <th>{{ percentage }}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="region-stats-wave">
                                     </tbody>
                                 </table>
                             </div>
@@ -103,7 +128,7 @@
                         </div>
                         <div class="card">
                             <div class="card-body table-responsive">
-                                <table id="table" class="table">
+                                <table id="table-status-stats" class="table">
                                     <thead class="primary">
                                     <tr>
                                         <th>{{ status }}</th>
@@ -135,7 +160,7 @@
                         </div>
                         <div class="card">
                             <div class="card-body table-responsive">
-                                <table id="table" class="table">
+                                <table id="table-status-stats" class="table">
                                     <thead class="primary">
                                     <tr>
                                         <th>{{ status }}</th>
@@ -164,7 +189,7 @@
                         </div>
                         <div class="card">
                             <div class="card-body table-responsive">
-                                <table id="table" class="table">
+                                <table id="table-type-stats" class="table">
                                     <thead class="primary">
                                     <tr>
                                         <th>{{ type }}</th>
@@ -178,7 +203,7 @@
                             </div>
                         </div>
                     </div> {% endcomment %}
-                    <div class="col-lg-12" style="margin: auto !important;">
+                    <div class="col-lg-3" style="margin: auto !important;">
                         <div class="card">
                             <div class="card-header border-0">
                                 <div class="card-title">
@@ -191,9 +216,11 @@
                                 <canvas id="category_pie_chart" class="pie-chart"></canvas>
                             </div>
                         </div>
+                    </div>
+                    <div class="col-lg-9" style="margin: auto !important;">
                         <div class="card">
                             <div class="card-body table-responsive">
-                                <table id="table" class="table">
+                                <table id="table-category-stats" class="table">
                                     <thead class="primary">
                                     <tr>
                                         <th>{{ category }}</th>
@@ -207,6 +234,7 @@
                             </div>
                         </div>
                     </div>
+                    
                 </div>
                 <div class="overlay z-index1000" id="statistics-spin">
                     <i class="fas fa-10x fa-sync-alt fa-spin">
@@ -222,6 +250,10 @@
     <script type="text/javascript">
         $("#id_category").select2({
             placeholder: "{% translate 'Category' %}",
+            allowClear: true
+        });
+        $("#id_wave").select2({
+            placeholder: "{% translate 'Wave' %}",
             allowClear: true
         });
         {% comment %} $("#id_type").select2({
@@ -240,6 +272,9 @@
     </script>
 {% endblock select2 %}
 
+<!-- DataTables export files -->
+{% include 'layouts/datatable-js.html' %}
+
 {% block javascript %}
     {{ block.super }}
     {% comment %} <script src="{% static 'plugins/mapbox-gl-js/v2.6.1/mapbox-gl.js' %}"></script> {% endcomment %}
@@ -250,6 +285,7 @@
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
         let category = $('#id_category');
+        let wave = $('#id_wave');
         {% comment %} let type = $('#id_type'); {% endcomment %}
         let current_region_id;
         let markers = [];
@@ -293,7 +329,6 @@
             'Enregistrée': '#ff0000'
         };
         colors_keys = Object.keys(colors_array);
-        console.log(colors_keys);
 
         let colors_length = colors.length;
 
@@ -360,10 +395,17 @@
         loadStatistics();
 
         function fillStats(stats, table_selector, chart = null) {
+            stats = Object.entries(stats).sort(
+                ([, a], [, b]) => b.count - a.count
+            );
             let stats_table = document.createElement('div');
             let index = 0;
-            $.each(stats, function (key, value) {
-                const tr = document.createElement('tr');
+            let html = '';
+            $.each(stats, function (index, item) {
+                const key = item[0];
+                const value = item[1];
+
+                /*const tr = document.createElement('tr');
                 const td_name = document.createElement('td');
                 td_name.setAttribute('align', 'left');
                 td_name.innerHTML = value.name;
@@ -374,13 +416,18 @@
                 const td_percentage = document.createElement('td');
                 td_percentage.innerHTML = value.percentage + '%';
                 tr.appendChild(td_percentage);
-                stats_table.append(tr);
+                stats_table.append(tr);*/
+                html += `
+                    <tr>
+                        <td align="left">${value.name}</td>
+                        <td>${value.issues}</td>
+                        <td>${value.percentage}%</td>
+                    </tr>
+                `;
 
                 if (chart) {
                     chart.data.labels.push(value.name);
                     chart.data.datasets[0].data.push(value.percentage);
-                    console.log(value.name);
-                    console.log(colors_keys.includes(value.name));
 
                     if(colors_keys.includes(value.name)){
                         chart.data.datasets[0].backgroundColor.push(colors_array[value.name]);
@@ -390,7 +437,8 @@
                     index++;
                 }
             });
-            table_selector.html(stats_table.innerHTML);
+            //table_selector.html(stats_table.innerHTML);
+            table_selector.html(html);
             chart && chart.update();
         }
 
@@ -407,6 +455,7 @@
                     start_date: start_date.val(),
                     end_date: end_date.val(),
                     category: category.val(),
+                    wave: wave.val(),
                     {% comment %} type: type.val(), {% endcomment %}
                     region: current_region_id,
                 },
@@ -415,6 +464,7 @@
                     $('#id_total_issues').text(data.total_issues);
 
                     let region_stats = data.region_stats;
+                    let region_stats_wave = data.region_stats_wave;
                     let status_stats = data.status_stats;
                     {% comment %} let type_stats = data.type_stats; {% endcomment %}
                     let category_stats = data.category_stats;
@@ -484,15 +534,41 @@
                         {% comment %} fillStats(type_stats, $('#type-stats'), typeChart); {% endcomment %}
                         fillStats(category_stats, $('#category-stats'), categoryChart);
 
+                        if(Object.keys(region_stats_wave).length > 0){
+                            // col-md-6 to col-md-4
+                            $('#region-stats-container').removeClass('col-md-6').addClass('col-md-4');
+
+                            $('#region-stats-wave-container').show();
+                            $('#administrative_level_label_wave').html('{% translate "Wave" %}');
+                            fillStats(region_stats_wave, $('#region-stats-wave'));
+                        }else{
+                            // col-md-4 to col-md-6
+                            $('#region-stats-container').removeClass('col-md-4').addClass('col-md-6');
+                            
+                            $('#region-stats-wave-container').hide();
+                        }
+
                     } else {
+                        // col-md-4 to col-md-6
+                        $('#region-stats-container').removeClass('col-md-4').addClass('col-md-6');
+
                         let no_issues_msg = "{% translate "No issues found" %}";
                         let no_issues_msg_html = '<td class="text-center" colspan="3">' + no_issues_msg + '</td>';
                         $('#region-stats').html(no_issues_msg_html);
                         $('#status-stats').html(no_issues_msg_html);
                         {% comment %} $('#type-stats').html(no_issues_msg_html); {% endcomment %}
                         $('#category-stats').html(no_issues_msg_html);
+
+                        $('#region-stats-wave').html(no_issues_msg_html);
+                        $('#region-stats-wave-container').hide();
                     }
                     statistics_spin.hide();
+
+                    {% comment %} $(document).ready(function () {
+                        {% get_current_language as lang %}    
+
+                    }); {% endcomment %}
+                    
                 },
                 error: function (data) {
                     alert(error_server_message + "Error " + data.status);

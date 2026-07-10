@@ -41,7 +41,7 @@ from authentication.permissions import AdminPermissionRequiredMixin
 from privacy.functions import get_last_category_password, get_all_privacy_passwords
 from issue.models import Wave
 from grm.call_objects_from_other_db import mis_objects_call
-from administrativelevels.models import AdministrativeLevel
+from administrativelevels.models import AdministrativeLevel, CVD
 
 COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
 COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
@@ -820,6 +820,7 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
         index = int(self.request.GET.get('index'))
         offset = int(self.request.GET.get('offset'))
         issues, wave_administrative_ids = self.get_results()
@@ -828,9 +829,16 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
 
         context['issues'] = issues if self.request.GET.get('see_all') in (True, 'true') else issues[index:index + offset] #issues #
 
+        # context['wave_administrative_levels'] = mis_objects_call.filter_objects(
+        #     AdministrativeLevel, id__in=wave_administrative_ids
+        # )
         context['wave_administrative_levels'] = mis_objects_call.filter_objects(
-            AdministrativeLevel, id__in=wave_administrative_ids
+            CVD, headquarters_village__id__in=wave_administrative_ids
         )
+        context['total_cvds_total_villages_message'] = _("%(total_cvds)d CVDs, including %(total_villages)d villages") % {
+            'total_cvds': context['wave_administrative_levels'].count(),
+            'total_villages': len(wave_administrative_ids)
+        }
 
         eadls_db = get_db()
         facilitators_stabilized = eadls_db.get_view_result(
@@ -851,7 +859,61 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                         if str(wave_administrative_id) in administratives_stabilized:
                             _f_s[int(wave_administrative_id)] = elt
             context['wave_administrative_levels_with_facilitators'] = _f_s
+
+        if facilitators_stabilized:
+            _adl_phone_number = {}
+            for elt in [row["doc"] for row in facilitators_stabilized[:] if ((
+                (not row["doc"]["representative"].get("groups") or (row["doc"]["representative"].get("groups") and not any(_g for _g in ["CommunityFacilitator", "TechnicalFacilitator", "Facilitator", "Supervisor"] if _g in row["doc"]["representative"]["groups"]))) and
+                any(adl_id for adl_id in wave_administrative_ids if str(adl_id) == row["doc"]["administrative_region"])
+            ) and row["doc"]["representative"]["is_active"] == True)]:
+                if elt not in list(_adl_phone_number.values()):
+                    for wave_administrative_id in wave_administrative_ids:
+                        administratives_stabilized = elt['administrative_regions']
+                        administrative_regions_objects = elt.get('administrative_regions_objects')
+                        administratives_stabilized = list(set(
+                            (administratives_stabilized if administratives_stabilized else []) + list(itertools.chain(*[[str(v['id']) for v in ad['villages']] for ad in (administrative_regions_objects if administrative_regions_objects else [])]))
+                        ))
+                        if str(wave_administrative_id) in administratives_stabilized:
+                            _adl_phone_number[int(wave_administrative_id)] = elt
+            context['wave_administrative_levels_with_adl_profile'] = _adl_phone_number
+
+
+        # count issues by administrative region wave
+        region_stats_wave = {}
+        region_stats_wave_for_cvd = {}
+
+        def fill_count(key, stats: dict, name=None):
+            key = str(key)
+            if key in stats:
+                stats[key]['count'] = stats[key]['count'] + 1
+            else:
+                stats[key] = {
+                    'count': 1
+                }
+            if name:
+                stats[key]['name'] = name
+        def process_stats(stats: dict):
+            for k in stats:
+                k = str(k)
+                stats[k]['percentage'] = round(stats[k]['count'] * 100 / context['total_issues'])
+                stats[k]['issues'] = stats[k]['count']
         
+        if wave_administrative_ids:
+            for doc in issues:
+                if 'administrative_region' in doc and 'administrative_id' in doc['administrative_region']:
+                        fill_count(doc['administrative_region']['administrative_id'], region_stats_wave)
+                        
+        for _cvd in context['wave_administrative_levels']:
+            cvd_villages_id = list(_cvd.get_villages().values_list('id', flat=True))
+            region_stats_wave_for_cvd[str(_cvd.id)] = {'count': sum([region_stats_wave[str(k)]['count'] for k in cvd_villages_id if str(k) in region_stats_wave])}
+        
+        process_stats(region_stats_wave_for_cvd)
+        
+        context['region_stats_wave_for_cvd'] = dict(
+            sorted(region_stats_wave_for_cvd.items(), key=lambda item: item[1]['count'], reverse=True)
+        )
+        # End count issues by administrative region wave
+
         return context
     
     def get_queryset(self):
@@ -959,13 +1021,29 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
             selector["intake_date"] = {"$gte": start_date}
         if end_date or (wave_administrative_ids and wave_object.end):
             if end_date:
-                end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                if wave_administrative_ids and end_date:
-                    wave_end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
+                # end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                end_date = datetime.strptime(end_date, '%d/%m/%Y').replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    microsecond=999999
+                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                if wave_administrative_ids and wave_object and wave_object.end:
+                    wave_end_date = wave_object.end.replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    microsecond=999999
+                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                     if end_date > wave_end_date:
                         end_date = wave_end_date
-            elif wave_administrative_ids and wave_object.end:
-                end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
+            elif wave_administrative_ids and wave_object and wave_object.end:
+                end_date = wave_object.end.replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    microsecond=999999
+                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 
             if "intake_date" not in selector:
                 selector["intake_date"] = {"$lte": end_date}

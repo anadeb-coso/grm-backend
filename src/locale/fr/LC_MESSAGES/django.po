@@ -1741,3 +1741,19 @@ msgstr "Vague"
 #: .\administrativelevels\templates\upload.html
 msgid "List of Pilot Localities"
 msgstr "Liste des localités pilotes"
+
+#: .\administrativelevels\templates\upload.html
+msgid "Total number of CVD"
+msgstr "Nombre total de CVD"
+
+#: .\administrativelevels\templates\upload.html
+msgid "Total number of Villages"
+msgstr "Nombre total de villages"
+
+#: .\administrativelevels\templates\upload.html
+msgid "%(total_cvds)d CVDs, including %(total_villages)d villages"
+msgstr "%(total_cvds)d CVD dont %(total_villages)d villages"
+
+#: dashboard
+msgid "Complaints"
+msgstr "Plaintes"

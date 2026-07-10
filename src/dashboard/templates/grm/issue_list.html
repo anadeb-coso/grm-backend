@@ -121,7 +121,7 @@
 <!-- Modal  modal-dialog pilot-localities -->
 <div class="modal fade" id="modal-pilot-localities" tabindex="-1" role="dialog"
     aria-labelledby="UploadTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-dialog modal-xl" role="document" style="max-width: 90% !important;">
         <div class="modal-content">
 
         <div class="modal-header">
@@ -144,25 +144,41 @@
                             <th>{% translate 'Prefecture' %}</th>
                             <th>{% translate 'Commune' %}</th>
                             <th>{% translate 'Canton' %}</th>
-                            <th>{% translate 'Locality' %}</th>
+                            <th>{% translate 'CVD' %}</th>
+                            <th>{% translate 'Villages' %}</th>
+                            {% if wave_administrative_levels_with_adl_profile %}
+                                <th>{% translate 'Phone' %}</th>
+                            {% endif %}
                             {% if wave_administrative_levels_with_facilitators %}
                                 <th>{% translate 'AC' %}</th>
                                 <th>{% translate 'AC Phone' %}</th>
                                 <th>{% translate 'AC Email' %}</th>
                             {% endif %}
+                            <th>{% translate 'Complaints' %}</th>
+                            <th>{% translate 'Percentage' %}</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for pilot_locality in wave_administrative_levels %}
                             <tr>
 
-                                <td align="left">{{ pilot_locality.parent.parent.parent.parent.name }}</td>
-                                <td align="left">{{ pilot_locality.parent.parent.parent.name }}</td>
-                                <td align="left">{{ pilot_locality.parent.parent.name }}</td>
-                                <td align="left">{{ pilot_locality.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.headquarters_village.parent.parent.parent.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.headquarters_village.parent.parent.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.headquarters_village.parent.parent.name }}</td>
+                                <td align="left">{{ pilot_locality.headquarters_village.parent.name }}</td>
                                 <td align="left">{{ pilot_locality.name }}</td>
+                                <td align="left">{{ pilot_locality.get_villages_name }}</td>
+                                {% if wave_administrative_levels_with_adl_profile %}
+                                    {% with wave_administrative_levels_with_adl_profile|get:pilot_locality.headquarters_village.id as adl_profile %}
+                                        {% if adl_profile %}
+                                            <td align="left">{{ adl_profile.representative.phone }}</td>
+                                        {% else %}
+                                            <td align="center">-</td>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
                                 {% if wave_administrative_levels_with_facilitators %}
-                                    {% with wave_administrative_levels_with_facilitators|get:pilot_locality.id as facilitator %}
+                                    {% with wave_administrative_levels_with_facilitators|get:pilot_locality.headquarters_village.id as facilitator %}
                                         {% if facilitator %}
                                             <td align="left">{{ facilitator.representative.name }}</td>
                                             <td>{{ facilitator.representative.phone }}</td>
@@ -174,11 +190,23 @@
                                         {% endif %}
                                     {% endwith %}
                                 {% endif %}
+                                {% with region_stats_wave_for_cvd|get:pilot_locality.id_str as region_stats %}
+                                    {% if region_stats %}
+                                        <td align="center">{{ region_stats.count }}</td>
+                                        <td align="center">{{ region_stats.percentage }}%</td>
+                                    {% else %}
+                                        <td align="center">0</td>
+                                        <td align="center">0%</td>
+                                    {% endif %}
+                                {% endwith %}
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                
+                <b>{{ total_cvds_total_villages_message }}</b><br />
+                
             </div>
         </div>
 
@@ -282,7 +310,12 @@
             buttons: ['copy', 'excel', 'pdf', 'colvis'],
             lengthMenu: [10, 20, 30, 40, 43, 50, 60, 70, 80, 90, 100],
             pageLength: 10,
-            order: []
+            order: [],
+            columnDefs: [
+                { 
+                    type: 'numeric-comma', targets: [6, 10, 11]
+                }
+            ]
         });
       
       });

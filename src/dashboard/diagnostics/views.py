@@ -83,13 +83,29 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             selector["intake_date"] = {"$gte": start_date}
         if end_date or (wave_administrative_ids and wave_object.end):
             if end_date:
-                end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                if wave_administrative_ids and end_date:
-                    wave_end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
+                # end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                end_date = datetime.strptime(end_date, '%d/%m/%Y').replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    microsecond=999999
+                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                if wave_administrative_ids and wave_object and wave_object.end:
+                    wave_end_date = wave_object.end.replace(
+                        hour=23,
+                        minute=59,
+                        second=59,
+                        microsecond=999999
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                     if end_date > wave_end_date:
                         end_date = wave_end_date
-            elif wave_administrative_ids and wave_object.end:
-                end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
+            elif wave_administrative_ids and wave_object and wave_object.end:
+                end_date = wave_object.end.replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    microsecond=999999
+                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 
             if "intake_date" not in selector:
                 selector["intake_date"] = {"$lte": end_date}

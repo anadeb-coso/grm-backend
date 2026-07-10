@@ -145,19 +145,18 @@ class CVD(BaseModel):
     description = models.TextField(null=True, blank=True)
 
     def get_name(self):
-        administrativelevels = self.get_villages()
         if self.name:
             return self.name
         
-        name = ""
-        count = 1
-        length = len(administrativelevels)
-        for adl in administrativelevels:
-            name += adl.name
-            if length != count:
-                name += "/"
-            count += 1
-        return name if name else self.unique_code
+        administrativelevels = self.get_villages()
+
+        return "/".join([adl.name for adl in administrativelevels]) if administrativelevels else self.unique_code
+    
+    def get_villages_name(self, separator=", "):
+
+        administrativelevels = self.get_villages()
+
+        return separator.join([adl.name for adl in administrativelevels]) if administrativelevels else self.unique_code
     
     def get_villages(self):
         return self.administrativelevel_set.get_queryset()
@@ -174,6 +173,10 @@ class CVD(BaseModel):
         """Method to get the list of the all subprojects"""
         return self.subproject_set.get_queryset()
     
+    @property
+    def id_str(self):
+        return str(self.id)
+
     def __str__(self):
         return self.get_name()
     

@@ -212,6 +212,12 @@ def create_users_mis_on_grm(emails=[]):
 
 
 def create_facilitators_on_grm(project_name, emails=[]):
+    response = requests.get(f'{settings.BASE_URL_COSO_MIS}/api/users')
+    users_emails_mis = []
+    if response.status_code == 200:
+        users = response.json()
+        users_emails_mis = [user['email'] for user in users if user.get('email')]
+
     couchdb_dbs_name = get_dbs_name()
     dbs_name = [db_name for db_name in couchdb_dbs_name if 'facilitator' in db_name]
     account_created = 0
@@ -227,6 +233,9 @@ def create_facilitators_on_grm(project_name, emails=[]):
                 "training_mode": False,
                 "sql_id": {
                     "$exists": True
+                },
+                "email": {
+                    "$nin": users_emails_mis
                 },
                 # "total_number_of_tasks": {
                 #     "$exists": True
@@ -252,7 +261,7 @@ def create_facilitators_on_grm(project_name, emails=[]):
                 ]
             })[0][0]["_id"]]
 
-            if project_name in doc_facilitator.get("projects_names", []) and (doc_facilitator.get("geographical_units") or doc_facilitator.get("email") in emails):
+            if (not emails or (emails and doc_facilitator.get("email") in emails)) and (project_name in doc_facilitator.get("projects_names", []) and (doc_facilitator.get("geographical_units") or doc_facilitator.get("facilitator_type") == "technical_facilitator")):
                 for _n in ['DAMTARE Tchably', 'LAMBONI Kitchéssoa', 'GOBINE Nimome']:
                     if strip_accents(_n) == strip_accents(doc_facilitator['name']):
                         skip = True

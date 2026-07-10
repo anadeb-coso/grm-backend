@@ -1665,3 +1665,19 @@ msgstr ""
 #: .\administrativelevels\templates\upload.html
 msgid "List of Pilot Localities"
 msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "Total number of CVD"
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "Total number of Villages"
+msgstr ""
+
+#: .\administrativelevels\templates\upload.html
+msgid "%(total_cvds)d CVDs, including %(total_villages)d villages"
+msgstr ""
+
+#: dashboard
+msgid "Complaints"
+msgstr ""

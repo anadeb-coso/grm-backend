@@ -1474,6 +1474,18 @@ msgstr "Joint le fichier du transfert de la plainte au niveau supérieur"
 msgid "Transfer file"
 msgstr "Fiche de transfert"
 
+#: dashboard/templates/common/attachment_preview_modal.html
+msgid "Download"
+msgstr "Télécharger"
+
+#: dashboard/templates/common/attachment_preview_modal.html
+msgid "This file cannot be played in the browser. Please download it instead."
+msgstr "Ce fichier ne peut pas être lu dans le navigateur. Veuillez le télécharger."
+
+#: dashboard/templates/common/attachment_preview_modal.html
+msgid "Please download the file and open it with a media player on your computer."
+msgstr "Veuillez télécharger le fichier et l'ouvrir avec un lecteur multimédia sur votre ordinateur."
+
 #: dashboard/privacy
 msgid "COSO GRM - A new issue recorded"
 msgstr "MGP COSO - Une nouvelle plainte est enregistrée"
@@ -1757,3 +1769,59 @@ msgstr "%(total_cvds)d CVD dont %(total_villages)d villages"
 #: dashboard
 msgid "Complaints"
 msgstr "Plaintes"
+
+#: dashboard
+msgid "Reopen the issue"
+msgstr "Rouvrir la plainte/le sujet"
+
+#: dashboard
+msgid "COSO GRM - Issue opened"
+msgstr "MGP COSO - Plainte/sujet Ouvert"
+
+#: dashboard
+msgid "COSO GRM - Issue investigation update"
+msgstr "MGP COSO - Mise à jour de l'enquête sur la plainte/le sujet"
+
+#: dashboard
+msgid "COSO GRM - Issue resolved"
+msgstr "MGP COSO - Plainte/sujet résolu"
+
+#: dashboard
+msgid "COSO GRM - Issue rejected"
+msgstr "MGP COSO - Plainte/sujet rejeté"
+
+#: dashboard
+msgid "The issue was accepted"
+msgstr "La plainte a été acceptée"
+
+#: dashboard
+msgid "The issue was rejected"
+msgstr "La plainte a été rejetée"
+
+#: dashboard
+msgid "The issue was resolved"
+msgstr "La plainte a été résolue"
+
+#: dashboard
+msgid "The issue wasn't resolved"
+msgstr "La plainte n'a pas été résolue"
+
+#: dashboard
+msgid "The issue was reopened"
+msgstr "La plainte a été reouverte"
+
+#: dashboard
+msgid "Record a new decision or investigation step"
+msgstr "Consigner une nouvelle décision ou étape d'enquête"
+
+#: dashboard
+msgid "Assigned to you"
+msgstr "Assigné à vous"
+
+#: dashboard
+msgid "No staff member is designated to handle this issue. Please report it to the relevant department."
+msgstr "Aucun membre du personnel n'est désigné pour prendre en charge ce problème. Veuillez le signaler au service."
+
+#: dashboard
+msgid "Open in new tab"
+msgstr "Ouvrir dans nouvel onglet"

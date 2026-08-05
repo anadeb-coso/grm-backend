@@ -57,6 +57,7 @@
 {% endblock %}
 
 {% block modals %}
+    {% include 'common/attachment_preview_modal.html' %}
     <div id="formModal" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
 {% endblock modals %}
 
@@ -77,6 +78,7 @@
     {{ block.super }}
     <script src="{% static 'js/csrfSafeMethodAjax.js' %}"></script>
     <script src="{% static 'js/formAjaxSubmit.js' %}"></script>
+    <script src="{% static 'js/attachment_preview_modal.js' %}"></script>
     <script type="text/javascript">
         let load_attachments_spin = $('#load-attachments-spin');
 
@@ -188,13 +190,15 @@
                 issue_password_parent.hide();
                 
                 submit_issue_detail.prop('disabled', false);
+
+                $('#attachments').show();
             }
         });
 
-        issue_password_parent.focusout(function(){
+        function validateCategoryPassword(){
             $.ajax({
                 url: "{% url 'privacy:validated_category_password' %}",
-                type: 'GET',
+                type: 'POST',
                 data: {
                     category_id: $('#id_category').val(),
                     password: issue_password.val()
@@ -210,15 +214,40 @@
                     issue_password.next().children().css('color', '#32cd32');
                 
                     submit_issue_detail.prop('disabled', false);
+
+                    $('#attachments').hide();
+                    $('.delete-attachment').each(function(){
+                        console.log($(this).data('url'))
+                        $.ajax({
+                            url: $(this).data('url'),
+                            type: 'POST'
+                        })
+                            .fail(function (data) {
+                                alert(error_server_message + "Error " + data.status);
+                            })
+                            .done(function (data) {
+                                loadAttachments();
+                            })
+                    });
+
                 }else{
                     issue_password.css('color', 'red');
                     issue_password.parent().parent().children().css('color', 'red');
                     issue_password.next().children().css('color', 'red');
                 
                     submit_issue_detail.prop('disabled', true);
+
+                    $('#attachments').show();
                 }
             });
+        }
+
+        issue_password.keyup(function(event){
+            if(issue_password.val() && issue_password.val().length >= 7){
+                validateCategoryPassword();
+            }
         });
+        issue_password_parent.focusout(validateCategoryPassword);
 
     </script>
 {% endblock javascript %}

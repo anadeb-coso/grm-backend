@@ -1,184 +1,90 @@
-from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from twilio.base.exceptions import TwilioRestException
-from datetime import datetime
 
-from authentication.models import anonymize_issue_data, get_assignee, get_assignee_to_escalate, get_adl_to_escalate
-from client import get_db
+from authentication.models import anonymize_issue_data, get_assignee, get_adl_to_escalate
 from dashboard.grm import CHOICE_CONTACT, CHOICE_PHONE
+from dashboard.grm.serializers import issue_to_legacy_dict
 from grm.celery import app
-from grm.utils import get_auto_increment_id
 from sms_client import send_sms
-from grm.utils import datetime_str
-from administrativelevels.functions import get_ald_parent_by_type_and_child_id
-from dashboard.grm.functions import send_notification_by_mail, send_notification_on_escalation_by_mail
-from grm.constants import COUNTRY_NAME
-
-COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
-COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
+from dashboard.grm.functions import (
+    send_notification_by_mail, send_notification_on_escalation_by_mail,
+    send_issue_status_update_notification_by_mail,
+)
+from issue.models import Comment, EscalationLevel, Issue, IssueStatus, IssueStatusStory
+from administrativelevels.models import AdministrativeLevel
+from grm.call_objects_from_other_db import mis_objects_call
 
 
 @app.task
 def check_issues():
     """
-    Check the issues without 'auto_increment_id', 'internal_code' or 'assignee', and try to set a value for these fields
+    Auto-complète/nettoie les issues confirmées auxquelles il manque un assignee, un internal_code,
+    ou dont les données citoyen/contact n'ont pas encore été anonymisées. Équivalent Postgres de
+    l'ancienne tâche CouchDB (`auto_increment_id` n'est plus jamais manquant : c'est un champ
+    obligatoire du modèle `Issue`, renseigné dès la création — cf. StartNewIssueView).
     """
-    grm_db = get_db(COUCHDB_GRM_DATABASE)
-    selector = {
-        "type": "issue",
-        "confirmed": True,
-        "$or": [
-            {
-                "auto_increment_id": {
-                    "$in": [
-                        None,
-                        ""
-                    ]
-                }
-            },
-            {
-                "auto_increment_id": {
-                    "$exists": False
-                }
-            },
-            {
-                "internal_code": {
-                    "$in": [
-                        None,
-                        ""
-                    ]
-                }
-            },
-            {
-                "internal_code": {
-                    "$exists": False
-                }
-            },
-            {
-                "citizen": {
-                    "$nin": [
-                        None,
-                        "",
-                        "*"
-                    ]
-                }
-            },
-            {
-                "contact_information.contact": {
-                    "$nin": [
-                        None,
-                        "",
-                        "*"
-                    ]
-                }
-            },
-            {
-                "assignee": {
-                    "$in": [
-                        None,
-                        ""
-                    ]
-                }
-            },
-            {
-                "assignee": {
-                    "$exists": False
-                }
-            }
-        ]
-    }
-
-    issues = grm_db.get_query_result(selector)
     result = {
-        'errors': [],
-        'auto_increment_id_updated': [],
-        'internal_code_updated': [],
-        'anonymized_data': [],
-        'assignee_updated': [],
+        'errors': [], 'auto_increment_id_updated': [], 'internal_code_updated': [],
+        'anonymized_data': [], 'assignee_updated': [],
     }
     updated_issues = 0
-    for issue in issues:
-        auto_increment_id_updated = False
-        internal_code_updated = False
-        anonymized_data = False
-        assignee_updated = False
 
-        issue_id = issue['_id']
-        try:
-            issue_doc = grm_db[issue_id]
-        except Exception:
-            error = f'Error trying to get issue document with id {issue_id}'
-            result['errors'].append(error)
-            return result
+    candidates = Issue.objects.filter(confirmed=True, is_deleted=False).filter(
+        Q(assignee__isnull=True)
+        | Q(internal_code='') | Q(internal_code__startswith='DRAFT-')
+        | (~Q(citizen__isnull=True) & ~Q(citizen='') & ~Q(citizen='*'))
+        | (Q(contact_information__contact__isnull=False) & ~Q(contact_information__contact='') & ~Q(contact_information__contact='*'))
+    ).select_related('category')
 
-        if 'auto_increment_id' not in issue_doc or not issue_doc['auto_increment_id']:
+    for issue in candidates:
+        issue_id = str(issue.pk)
+        changed_fields = set()
+
+        if not issue.assignee_id:
             try:
-                auto_increment_id = get_auto_increment_id(grm_db)
-                issue_doc['auto_increment_id'] = auto_increment_id
-                auto_increment_id_updated = True
-                result['auto_increment_id_updated'].append(issue_id)
-            except Exception:
-                error = f'Error trying to set auto_increment_id of issue document with id {issue_id}'
-                result['errors'].append(error)
-        else:
-            auto_increment_id = issue_doc['auto_increment_id']
-
-        try:
-            category_id = issue_doc['category']['id']
-            doc_category = grm_db.get_query_result({
-                "id": category_id,
-                "type": 'issue_category'
-            })[0][0]
-        except Exception:
-            error = f'Error trying to get the category of issue document with id {issue_id}'
-            result['errors'].append(error)
-            continue
-
-        if 'internal_code' not in issue_doc or not issue_doc['internal_code']:
-            try:
-                administrative_id = issue_doc["administrative_region"]["administrative_id"]
-                issue_doc['internal_code'] = f'{doc_category["abbreviation"]}-{administrative_id}-{auto_increment_id}'
-                internal_code_updated = True
-                result['internal_code_updated'].append(issue_id)
-            except Exception:
-                error = f'Error trying to set internal_code for issue document with id {issue_id}'
-                result['errors'].append(error)
-
-        contact_information = issue_doc['contact_information']
-        if issue_doc['citizen'] != '*' or (contact_information and contact_information['contact'] != '*'):
-            try:
-                anonymize_issue_data(issue_doc)
-                anonymized_data = True
-                result['anonymized_data'].append(issue_id)
-            except Exception:
-                error = f'Error trying to anonymize issue document with id {issue_id}'
-                result['errors'].append(error)
-
-        if 'assignee' not in issue_doc or not issue_doc['assignee']:
-            # Implement for training | 25.02.2024
-            # if issue_doc['category']['id'] != 2: #Don't be "Relative à un autre programme ou projet" issue
-            #     assignee = issue_doc['reporter'].copy()
-            #     issue_doc['assignee'] = assignee
-            #     assignee_updated = True
-            #     result['assignee_updated'].append(issue_id)
-            # Comment for training | 25.02.2024
-            try:
-                eadl_db = get_db()
-                adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-                assignee = get_assignee(grm_db, eadl_db, adl_db, issue_doc, result['errors'])
-                issue_doc['assignee'] = assignee
+                assignee = get_assignee(issue)
                 if assignee:
-                    assignee_updated = True
+                    issue.assignee_id = assignee['id']
+                    issue.assignee_name = assignee['name']
+                    changed_fields |= {'assignee', 'assignee_name'}
                     result['assignee_updated'].append(issue_id)
             except Exception:
-                error = f'Error trying to set assignee for issue document with id {issue_id}'
-                result['errors'].append(error)
+                result['errors'].append(f'Error trying to set assignee for issue document with id {issue_id}')
 
-        if auto_increment_id_updated or internal_code_updated or anonymized_data or assignee_updated:
-        # if assignee_updated:
-            issue_doc.save()
+        if not issue.internal_code or issue.internal_code.startswith('DRAFT-'):
+            try:
+                administrative_id = issue.administrative_region_id
+                issue.internal_code = f'{issue.category.abbreviation}-{administrative_id}-{issue.auto_increment_id}'
+                changed_fields.add('internal_code')
+                result['internal_code_updated'].append(issue_id)
+            except Exception:
+                result['errors'].append(f'Error trying to set internal_code for issue document with id {issue_id}')
+
+        needs_anonymizing = (issue.citizen and issue.citizen != '*') or (
+            issue.contact_information and issue.contact_information.get('contact') not in (None, '', '*')
+        )
+        if needs_anonymizing:
+            try:
+                legacy = {
+                    '_id': issue_id, 'citizen': issue.citizen, 'contact_information': issue.contact_information,
+                }
+                anonymize_issue_data(legacy)
+                issue.citizen = legacy['citizen']
+                issue.contact_information = legacy['contact_information']
+                changed_fields |= {'citizen', 'contact_information'}
+                result['anonymized_data'].append(issue_id)
+            except Exception:
+                result['errors'].append(f'Error trying to anonymize issue document with id {issue_id}')
+
+        if changed_fields:
+            # `updated_at` doit être explicitement dans `update_fields` : Django n'applique
+            # `auto_now` que pour les champs listés (sinon la ligne change en base sans que le
+            # pull incrémental mobile ne le détecte jamais, cf. dashboard/grm/serializers.py::
+            # LegacyIssueDoc.save() pour le même correctif appliqué au dashboard web).
+            issue.save(update_fields=list(changed_fields) + ['updated_at'])
             updated_issues += 1
-            grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
 
     result['updated_issues'] = updated_issues
     return result
@@ -186,157 +92,90 @@ def check_issues():
 
 @app.task
 def escalate_issues():
-    grm_db = get_db(COUCHDB_GRM_DATABASE)
-    selector = {
-        "type": "issue",
-        "confirmed": True,
-        "escalate_flag": True,
-        "assignee": {"$ne": ""}
-    }
-
-    issues = grm_db.get_query_result(selector)
-    result = {
-        'errors': [],
-        'issues_updated': [],
-        'scale_is_not_available': [],
-    }
+    """
+    Pour toute issue en cours d'escalade (`escalate_flag=True`), s'assure qu'un `EscalationLevel`
+    a bien été résolu (normalement déjà fait de façon synchrone par
+    `dashboard/grm/views.py::SubmitIssueEscalateFormView`, cf. Phase 6 de la migration — ce filet
+    de sécurité couvre les données plus anciennes ou une erreur transitoire), puis lève le drapeau
+    d'escalade, rouvre l'issue et notifie par email.
+    """
+    result = {'errors': [], 'issues_updated': [], 'scale_is_not_available': []}
     updated_issues = 0
-    for issue in issues:
-        issues_updated = False
-        issue_id = issue['_id']
-        try:
-            issue_doc = grm_db[issue_id]
-        except Exception:
-            error = f'Error trying to get issue document with id {issue_id}'
-            result['errors'].append(error)
-            continue
-        try:
-            category_id = issue_doc['category']['id']
-            doc_category = grm_db.get_query_result({
-                "id": category_id,
-                "type": 'issue_category'
-            })[0][0]
-            department_id = doc_category['assigned_department']['id']
-            administrative_id = issue_doc['administrative_region']['administrative_id']
 
-            #Building the escate list
-            escalation_administrativelevels = issue_doc['escalation_administrativelevels'] if 'escalation_administrativelevels' in issue_doc else list()
-            
-            at_least_one = False
-            for i_escalation in range(len(escalation_administrativelevels)):
-                if not escalation_administrativelevels[i_escalation].get('comment'):
-                    # try:
-                    ald_to_escalation = get_ald_parent_by_type_and_child_id(
-                        escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'],
-                        administrative_id
+    # Reparer administrative_id = None
+    candidates_escalated = Issue.objects.filter(
+        confirmed=True, is_deleted=False, assignee__isnull=False, 
+        escalation_levels__administrative_level__isnull=False, 
+        escalation_levels__name__isnull=False, 
+        escalation_levels__administrative_id__isnull=True
+    ).select_related('category', 'status')
+    for _issue in candidates_escalated:
+        for current_level in _issue.escalation_levels.filter(administrative_level__isnull=False, name__isnull=False, administrative_id__isnull=True):
+            if current_level and not current_level.administrative_id and (
+                current_level.administrative_level and current_level.name
+            ):
+                _adl = mis_objects_call.filter_objects(AdministrativeLevel, name=current_level.name, type=current_level.administrative_level).first()
+                if _adl:
+                    current_level.administrative_id = _adl.id
+                    current_level.save(update_fields=['administrative_id', 'updated_at'])
+                    print(current_level.name)
+                    print(current_level.administrative_id)
+                    print(current_level.administrative_level)
+
+
+    candidates = Issue.objects.filter(
+        confirmed=True, is_deleted=False, assignee__isnull=False, escalate_flag=True
+    ).select_related('category', 'status')
+    open_status = IssueStatus.objects.filter(open_status=True).first()
+    for issue in candidates:
+        issue_id = str(issue.pk)
+        try:
+            current_level = issue.escalation_levels.order_by('-created_at').first()
+            if not current_level:
+                escalate_to = get_adl_to_escalate(issue.administrative_region_id) if issue.administrative_region_id else None
+                if escalate_to:
+                    EscalationLevel.objects.create(
+                        issue=issue,
+                        administrative_level=escalate_to['administrative_level'],
+                        administrative_id=escalate_to['administrative_id'],
+                        name=escalate_to['name'],
+                        due_at=timezone.now(),
                     )
-                    escalate_to_administrative = {
-                        "administrative_id": 0 if not ald_to_escalation and escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country' else str(ald_to_escalation.id),
-                        "name": COUNTRY_NAME if not ald_to_escalation and escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country' else ald_to_escalation.name,
-                        "administrative_level": 'Country' if not ald_to_escalation and escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country' else ald_to_escalation.type
-                    }
-                    # except:
-                    #     ald_to_escalation = None
-                    if ald_to_escalation or escalation_administrativelevels[i_escalation]['escalate_to']['administrative_level'] == 'Country':
-                        at_least_one = True
-                        escalation_administrativelevels[i_escalation] = {
-                            "escalate_to": escalate_to_administrative,
-                            "comment": (escalation_administrativelevels[i_escalation+1]['escalate_to']['name'] if \
-                                        (len(escalation_administrativelevels) > 1 and i_escalation+1 < len(escalation_administrativelevels)) else issue_doc['administrative_region']['name']) \
-                                            + " " + _("to") + " " + escalate_to_administrative['name'] + \
-                                                " (" + escalate_to_administrative['administrative_level'] + ")",
-                            "due_at": escalation_administrativelevels[i_escalation]["due_at"]
-                        }
-
+                    current_level = issue.escalation_levels.order_by('-created_at').first()
             
-            if escalation_administrativelevels and at_least_one:
-                issue_doc['escalate_flag'] = False
-                issue_doc['escalation_administrativelevels'] = escalation_administrativelevels
+            if current_level:
+
+                issue.escalate_flag = False
+                update_fields = ['escalate_flag']
+                if open_status:
+                    issue.status = open_status
+                    update_fields.append('status')
+                # cf. check_issues() ci-dessus : `updated_at` doit être explicitement listé pour
+                # que Django l'auto-rafraîchisse, sinon la ré-ouverture automatique de l'issue
+                # (statut + escalate_flag) ne remonte jamais au pull mobile.
+                issue.save(update_fields=update_fields + ['updated_at'])
+
+                IssueStatusStory.objects.create(
+                    issue=issue, status=open_status, user=None, user_full_name="GRM System",
+                    comment=_("Automatic update"), datetime=timezone.now(),
+                )
+                Comment.objects.create(
+                    issue=issue, author=None, author_name="GRM System",
+                    comment=_("Issue opened"), due_at=timezone.now(),
+                )
+
                 result['issues_updated'].append(issue_id)
-                issues_updated = True
+                updated_issues += 1
+
+                try:
+                    send_notification_on_escalation_by_mail(issue_to_legacy_dict(issue))
+                except Exception:
+                    pass
             else:
                 result['scale_is_not_available'].append(issue_id)
 
-            #Search the last escalate
-            # #
-            # if escalation_administrativelevels:
-            #     administrative_id = escalation_administrativelevels[0]['escalate_to']['administrative_id']
-                
-            # adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-            # #
-
-            #"""Comment to be able to report a issue even if the administrative level does not have a issue manager"""
-            # assignee, escalate_to_administrative = get_assignee_to_escalate(adl_db, department_id, administrative_id)
-            # if assignee:
-            #     issue_doc['assignee'] = assignee
-
-
-            # #
-            # escalate_to_administrative = get_adl_to_escalate(adl_db, administrative_id)
-            # if escalate_to_administrative:
-            #     issue_doc['escalate_flag'] = False
-            #     escalation_administrativelevels.insert(0, {
-            #         "escalate_to": escalate_to_administrative,
-            #         "comment": (escalation_administrativelevels[0]['escalate_to']['name'] if \
-            #                     escalation_administrativelevels else issue_doc['administrative_region']['name']) \
-            #                         + " " + _("to") + " " + escalate_to_administrative['name'] + \
-            #                             " (" + escalate_to_administrative['administrative_level'] + ")",
-            #         "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            #     })
-            #     issue_doc['escalation_administrativelevels'] = escalation_administrativelevels
-
-            #     result['issues_updated'].append(issue_id)
-            #     issues_updated = True
-
-            # else:
-            #     result['scale_is_not_available'].append(issue_id)
-            # #
-
         except Exception:
-            error = f'Error trying to escalate for issue document with id {issue_id}'
-            result['errors'].append(error)
-        if issues_updated:
-            try:
-                doc_status = grm_db.get_query_result({
-                    "open_status": True,
-                    "type": 'issue_status'
-                })[0][0]
-                issue_doc['status'] = {
-                    "name": doc_status['name'],
-                    "id": doc_status['id']
-                }
-
-                issue_status_stories = issue_doc["issue_status_stories"] if issue_doc.get("issue_status_stories") else []
-                issue_status_stories.insert(0, {
-                    'status': issue_doc['status'],
-                    'user': {
-                        'id': 0,
-                        'username': "grm",
-                        'full_name': "GRM System"
-                    },
-                    "comment": _("Automatic update"),
-                    'datetime': datetime_str()
-                })
-
-                comments = issue_doc['comments'] if 'comments' in issue_doc else list()
-                comments.insert(0, {
-                    "name": "GRM System",
-                    "id": 0,
-                    "comment": _("Issue opened").__str__(),
-                    "due_at": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                })
-
-                issue_doc['issue_status_stories'] = issue_status_stories
-                issue_doc['comments'] = comments
-
-            except Exception:
-                pass
-            
-            issue_doc.save()
-            updated_issues += 1
-            grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
-
-            send_notification_on_escalation_by_mail(issue_doc) #Send mail
+            result['errors'].append(f'Error trying to escalate for issue document with id {issue_id}')
 
     result['updated_issues'] = updated_issues
     return result
@@ -352,176 +191,133 @@ def send_sms_message():
         'closed_alert_message': _(
             "Your issue %s(tracking_code)s has been resolved with the following response: %s(resolution)s"),
     }
-    grm_db = get_db(COUCHDB_GRM_DATABASE)
-    selector = {
-        "type": "issue",
-        "confirmed": True,
-        "assignee": {"$ne": ""},
-        "tracking_code": {"$ne": ""},
-        "contact_medium": CHOICE_CONTACT,
-        "contact_information.type": CHOICE_PHONE,
-        "contact_information.contact": {"$ne": ""},
-        "$or": [
-            {
-                "accepted_alert_message": False,
-            },
-            {
-                "accepted_alert_message": {
-                    "$exists": False
-                }
-            },
-            {
-                "rejected_alert_message": False,
-            },
-            {
-                "rejected_alert_message": {
-                    "$exists": False
-                }
-            },
-            {
-                "closed_alert_message": False,
-            },
-            {
-                "closed_alert_message": {
-                    "$exists": False
-                }
-            },
-        ]
-    }
 
-    issues = grm_db.get_query_result(selector)
-    result = {
-        'errors': [],
-        'notified_issues': [],
-    }
+    candidates = Issue.objects.filter(
+        confirmed=True, is_deleted=False,
+        assignee__isnull=False, tracking_code__isnull=False,
+        contact_medium=CHOICE_CONTACT,
+        contact_information__type=CHOICE_PHONE,
+    ).exclude(tracking_code='').filter(
+        Q(accepted_alert_sent=False) | Q(rejected_alert_sent=False) | Q(closed_alert_sent=False)
+    ).select_related('status')
+
+    result = {'errors': [], 'notified_issues': []}
     updated_issues = 0
-    for issue in issues:
-        notified_issues = False
-        issue_id = issue['_id']
-        try:
-            issue_doc = grm_db[issue_id]
-        except Exception:
-            error = f'Error trying to get issue document with id {issue_id}'
-            result['errors'].append(error)
-            continue
-        try:
-            status_id = issue_doc['status']['id']
-            doc_status = grm_db.get_query_result({
-                "id": status_id,
-                "type": 'issue_status'
-            })[0][0]
-        except Exception:
-            error = f'Error trying to get issue_status document with id {status_id}'
-            result['errors'].append(error)
+
+    for issue in candidates:
+        issue_id = str(issue.pk)
+        phone = (issue.contact_information or {}).get('contact')
+        if not phone:
             continue
 
-        tracking_code = issue_doc['tracking_code']
-        phone = issue_doc['contact_information']['contact']
+        notified = False
+        update_fields = []
 
-        no_alert = 'accepted_alert_message' not in issue_doc or not issue_doc['accepted_alert_message']
-        if no_alert and doc_status['open_status']:
-            msg = messages['accepted_alert_message'] % {'tracking_code': tracking_code}
+        if not issue.accepted_alert_sent and issue.status and issue.status.open_status:
+            msg = messages['accepted_alert_message'] % {'tracking_code': issue.tracking_code}
             try:
                 send_sms(phone, msg)
-                notified_issues = True
-                issue_doc['accepted_alert_message'] = True
+                issue.accepted_alert_sent = True
+                update_fields.append('accepted_alert_sent')
+                notified = True
             except TwilioRestException as e:
                 result['errors'].append(e.msg)
 
-        no_alert = 'rejected_alert_message' not in issue_doc or not issue_doc['rejected_alert_message']
-        if no_alert and doc_status['rejected_status']:
+        if not issue.rejected_alert_sent and issue.status and issue.status.rejected_status:
+            # `reject_reason` n'a pas de colonne Postgres dédiée (cf. dashboard/grm/serializers.py
+            # ::_IGNORED_ON_SAVE) — le motif reste consultable dans l'historique des commentaires.
             msg = messages['rejected_alert_message'] % {
-                'tracking_code': tracking_code,
-                'reason': issue_doc['rejected_alert_message'] if 'rejected_alert_message' in issue_doc else ''
+                'tracking_code': issue.tracking_code, 'reason': '',
             }
             try:
                 send_sms(phone, msg)
-                notified_issues = True
-                issue_doc['rejected_alert_message'] = True
+                issue.rejected_alert_sent = True
+                update_fields.append('rejected_alert_sent')
+                notified = True
             except TwilioRestException as e:
                 result['errors'].append(e.msg)
 
-        no_alert = 'closed_alert_message' not in issue_doc or not issue_doc['closed_alert_message']
-        if no_alert and doc_status['final_status']:
+        if not issue.closed_alert_sent and issue.status and issue.status.final_status:
             msg = messages['closed_alert_message'] % {
-                'tracking_code': tracking_code,
-                'resolution': issue_doc['research_result'] if 'research_result' in issue_doc else ''
+                'tracking_code': issue.tracking_code, 'resolution': issue.research_result or '',
             }
             try:
                 send_sms(phone, msg)
-                notified_issues = True
-                issue_doc['closed_alert_message'] = True
+                issue.closed_alert_sent = True
+                update_fields.append('closed_alert_sent')
+                notified = True
             except TwilioRestException as e:
                 result['errors'].append(e.msg)
 
-        if notified_issues:
-            issue_doc.save()
+        if notified:
+            # cf. check_issues() ci-dessus.
+            issue.save(update_fields=update_fields + ['updated_at'])
             updated_issues += 1
-            grm_db = get_db(COUCHDB_GRM_DATABASE)  # refresh db
+            result['notified_issues'].append(issue_id)
 
     result['updated_issues'] = updated_issues
     return result
 
 
-
 @app.task
 def send_a_new_issue_notification():
-    """
-    Check the issues without 'auto_increment_id', 'internal_code' or 'assignee', and try to set a value for these fields
-    """
-    grm_db = get_db(COUCHDB_GRM_DATABASE)
-    selector = {
-        "type": "issue",
-        "confirmed": True,
-        "$or": [
-            {
-                "notification_send": False,
-            },
-            {
-                "notification_send": {
-                    "$exists": False
-                }
-            }
-        ]
-    }
-
-    issues = grm_db.get_query_result(selector)
-    
-    for issue in issues:
+    """Envoie la notification email de création aux issues confirmées pas encore notifiées."""
+    candidates = Issue.objects.filter(
+        confirmed=True, is_deleted=False, notification_send=False,
+    ).select_related('status', 'category', 'age_group', 'issue_type').prefetch_related(
+        'comments', 'reasons', 'escalation_reasons', 'escalation_levels', 'issue_status_stories', 'attachments',
+    )
+    for issue in candidates:
         try:
-            issue_doc = grm_db[issue['_id']]
-            send_notification_by_mail(issue)
-            issue_doc['notification_send'] = True
-            issue_doc.save()
+            send_notification_by_mail(issue_to_legacy_dict(issue))
+            issue.notification_send = True
+            # cf. check_issues() ci-dessus.
+            issue.save(update_fields=['notification_send', 'updated_at'])
         except Exception:
             continue
-            
 
 
-
-
-# @app.on_after_finalize.connect
-# def setup_periodic_tasks(sender, **kwargs):
-#     # Calls check_issues() every 5 minutes.
-#     sender.add_periodic_task(300, check_issues.s(), name='check issues every 5 minutes')
-
-#     # Calls escalate_issues() every 5 minutes.
-#     sender.add_periodic_task(300, escalate_issues.s(), name='escalate issues every 5 minutes')
-
-#     # Calls send_sms_message() every 5 minutes.
-#     sender.add_periodic_task(300, send_sms_message.s(), name='send sms every 5 minutes')
-    
-#     # Calls send_a_new_issue_notification() every 5 minutes.
-#     sender.add_periodic_task(300, send_a_new_issue_notification.s(), name='send sms every 5 minutes')
-
-
-# your_app/tasks.py
-# from celery import shared_task
-
-# @shared_task
 @app.task
-def your_task_name():
-    # Your task logic here
-    print("hello hello")
-    
-    return "Hello hello 111"
+def send_issue_status_notifications():
+    """Notifie par email chaque étape du traitement d'une issue : ouverture/acceptation,
+    investigation/décision, résolution. Se base sur `IssueStatusStory.email_notified=False`
+    plutôt que sur un drapeau par `Issue` (comme `accepted_alert_sent`/`closed_alert_sent` pour le
+    SMS) car une même issue peut accumuler plusieurs entrées d'investigation
+    (`IssueActions/containers/Content.js::recordStep()`), chacune devant déclencher son propre
+    email. Le type d'email est déduit du statut de l'entrée : `open_status` -> ouverture,
+    `final_status` -> résolution, tout le reste (investigation, mais aussi rejet/non-résolution
+    qui n'ont pas de canal dédié) -> investigation/décision."""
+    result = {'errors': [], 'notified': []}
+
+    candidates = IssueStatusStory.objects.filter(
+        email_notified=False, issue__is_deleted=False, issue__confirmed=True,
+    ).select_related(
+        'status', 'issue', 'issue__status', 'issue__category', 'issue__age_group', 'issue__issue_type',
+    ).prefetch_related(
+        'issue__comments', 'issue__reasons', 'issue__escalation_reasons', 'issue__escalation_levels',
+        'issue__issue_status_stories', 'issue__attachments',
+    ).order_by('created_at')
+
+    for story in candidates:
+        story_id = str(story.pk)
+        try:
+            if story.status.open_status and not story.issue.issue_status_stories.filter(email_notified=True).exists():
+                kind = 'opened'
+            elif story.status.final_status:
+                kind = 'resolved'
+            elif story.status.rejected_status:
+                kind = 'rejected'
+            else:
+                kind = 'investigation'
+
+            send_issue_status_update_notification_by_mail(
+                issue_to_legacy_dict(story.issue), kind, story_comment=story.comment,
+            )
+            story.email_notified = True
+            # cf. check_issues() ci-dessus : même correctif pour `IssueStatusStory`.
+            story.save(update_fields=['email_notified', 'updated_at'])
+            result['notified'].append(story_id)
+        except Exception:
+            result['errors'].append(f'Error trying to send status notification for issue_status_story with id {story_id}')
+
+    return result

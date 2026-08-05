@@ -1,10 +1,10 @@
 import os
 import zlib
 from django.conf import settings
+from django.utils import timezone
 
 import shortuuid as uuid
 
-from client import get_db
 from authentication.functions import send_code_by_mail, update_user_adl_on_cdd_app
 from administrativelevels.functions import get_cascade_administrative_levels_by_administrative_level_id
 from administrativelevels.serializers import AdministrativeLevelSerializer
@@ -57,110 +57,81 @@ def generate_administrative_regions_objects(ids, _id=None):
 
 
 def create_or_update_adl_user_adl(user, updated=False):
-    eadl_db = get_db()
-    doc_user_update = {}
-    if updated:
-        try:
-            doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": user.id})[0][0]["_id"]]
-        except Exception as exc:
-            updated = False
-    else:
-        send_code_by_mail(user, get_validation_code(user.email)) # Send user account code on their Email
-    
-    doc_user = {
-        "type": "adl",
-        "photo": doc_user_update['photo'] if doc_user_update else "https://via.placeholder.com/150",
-        "location": {
-            "lat": 0,
-            "long": 0
-        },
-        "representative": {
-            "id": user.id,
-            "name": user.get_full_name(),
-            "email": user.email,
-            "phone": user.phone_number,
-            "photo": doc_user_update['representative']['photo'] if doc_user_update else "https://via.placeholder.com/150",
-            "is_active": user.is_active,
-            "last_active": doc_user_update['representative']['last_active'] if doc_user_update else (user.last_login.strftime('%Y-%m-%dT%H:%M:%S.%fZ') if user and user.last_login else None),
-            "password": user.password,
-            "groups": [g.name for g in user.groups.all()]
-        },
-        "phases": [],
-        "department": 1,
-        "unique_region": 0,
-        "village_secretary": 1
-    }
+    """Tient à jour l'enregistrement `issue.Adl` Postgres rattaché à ce représentant (remplace
+    l'ancien miroir écrit dans le document CouchDB `eadls` à chaque sauvegarde de `User` — l'Adl
+    Postgres, alimenté par `migrate_eadls` et le dashboard, est désormais la source de vérité,
+    donc aucune valeur n'est ré-écrasée si l'Adl existe déjà). `updated=False` signale un `User`
+    tout juste créé : on envoie le code de validation par email, comme avant."""
+    from issue.models import Adl
 
     if not updated:
-        doc_user['name'] = None
-        doc_user['location_name'] = None
-        doc_user['administrative_region'] = None
-        doc_user['administrative_regions'] = []
+        send_code_by_mail(user, get_validation_code(user.email))  # Send user account code on their Email
 
-    # if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id:
-    #     doc_user['name'] = user.governmentworker.administrative_level().type
-    #     doc_user['location_name'] = user.governmentworker.administrative_level().name
-    #     doc_user['administrative_region'] = user.governmentworker.administrative_id
-    #     doc_user['administrative_regions'] = user.governmentworker.administrative_ids
+    Adl.objects.get_or_create(
+        representative=user,
+        defaults={
+            'representative_name': user.get_full_name(),
+        },
+    )
 
-    if updated:
-        for k, v in doc_user.items():
-            doc_user_update[k] = v
-        doc_user_update.save()
-    else:
-        eadl_db.create_document(doc_user)
 
 def delete_adl_user_adl(user):
-    eadl_db = get_db()
-    eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": user.id})[0][0]["_id"]].delete()
+    from issue.models import Adl
+
+    # `updated_at` doit être explicitement forcé : `QuerySet.update()` n'applique jamais `auto_now`
+    # (contrairement à `Model.save()`) — sans ça, la suppression de l'Adl reste invisible au pull
+    # (référentiel `adls`, lecture seule côté mobile, cf. sync/views.py::SYNC_READONLY_MODELS).
+    Adl.objects.filter(representative=user).update(is_deleted=True, updated_at=timezone.now())
 
 
 def set_user_government_worker_adl(government_worker):
-    eadl_db = get_db()
-    doc_user_update = {}
+    """Reporte le périmètre administratif du `GovernmentWorker` sur l'Adl Postgres correspondant,
+    puis notifie l'application CDD externe (intégration indépendante de CouchDB, inchangée)."""
+    from issue.models import Adl
+
+    adl = Adl.objects.filter(representative=government_worker.user).first()
+    if adl is None:
+        return
+
     try:
-        doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
-    
-        _administrative_regions_objects = generate_administrative_regions_objects(government_worker.administrative_ids, government_worker.administrative_id)
-        _additional_administrative_regions_objects = generate_administrative_regions_objects(government_worker.additional_administrative_ids)
+        _, village_ids = generate_administrative_regions_objects(
+            government_worker.administrative_ids, government_worker.administrative_id
+        )
+        _, additional_village_ids = generate_administrative_regions_objects(
+            government_worker.additional_administrative_ids
+        )
 
-        doc_user = {
-            "name": government_worker.administrative_level().type,
-            "location_name": government_worker.administrative_level().name,
-            "administrative_region": government_worker.administrative_id,
-            "administrative_regions": government_worker.administrative_ids,
-            "administrative_regions_objects": _administrative_regions_objects[0],
-            "additional_administrative_regions": government_worker.additional_administrative_ids,
-            "additional_administrative_regions_objects": _additional_administrative_regions_objects[0]
-        }
-
-        for k, v in doc_user.items():
-            doc_user_update[k] = v
-        doc_user_update.save()
+        adl.name = government_worker.administrative_level().type if government_worker.administrative_id else adl.name
+        adl.location_name = government_worker.administrative_level().name if government_worker.administrative_id else adl.location_name
+        # `GovernmentWorker.administrative_ids`/`additional_administrative_ids` sont nullables
+        # (JSONField null=True), contrairement à `Adl.administrative_region_ids` (default=list,
+        # non nullable) : normaliser None -> [] pour éviter une IntegrityError silencieuse au save.
+        adl.administrative_region_ids = government_worker.administrative_ids or []
+        adl.smallest_administrative_level_ids = [str(v_id) for v_id in village_ids]
+        adl.additional_administrative_region_ids = government_worker.additional_administrative_ids or []
+        adl.additional_smallest_administrative_level_ids = [str(v_id) for v_id in additional_village_ids]
+        # `updated_at` explicitement listé : cf. delete_adl_user_adl() ci-dessus pour la raison
+        # (sinon la réaffectation de périmètre administratif du facilitateur ne remonte jamais au
+        # pull mobile).
+        adl.save(update_fields=[
+            'name', 'location_name', 'administrative_region_ids', 'additional_administrative_region_ids',
+            'smallest_administrative_level_ids', 'additional_smallest_administrative_level_ids', 'updated_at',
+        ])
 
         update_user_adl_on_cdd_app(
-            doc_user_update['representative']['email'], settings.GRM_SECRET_KEY_GENRATE,
-            _administrative_regions_objects[1], _additional_administrative_regions_objects[1]
+            government_worker.user.email, settings.GRM_SECRET_KEY_GENRATE, village_ids, additional_village_ids
         )
     except Exception as exc:
         print(government_worker.user.id)
         pass
-    
-    
+
 
 def delete_user_government_worker_adl(government_worker):
-    eadl_db = get_db()
-    doc_user_update = {}
-    try:
-        doc_user_update = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.id": government_worker.user.id})[0][0]["_id"]]
-        
-        doc_user = {
-            "administrative_region": None
-        }
+    from issue.models import Adl
 
-        for k, v in doc_user.items():
-            doc_user_update[k] = v
-        doc_user_update.save()
-    except Exception as exc:
-        print(government_worker.user.id)
-        pass
+    # cf. delete_adl_user_adl() ci-dessus pour la raison du `updated_at` explicite.
+    Adl.objects.filter(representative=government_worker.user).update(
+        administrative_region_ids=[], additional_administrative_region_ids=[],
+        smallest_administrative_level_ids=[], additional_smallest_administrative_level_ids=[],
+        updated_at=timezone.now(),
+    )

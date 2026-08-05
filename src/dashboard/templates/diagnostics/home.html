@@ -25,6 +25,11 @@
     {% translate 'Status' as status %}
     {% comment %} {% translate 'Type' as type %} {% endcomment %}
     {% translate 'Category' as category %}
+    {% translate 'Region' as region_label %}
+    {% translate 'Prefecture' as prefecture_label %}
+    {% translate 'Commune' as commune_label %}
+    {% translate 'Canton' as canton_label %}
+    {% translate 'Village' as village_label %}
 
     <div class="row">
         <div class="col-12">
@@ -50,6 +55,7 @@
                         </div>
                         <div class="col-4 regions-filter border-left">
                             {% bootstrap_field form.administrative_region layout='horizontal' %}
+                            {% bootstrap_field form.administrative_level_type layout='horizontal' %}
                         </div>
                     </div>
                     <p class="pull-left p-0">
@@ -82,10 +88,7 @@
                             <div class="card-body table-responsive overflow-y-auto" style="max-height: 650px;">
                                 <table id="table-region-stats" class="table">
                                     <thead class="primary">
-                                    <tr>
-                                        <th id="administrative_level_label"></th>
-                                        <th>{{ number }}</th>
-                                        <th>{{ percentage }}</th>
+                                    <tr id="region-stats-head">
                                     </tr>
                                     </thead>
                                     <tbody id="region-stats">
@@ -264,6 +267,9 @@
             placeholder: "{% translate 'Location' %}",
             allowClear: true
         });
+        $("#id_administrative_level_type").select2({
+            allowClear: false
+        });
 
         $('b[role="presentation"]').hide();
         $('.select2-selection__arrow').append(
@@ -272,21 +278,34 @@
     </script>
 {% endblock select2 %}
 
-<!-- DataTables export files -->
-{% include 'layouts/datatable-js.html' %}
-
 {% block javascript %}
     {{ block.super }}
+    {% get_current_language as lang %}
+    <!-- DataTables export files -->
+    {% include 'layouts/datatable-js.html' %}
     {% comment %} <script src="{% static 'plugins/mapbox-gl-js/v2.6.1/mapbox-gl.js' %}"></script> {% endcomment %}
     <script src="{% static 'AdminLTE/plugins/chart.js/Chart.js' %}"></script>
     <script>
-        let administrative_level_label = $("#administrative_level_label");
+        let number_label = "{% translate 'Number' %}";
+        let percentage_label = "{% translate 'Percentage' %}";
+        // Ordre attendu du plus haut niveau (racine) au plus fin — détermine à la fois les
+        // options du filtre `administrative_level_type` et les colonnes affichées dans
+        // #region-stats-container (toutes les colonnes du niveau sélectionné et au-dessus).
+        let administrative_level_types = ['Region', 'Prefecture', 'Commune', 'Canton', 'Village'];
+        let administrative_level_labels = {
+            'Region': "{% translate 'Region' %}",
+            'Prefecture': "{% translate 'Prefecture' %}",
+            'Commune': "{% translate 'Commune' %}",
+            'Canton': "{% translate 'Canton' %}",
+            'Village': "{% translate 'Village' %}",
+        };
         let statistics_spin = $('#statistics-spin');
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
         let category = $('#id_category');
         let wave = $('#id_wave');
         {% comment %} let type = $('#id_type'); {% endcomment %}
+        let administrative_level_type = $('#id_administrative_level_type');
         let current_region_id;
         let markers = [];
         let statusPieChartCanvas = $('#status_pie_chart').get(0).getContext('2d');
@@ -331,9 +350,6 @@
         colors_keys = Object.keys(colors_array);
 
         let colors_length = colors.length;
-
-
-        administrative_level_label.html($("label[for='id_administrative_region']").html());
 
         {% comment %} mapboxgl.accessToken = '{{ access_token }}';
         if (!mapboxgl.supported()) {
@@ -442,6 +458,81 @@
             chart && chart.update();
         }
 
+        // #region-stats-container a des colonnes dynamiques (Région, ..., jusqu'au niveau
+        // sélectionné) plutôt que le format fixe nom/nombre/pourcentage de fillStats() : chaque
+        // ligne détaille toute la chaîne (Région/Préfecture/Commune/Canton/Village selon le
+        // niveau choisi), déduite de `value.ancestors` (cf. dashboard/diagnostics/views.py::
+        // build_ancestor_chain).
+        function fillRegionStats(stats, selectedType) {
+            let typeIndex = administrative_level_types.indexOf(selectedType);
+            if (typeIndex === -1) typeIndex = 0;
+            let columnTypes = administrative_level_types.slice(0, typeIndex + 1);
+
+            let headHtml = '';
+            columnTypes.forEach(function (t) {
+                headHtml += '<th>' + administrative_level_labels[t] + '</th>';
+            });
+            headHtml += '<th>' + number_label + '</th><th>' + percentage_label + '</th>';
+            $('#region-stats-head').html(headHtml);
+
+            let entries = Object.entries(stats).sort(([, a], [, b]) => b.count - a.count);
+
+            // Tbody laissé vide plutôt qu'une ligne <td colspan="N"> manuelle : une fois la table
+            // gérée par DataTables (tri/export), un nombre de <td> différent du nombre de <th>
+            // fait planter son indexation interne ("Cannot set properties of undefined (setting
+            // '_DT_CellIndex')"). DataTables affiche déjà son propre message "aucune donnée"
+            // (localisé via `language.url`, cf. initStatsDataTable) quand le tbody est vide.
+            if (entries.length === 0) {
+                $('#region-stats').html('');
+                return;
+            }
+
+            let html = '';
+            $.each(entries, function (index, item) {
+                const value = item[1];
+                const ancestors = value.ancestors || [];
+                html += '<tr>';
+                columnTypes.forEach(function (t) {
+                    const match = ancestors.find(function (a) { return a.type === t; });
+                    html += '<td align="left">' + (match ? match.name : '') + '</td>';
+                });
+                html += '<td>' + value.issues + '</td>';
+                html += '<td>' + value.percentage + '%</td>';
+                html += '</tr>';
+            });
+            $('#region-stats').html(html);
+        }
+
+        // À appeler AVANT de remplacer le thead/tbody d'une table déjà gérée par DataTables (ex.
+        // via fillRegionStats()/fillStats()) : une fois initialisé, DataTables garde des
+        // références internes vers les noeuds DOM existants (index de cellules, etc.). Remplacer
+        // ce DOM sous ses pieds sans l'avoir détruit avant corrompt ces références — au mieux la
+        // table cesse de se rafraîchir, au pire ça lève une exception qui interrompt tout le reste
+        // du callback (d'où le double symptôme : plus aucune table ne se met à jour, et les
+        // en-têtes dynamiques de #region-stats-container, construits juste avant, n'apparaissent
+        // pas puisque l'exception survient pendant la ré-initialisation).
+        function destroyStatsDataTable(tableId) {
+            if ($.fn.DataTable.isDataTable('#' + tableId)) {
+                $('#' + tableId).DataTable().destroy();
+            }
+        }
+
+        // (Re)crée le DataTable (tri, recherche, export Excel/PDF/copie) une fois le contenu de la
+        // table à jour — à appeler seulement après destroyStatsDataTable() + le remplissage du
+        // thead/tbody.
+        function initStatsDataTable(tableId) {
+            $('#' + tableId).DataTable({
+                language: {
+                    url: '{% static "AdminLTE/plugins/datatables/locale/lang.json" %}'.replace('lang', '{{ lang }}')
+                },
+                dom: 'Blfrtip',
+                buttons: ['copy', 'excel', 'pdf', 'colvis'],
+                lengthMenu: [10, 20, 30, 40, 50, 100],
+                pageLength: 10,
+                order: [],
+            });
+        }
+
         function loadStatistics() {
             statistics_spin.show();
 
@@ -458,8 +549,18 @@
                     wave: wave.val(),
                     {% comment %} type: type.val(), {% endcomment %}
                     region: current_region_id,
+                    administrative_level_type: administrative_level_type.val(),
                 },
                 success: function (data) {
+
+                    // Détruire les instances DataTable existantes AVANT de toucher au DOM des
+                    // tables (cf. destroyStatsDataTable) — sinon dès le 2e rafraîchissement (tout
+                    // changement de filtre), remplacer le contenu sous une DataTable encore active
+                    // la corrompt et interrompt le reste de ce callback.
+                    destroyStatsDataTable('table-region-stats');
+                    destroyStatsDataTable('table-region-stats-wave');
+                    destroyStatsDataTable('table-status-stats');
+                    destroyStatsDataTable('table-category-stats');
 
                     $('#id_total_issues').text(data.total_issues);
 
@@ -509,10 +610,9 @@
                         options: pieOptions
                     });
 
-                    if (Object.keys(region_stats).length > 0) {
-                        let level = region_stats[Object.keys(region_stats)[0]].level;
-                        administrative_level_label.html(level);
+                    let selected_level_type = administrative_level_type.val();
 
+                    if (Object.keys(region_stats).length > 0) {
                         {% comment %} $.each(region_stats, function (administrative_id, region) {
                             // create DOM element for the marker
                             const el = document.createElement('div');
@@ -529,10 +629,12 @@
 
                         }); {% endcomment %}
 
-                        fillStats(region_stats, $('#region-stats'));
+                        fillRegionStats(region_stats, selected_level_type);
                         fillStats(status_stats, $('#status-stats'), statusChart);
                         {% comment %} fillStats(type_stats, $('#type-stats'), typeChart); {% endcomment %}
                         fillStats(category_stats, $('#category-stats'), categoryChart);
+                        initStatsDataTable('table-status-stats');
+                        initStatsDataTable('table-category-stats');
 
                         if(Object.keys(region_stats_wave).length > 0){
                             // col-md-6 to col-md-4
@@ -544,24 +646,28 @@
                         }else{
                             // col-md-4 to col-md-6
                             $('#region-stats-container').removeClass('col-md-4').addClass('col-md-6');
-                            
+
                             $('#region-stats-wave-container').hide();
+                            $('#region-stats-wave').html('');
                         }
+                        initStatsDataTable('table-region-stats-wave');
 
                     } else {
                         // col-md-4 to col-md-6
                         $('#region-stats-container').removeClass('col-md-4').addClass('col-md-6');
 
-                        let no_issues_msg = "{% translate "No issues found" %}";
-                        let no_issues_msg_html = '<td class="text-center" colspan="3">' + no_issues_msg + '</td>';
-                        $('#region-stats').html(no_issues_msg_html);
-                        $('#status-stats').html(no_issues_msg_html);
-                        {% comment %} $('#type-stats').html(no_issues_msg_html); {% endcomment %}
-                        $('#category-stats').html(no_issues_msg_html);
+                        fillRegionStats({}, selected_level_type);
+                        $('#status-stats').html('');
+                        {% comment %} $('#type-stats').html(''); {% endcomment %}
+                        $('#category-stats').html('');
+                        initStatsDataTable('table-status-stats');
+                        initStatsDataTable('table-category-stats');
 
-                        $('#region-stats-wave').html(no_issues_msg_html);
+                        $('#region-stats-wave').html('');
                         $('#region-stats-wave-container').hide();
+                        initStatsDataTable('table-region-stats-wave');
                     }
+                    initStatsDataTable('table-region-stats');
                     statistics_spin.hide();
 
                     {% comment %} $(document).ready(function () {
@@ -632,11 +738,19 @@
         $('.issues-filter select').on('change', function () {
             loadStatistics();
         });
+        administrative_level_type.on('change', function () {
+            loadStatistics();
+        });
 
         $("#clear_all_filters").on("click", function () {
             $('.issues-filter input').val('');
             $('.issues-filter select').val(null).trigger('change.select2');
             $('.regions-filter select').val(null).trigger('change.select2');
+            // Le sélecteur de niveau administratif n'a pas d'option vide : contrairement aux
+            // autres champs de `.regions-filter` (dont les sélecteurs de cascade ajoutés
+            // dynamiquement), "effacer" le remet sur sa valeur par défaut ('Region') plutôt que
+            // de le vider — appliqué après le reset générique ci-dessus pour le remplacer.
+            administrative_level_type.val('Region').trigger('change.select2');
             current_region_id = null;
             loadStatistics();
             loadNextLevelRegions($("#id_administrative_region"), '', '');

@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n custom_tags %}
 
 {% if attachments %}
     <div class="form-group row">
@@ -15,26 +15,40 @@
         <div class="col-md-9">
             {% for attachment in attachments %}{% if attachment.name %}
                 <div class="row border-bottom">
-                    <div class="col-9">
+                    <div class="col-10">
                         <div class="align-self-center mt-2">
-                            <a 
+                            <a
                                 {% if attachment.uploaded %}
-                                    {% if "s3.amazonaws" in attachment.url %}
-                                    href="{{ attachment.url }}" 
-                                    {% else %}
-                                    href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm" 
-                                    {% endif %}
-                                target="_blank"
+                                href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}"
+                                class="attachment-link" data-filename="{{ attachment.name }}"
+                                data-download-url="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?download=1"
                                 {% else %}
                                 href="#!"
-                                {% endif %}
+                                {% endif %} 
                                >
                                 <i class="fas fa-paperclip mr-2"></i>
                                 {{ attachment.name }} {% if not attachment.uploaded %}({% translate "Unsynchronized" %}){% endif %}
                             </a>
                         </div>
+
+                        
+                        
+
                     </div>
-                    <div class="col-3">
+                    {% if "encrypt_" in attachment.name %}
+                    <div class="col-1">
+                        <a class="btn pull-right show-data attachment-link" 
+                            href="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                            data-download-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                            data-filename="{{ attachment.name }}"
+                            id="show_data_attachment_{{ doc.auto_increment_id }}_{{ attachment.id }}">
+                                <i class="far fa-eye link show-data"></i>
+                            </a>
+                    {% endif %}
+                    </div>
+
+                    <div class="col-1">
                         <a class="btn pull-right delete-attachment"
                            data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id attachment.id %}">
                             <i class="far fa-trash-alt text-danger"></i>

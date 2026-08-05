@@ -8,8 +8,6 @@ from django.contrib.auth.hashers import make_password
 import re
 
 from authentication.models import User
-from authentication import ADL, MAJOR
-from client import get_db
 from authentication.utils import get_validation_code
 from grm.form_utils import password_regex, _password_regex
 
@@ -62,33 +60,21 @@ class RegisterADLForm(forms.Form):
         password = self.cleaned_data.get("password")
         user = User.objects.get(email=email) if User.objects.filter(email=email).exists() else None
 
-
-        selector = {
-            "$and": [
-                {
-                    "representative.email": email
-                },
-                {
-                    "representative.is_active": {"$eq": True}
-                },
-                {
-                    "type": {
-                        "$in": [ADL, MAJOR]
-                    }
-                }
-            ]
-        }
-        eadl_db = get_db()
-        docs = eadl_db.get_query_result(selector)
-        try:
-            doc = eadl_db[docs[0][0]['_id']]
-        except Exception:
+        # Remplace l'ancienne requête Mango CouchDB (docs `type: adl|major`, `representative.
+        # is_active`) : `User.is_active` est directement la même donnée (c'est ce que
+        # `dashboard/adls/views.py::ToggleAdlStatusView` bascule), inutile de repasser par un
+        # document `Adl` intermédiaire. La restriction aux seuls types `adl`/`major` est retirée
+        # (simplification documentée, migration dashboard web) : tout compte Postgres actif sans
+        # mot de passe déjà défini peut s'enregistrer via ce flux — la propriété de sécurité qui
+        # compte (pas de réinitialisation de mot de passe déguisée en inscription) est préservée
+        # ci-dessous.
+        if not user or not user.is_active:
             raise ValidationError(
                     self.error_messages.get('credentials'),
                     code="credentials",
                 )
         # prevents the sign up is used to reset password
-        if 'password' in doc['representative'] and doc['representative']['password']:
+        if user.password:
             raise ValidationError(
                     self.error_messages.get('duplicated_email'),
                     code="duplicated_email",
@@ -144,42 +130,23 @@ class ConfirmCodeForm(forms.Form):
 
 
     def clean(self):
-        
-        
 
-        selector = {
-            "$and": [
-                {
-                    "representative.email": self.email
-                },
-                {
-                    "representative.is_active": {"$eq": True}
-                },
-                {
-                    "type": {
-                        "$in": [ADL, MAJOR]
-                    }
-                }
-            ]
-        }
-        eadl_db = get_db()
-        docs = eadl_db.get_query_result(selector)
-
-        try:
-            doc = eadl_db[docs[0][0]['_id']]
-        except Exception:
+        # cf. RegisterADLForm.clean : même simplification (accès direct à `User`, sans document
+        # `Adl` intermédiaire ni restriction de type `adl`/`major`).
+        user = User.objects.filter(email__iexact=self.email, is_active=True).first()
+        if not user:
             raise ValidationError(
                     self.default_error_messages.get('credentials'),
                     code="credentials",
                 )
-        
+
         # prevents the sign up is used to reset password
-        if 'password' in doc['representative'] and doc['representative']['password']:
+        if user.password:
             raise ValidationError(
                     self.default_error_messages.get('duplicated_email'),
                     code="duplicated_email",
                 )
-        
+
         errors = dict()
         try:
             # validate the password and catch the exception
@@ -198,17 +165,16 @@ class ConfirmCodeForm(forms.Form):
                     )
 
         validation_code = str(self.cleaned_data.get("code"))
-        
-        if validation_code != get_validation_code(doc['representative']['email']):
+
+        if validation_code != get_validation_code(user.email):
             raise ValidationError(
                         self.default_error_messages.get('wrong_validation_code'),
                         code="wrong_validation_code",
                     )
-        doc['representative']['password'] = make_password(self.password)
-        doc.save()
 
-        user = User.objects.get(email=self.email)
-        user.password = doc['representative']['password']
-        user.save()
+        # Écriture unique Postgres (l'ancien code écrivait aussi sur le document CouchDB `adl`,
+        # désormais retiré — cf. RegisterADLForm.clean).
+        user.password = make_password(self.password)
+        user.save(update_fields=['password'])
 
         return self.cleaned_data

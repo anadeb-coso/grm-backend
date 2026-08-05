@@ -188,12 +188,25 @@
                                             {% if attachment.name %}
                                                 <div class="row mb-2">
                                                     <div class="col-12">
-                                                        <a href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?db=grm"
-                                                           target="_blank">
+                                                        <a href="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}"
+                                                           class="attachment-link" data-filename="{{ attachment.name }}"
+                                                           data-download-url="{% url 'attachments:get-attachment' attachment.bd_id attachment.name %}?download=1">
                                                             <i class="fas fa-paperclip mr-2"></i>
                                                             {{ attachment.name }}
                                                         </a>
                                                     </div>
+                                                    {% comment %} {% if "encrypt_" in attachment.name %}
+                                                    <div class="col-1">
+                                                        <a class="btn pull-right show-data attachment-link" 
+                                                            href="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                                                            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                                                            data-download-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id attachment.id %}" 
+                                                            data-filename="{{ attachment.name }}"
+                                                            id="show_data_attachment_{{ doc.auto_increment_id }}_{{ attachment.id }}">
+                                                                <i class="far fa-eye link show-data"></i>
+                                                            </a>
+                                                    {% endif %} {% endcomment %}
+
                                                 </div>
                                             {% else %}[{% translate "We can't see the file name" %}]{% endif %}
                                             {% endfor %}
@@ -244,3 +257,15 @@
         </div>
     </div>
 {% endblock %}
+
+{% block modals %}
+    {% include 'common/attachment_preview_modal.html' %}
+{% endblock modals %}
+
+
+{% block javascript %}
+    {{ block.super }}
+    
+    <script src="{% static 'js/attachment_preview_modal.js' %}"></script>
+
+{% endblock javascript %}

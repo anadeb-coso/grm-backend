@@ -8,6 +8,7 @@ class FileForm(forms.Form):
     file = forms.FileField(label='', help_text=_('Allowed file size less than or equal to 2 MB'))
     issue_password_file = forms.CharField(label='', max_length=7, min_length=7, required=False,
                                              widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+    category_id = forms.CharField(label='', max_length=100, required=False, widget=forms.HiddenInput())
 
     default_error_messages = {
         'file_size': _('Select a file size less than or equal to %(max_size)s. The selected file size is %(size)s.')}

@@ -9,7 +9,7 @@ function changeRegionTrigger(url, placeholder) {
 
 function loadNextLevelRegions(current_level, url, placeholder) {
     let current_level_val = current_level.val();
-    console.log('current_level_val para cargar proximo selector: ' + current_level_val);
+    // console.log('current_level_val para cargar proximo selector: ' + current_level_val);
     if (current_level_val !== '') {
         let select_region = $(".region");
         select_region.attr('disabled', true);

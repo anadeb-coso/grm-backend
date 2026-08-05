@@ -13,10 +13,7 @@
             </small>
         </div>
     </div> {% endcomment %}
-    <div class="row" 
-        {% if user.id != doc.assignee.id %}
-            style="border: 2px solid black; padding: 11px; border-style: dashed;" 
-        {% endif %}>
+    <div class="row">
         <div class="col-12">
             {% for reason in reasons %}
             
@@ -25,7 +22,7 @@
                 <div class="row">
                     <div class="col-6 border-bottom">
                         <div class="d-inline-block padding-6-0">
-                            <a href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm"
+                            <a href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}"
                             target="_blank">
                                 <i class="fas fa-paperclip mr-2"></i>
                                 {{ reason.name }}
@@ -63,14 +60,11 @@
                         <div class="col-10 mb-2 text-regular-family mb-3">
                             {% if reason.type == "file" %}
                                 {% if reason.name %}
-                                        <a 
+                                        <a
                                         {% if reason.uploaded %}
-                                            {% if "s3.amazonaws" in reason.url %}
-                                            href="{{ reason.url }}" 
-                                            {% else %}
-                                            href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?db=grm" 
-                                            {% endif %}
-                                        target="_blank"
+                                            href="{% url 'attachments:get-attachment' reason.bd_id reason.name %}"
+                                        class="attachment-link" data-filename="{{ reason.name }}"
+                                        data-download-url="{% url 'attachments:get-attachment' reason.bd_id reason.name %}?download=1"
                                         {% else %}
                                         href="#!"
                                         {% endif %}
@@ -86,7 +80,8 @@
                                     {% endif %}
                                     {% if "encrypt_" in reason.name %}
                                     <a class="btn pull-right show-data {% if not permission_to_edit %}disabled{% endif %}"
-                                    data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id reason.id %}" 
+                                    data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id reason.id %}"
+                                    data-filename="{{ reason.name }}"
                                     id="show_data_attachment_{{ doc.auto_increment_id }}_{{ reason.id }}">
                                         <i class="far fa-eye link show-data"></i>
                                     </a>

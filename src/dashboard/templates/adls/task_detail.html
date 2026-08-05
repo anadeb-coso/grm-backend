@@ -36,8 +36,8 @@
 
             <div class="text-bold-family mt-3 mb-2">{% translate "Attachments" %}</div>
             {% for attachment in task.attachments %}
-                <a class="link-attachment mt-2" href="{{ attachment.url }}"
-                   target="_blank">
+                <a class="link-attachment attachment-link mt-2" href="{{ attachment.url }}"
+                   data-filename="{{ attachment.name }}">
                     <i class="fas fa-paperclip mr-2"></i>
                     {{ attachment.name }}
                 </a>

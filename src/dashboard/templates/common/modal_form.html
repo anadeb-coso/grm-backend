@@ -92,6 +92,10 @@
             }
         });
 
+        {% if doc.category and doc.category.id %}
+             $('#id_category_id').val('{{ doc.category.id }}');
+        {% endif %}
+
 
         $('#id_file_pdf').attr(
             "accept", 

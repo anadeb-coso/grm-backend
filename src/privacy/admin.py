@@ -3,13 +3,10 @@ from django.contrib import admin
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 
 from privacy.models import IssueCategoryPassword
 from grm.utils import cryptography_fernet_encrypt
-from client import get_db
-
-COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
+from issue.models import IssueCategory
 
 
 # class IssueCategoryPasswordForm(forms.ModelForm):
@@ -69,14 +66,13 @@ class CustomIssueCategoryPasswordFormChangeForm(forms.ModelForm):
     
     def clean_issue_category_id(self):
         issue_category_id = self.cleaned_data['issue_category_id']
-        
-        try:
-            self._issue_category_key = get_db(COUCHDB_GRM_DATABASE).get_query_result({
-                "id": issue_category_id,
-                "type": 'issue_category'
-            })[0][0]['_id']
-        except Exception:
-            self._issue_category_key = None
+
+        # Le "key" utilisé comme matériel de clé Fernet (cf. save() ci-dessous) était l'`_id`
+        # CouchDB du document `issue_category` — un simple identifiant opaque et stable, jamais
+        # réinterprété ailleurs. Son équivalent Postgres est l'UUID `IssueCategory.pk` (résolu ici
+        # via `legacy_id`, l'ancien id numérique CouchDB toujours utilisé côté formulaire).
+        category = IssueCategory.objects.filter(legacy_id=issue_category_id).first()
+        self._issue_category_key = str(category.pk) if category else None
 
         if not self._issue_category_key:
             raise ValidationError(

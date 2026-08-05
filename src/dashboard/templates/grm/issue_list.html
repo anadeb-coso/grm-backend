@@ -146,14 +146,14 @@
                             <th>{% translate 'Canton' %}</th>
                             <th>{% translate 'CVD' %}</th>
                             <th>{% translate 'Villages' %}</th>
-                            {% if wave_administrative_levels_with_adl_profile %}
+                            {% comment %} {% if wave_administrative_levels_with_adl_profile %} {% endcomment %}
                                 <th>{% translate 'Phone' %}</th>
-                            {% endif %}
-                            {% if wave_administrative_levels_with_facilitators %}
+                            {% comment %} {% endif %} {% endcomment %}
+                            {% comment %} {% if wave_administrative_levels_with_facilitators %} {% endcomment %}
                                 <th>{% translate 'AC' %}</th>
                                 <th>{% translate 'AC Phone' %}</th>
                                 <th>{% translate 'AC Email' %}</th>
-                            {% endif %}
+                            {% comment %} {% endif %} {% endcomment %}
                             <th>{% translate 'Complaints' %}</th>
                             <th>{% translate 'Percentage' %}</th>
                         </tr>
@@ -168,7 +168,7 @@
                                 <td align="left">{{ pilot_locality.headquarters_village.parent.name }}</td>
                                 <td align="left">{{ pilot_locality.name }}</td>
                                 <td align="left">{{ pilot_locality.get_villages_name }}</td>
-                                {% if wave_administrative_levels_with_adl_profile %}
+                                {% comment %} {% if wave_administrative_levels_with_adl_profile %}
                                     {% with wave_administrative_levels_with_adl_profile|get:pilot_locality.headquarters_village.id as adl_profile %}
                                         {% if adl_profile %}
                                             <td align="left">{{ adl_profile.representative.phone }}</td>
@@ -176,8 +176,17 @@
                                             <td align="center">-</td>
                                         {% endif %}
                                     {% endwith %}
-                                {% endif %}
-                                {% if wave_administrative_levels_with_facilitators %}
+                                {% endif %} {% endcomment %}
+                                
+                                {% with pilot_locality.headquarters_village.id|getADL as adl_profile %}
+                                    {% if adl_profile %}
+                                        <td align="left">{{ adl_profile.representative.phone_number }}</td>
+                                    {% else %}
+                                        <td align="center">-</td>
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                {% comment %} {% if wave_administrative_levels_with_facilitators %}
                                     {% with wave_administrative_levels_with_facilitators|get:pilot_locality.headquarters_village.id as facilitator %}
                                         {% if facilitator %}
                                             <td align="left">{{ facilitator.representative.name }}</td>
@@ -189,7 +198,18 @@
                                             <td align="left">-</td>
                                         {% endif %}
                                     {% endwith %}
-                                {% endif %}
+                                {% endif %} {% endcomment %}
+                                {% with pilot_locality.headquarters_village.id|getADL:"CommunityFacilitator" as facilitator %}
+                                        {% if facilitator %}
+                                            <td align="left">{{ facilitator.representative.name }}</td>
+                                            <td>{{ facilitator.representative.phone_number }}</td>
+                                            <td align="left">{{ facilitator.representative.email }}</td>
+                                        {% else %}
+                                            <td align="left">-</td>
+                                            <td>-</td>
+                                            <td align="left">-</td>
+                                        {% endif %}
+                                    {% endwith %}
                                 {% with region_stats_wave_for_cvd|get:pilot_locality.id_str as region_stats %}
                                     {% if region_stats %}
                                         <td align="center">{{ region_stats.count }}</td>

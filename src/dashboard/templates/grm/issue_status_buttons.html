@@ -30,7 +30,7 @@
     </div>
 </div>
 
-{% if user|has_group:'Admin' and not doc.publish %}
+{% if user|has_group:'Admin' and not doc.publish or user|has_group:'Safeguard' and not doc.publish %}
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
@@ -45,7 +45,7 @@
     </div>
 </div>
 {% endif %}
-{% if user|has_group:'Admin' and doc.publish %}
+{% if user|has_group:'Admin' and doc.publish or user|has_group:'Safeguard' and doc.publish %}
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
@@ -64,7 +64,11 @@
 <div class="row mb-2">
     <div class="col-8">
         <label class="label-align">
-            {% translate 'Open Issue' %}
+            {% if doc_status.final_status or doc_status.rejected_status or doc_status.unresolved_status %}
+                {% translate 'Reopen the issue' %}
+            {% else %}
+                {% translate 'Open Issue' %}
+            {% endif %}
         </label>
     </div>
     <div class="col-4">
@@ -81,12 +85,13 @@
             {% if doc.resolution_files %}{% for file in doc.resolution_files %}
             {% if file.name %}
             <br />
-            <a href="{% url 'attachments:get-attachment' file.bd_id file.name %}?db=grm"
-                target="_blank">
+            <a href="{% url 'attachments:get-attachment' file.bd_id file.name %}"
+                class="attachment-link" data-filename="{{ file.name }}"
+                data-download-url="{% url 'attachments:get-attachment' file.bd_id file.name %}?download=1">
                 {% translate 'See PV de reconciliation' %}
             </a>
             {% else %}[{% translate "We can't see the file name" %}]{% endif %}
-            
+
             {% if user.id == doc.assignee.id %}
             <a class="btn pull-right delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
             data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id file.id %}">
@@ -95,7 +100,8 @@
             {% endif %}
             {% if "encrypt_" in file.name %}
             <a class="btn pull-right show-data {% if not permission_to_edit %}disabled{% endif %}"
-            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id file.id %}" 
+            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id file.id %}"
+            data-filename="{{ file.name }}"
             id="show_data_attachment_{{ doc.auto_increment_id }}_{{ file.id }}">
                 <i class="far fa-eye link show-data"></i>
             </a>

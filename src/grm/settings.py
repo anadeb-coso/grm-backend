@@ -36,6 +36,8 @@ DEBUG = env.bool('DEBUG', False)
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS', list, ['localhost'])
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS=env('DATA_UPLOAD_MAX_NUMBER_FIELDS', int, 1000)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -54,13 +56,19 @@ CREATED_APPS = [
     'administrativelevels',
     'privacy',
     'issue',
+    'budgeting',
+    'sync',
+    'service_api',
 ]
 
 THIRD_PARTY_APPS = [
     'bootstrap4',
     'drf_yasg',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'django_celery_results',
+    'django_celery_beat',
     'corsheaders',
 ]
 
@@ -106,9 +114,21 @@ WSGI_APPLICATION = 'grm.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 EXTERNAL_DATABASE_NAME = 'mis'
 DATABASES = {
-    'default': env.db(default='sqlite:///grm.db'),
+    'default': env.db(), # env.db(default='sqlite:///grm.db'),
     EXTERNAL_DATABASE_NAME: env.db('LEGACY_DATABASE_URL')
 }
+# `mis` est une base externe non managée par nos migrations (voir administrativelevels/models.py,
+# allow_migrate=False dans grm/routers.py). ⚠️ NE JAMAIS mettre `TEST: {'NAME': <nom réel>}` ici :
+# pytest-django/Django DROP puis CREATE la base de test à chaque run par défaut, ce qui détruirait
+# la vraie base `mis` si son nom est réutilisé tel quel. On la laisse migrer vers une vraie base de
+# test dédiée (`test_mis`) : comme `allow_migrate` renvoie False pour cette app, cette base de test
+# reste vide de toute façon — les tests qui en ont besoin doivent créer leurs propres fixtures via
+# `AdministrativeLevel.objects.using('mis').create(...)` plutôt que lire des données réelles.
+
+# Route automatiquement l'app `administrativelevels` (référentiel non managé, voir CLAUDE.md
+# §2.1/§4.2.1) vers la base MySQL `mis`. Le reste du code continue de fonctionner tel quel
+# (voir grm/routers.py pour le détail).
+DATABASE_ROUTERS = ['grm.routers.MisRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -187,7 +207,7 @@ MEDIA_ROOT = BASE_DIR / 'media/'
 
 MEDIA_URL = '/media/'
 
-MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_UPLOAD_SIZE = 100 * 1024 * 1024  # 100MB
 
 AUTH_USER_MODEL = 'authentication.User'
 
@@ -301,3 +321,41 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 GRM_SECRET_KEY_GENRATE = env('GRM_SECRET_KEY_GENRATE')
+
+# ---------------------------------------------------------------------------
+# API mobile (sync WatermelonDB) : JWT auth, REST framework, upload de fichiers.
+# N'affecte pas les vues existantes qui gèrent déjà leur propre authentification
+# (elles définissent explicitement leurs `permission_classes`/`authentication_classes`).
+# ---------------------------------------------------------------------------
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+from datetime import timedelta  # noqa: E402
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60) if DEBUG else timedelta(days=3650),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=6) if DEBUG else timedelta(days=3655),
+    # 'ACCESS_TOKEN_LIFETIME': timedelta(days=3650),  # 10 ans (365 jours × 10)
+    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=3650),  # 10 ans
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+# Fichiers (upload d'attachments mobile, cf. sync/attachment_views.py)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024   # 20 Mo
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024   # 20 Mo
+MAX_ATTACHMENT_SIZE = 15 * 1024 * 1024           # 15 Mo, cohérent avec la compression frontend
+
+# Si le `last_pulled_at` d'un client est plus vieux que ce délai, le pull renvoie
+# `force_full_resync: true` plutôt qu'un diff incrémental (voir sync/views.py) : au-delà, les
+# tombstones ont pu être purgées (cf. grm.tasks / issue.tasks.cleanup_old_tombstones) et un diff
+# incrémental ne serait plus fiable.
+TOMBSTONE_MAX_AGE_DAYS = 90
+SYNC_INACTIVE_DEVICE_DAYS = 30
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

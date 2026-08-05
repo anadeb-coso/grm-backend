@@ -5,7 +5,6 @@ import pytest
 from rest_framework.test import APITestCase
 
 from authentication.tests import UserFactory
-from client import get_db, bulk_delete
 
 JSON_TYPE = 'application/json'
 URLENCODED_TYPE = 'application/x-www-form-urlencoded'
@@ -15,15 +14,14 @@ AJAX_HEADER_VALUE = 'XMLHttpRequest'
 
 @pytest.mark.django_db
 class BaseTestCase(APITestCase):
+    """`tearDown` nettoyait auparavant la base CouchDB `eadls` après chaque test (les écritures
+    CouchDB, contrairement à Postgres, n'étaient pas couvertes par le rollback automatique de
+    `pytest.mark.django_db`). Toutes les données créées pendant les tests vivent désormais dans
+    Postgres, déjà isolées/rollback automatiquement par ce marqueur : plus besoin de nettoyage
+    manuel."""
     rest = True
     content_type = JSON_TYPE
-    eadl_db = get_db()
     user = None
-
-    def tearDown(self):
-        super().tearDown()
-        docs_to_delete = [d for d in self.eadl_db if 'type' in d and d['type'] != 'administrative_level']
-        bulk_delete(self.eadl_db, docs_to_delete)
 
     @staticmethod
     def create_user(is_active=True, **kwargs):

@@ -39,26 +39,32 @@
                     {% if doc.category.id != 2 %}
                     <hr />
                     <div class="card-header border-0">
-                        <div class="card-title">
+                        <div class="card-title d-flex align-items-center justify-content-between w-100">
                             <div class="pt-1 fs20 lh25 text-bold-family">
                                 {% translate 'Decisions' %}/{% translate 'Investigations' %}
                             </div>
+                            {% if user.id == doc.assignee.id %}
+                            <span class="badge badge-primary rounded-xl fs12 py-2 px-3">
+                                <i class="fas fa-user-check mr-1"></i>
+                                {% translate 'Assigned to you' %}
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="overlay-wrapper" 
-                    {% if user.id == doc.assignee.id %}
-                        style="border: 2px solid black; padding: 11px; border-style: dashed;" 
-                    {% endif %}
-                    >
+                    <div class="overlay-wrapper">
 
                         <div id="attachments-reason"></div>
 
-                        <div class="card mh-750">
-                            
-                            <div class="card-header">
-                                {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id %} 
+                        <div class="card mh-750 {% if user.id == doc.assignee.id %}border-left border-primary{% endif %}">
+
+                            <div class="card-header {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id %}bg-light{% endif %}">
+                                {% if enable_add_comment and permission_to_edit and user.id == doc.assignee.id %}
                                     {% comment %} and not doc.escalate_flag {% endcomment %}
-                                    <div class="row mb-3">
+                                    <div class="fs13 text-muted mb-2">
+                                        <i class="fas fa-pen mr-1"></i>
+                                        {% translate 'Record a new decision or investigation step' %}
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
                                         <div class="col-1">
                                             {% with indexed_users|get_indexed_user:user.id as color_index %}
                                                 <div class="circle-icon navbar-{{ colors|next_in_circular_list:color_index }}
@@ -72,15 +78,17 @@
                                         <div class="col-9">
                                             {% bootstrap_form reason_comment_form %}
                                         </div>
-                                        <div class="col-2">
-                                            <button class="btn btn-primary btn-sm fs12 rounded-xl" disabled id="add_comment_reason">
+                                        <div class="col-2 text-center">
+                                            <button class="btn btn-primary btn-sm fs12 rounded-xl" disabled id="add_comment_reason"
+                                                title="{% translate 'Save' %}">
                                                 {% translate "Save" %}
                                             </button>
                                             <br /><br />
-                                            
-                                            <a class="btn btn-primary btn-sm fs12 rounded-xl {% if not permission_to_edit %}
+
+                                            <a class="btn btn-outline-primary btn-sm fs12 rounded-xl {% if not permission_to_edit %}
                                                 disabled{% endif %}"
-                                                id="add_attachment_reason">
+                                                id="add_attachment_reason"
+                                                title="{% translate 'Attach a file' %}">
                                                     <i class="fa fa-file-o"></i>
                                             </a>
                                         </div>
@@ -101,7 +109,7 @@
 
 
 
-                        
+
                         <div class="overlay" id="load-attachments-spin-reason">
                             <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                         </div>
@@ -334,12 +342,13 @@
                                         {% if escalation_reason.attachment %}
                                         
             {% if escalation_reason.attachment.name %}
-            <a href="{% url 'attachments:get-attachment' escalation_reason.attachment.bd_id escalation_reason.attachment.name %}?db=grm"
-                target="_blank">
+            <a href="{% url 'attachments:get-attachment' escalation_reason.attachment.bd_id escalation_reason.attachment.name %}"
+                class="attachment-link" data-filename="{{ escalation_reason.attachment.name }}"
+                data-download-url="{% url 'attachments:get-attachment' escalation_reason.attachment.bd_id escalation_reason.attachment.name %}?download=1">
                 {% translate 'Transfer file' %}
             </a>
             {% else %}[{% translate "We can't see the file name" %}]{% endif %}
-            
+
             {% if user.id == doc.assignee.id %}
             <a class="btn delete-attachment {% if not permission_to_edit %}disabled{% endif %}"
             data-url="{% url 'dashboard:grm:delete_issue_attachment' doc.auto_increment_id escalation_reason.attachment.id %}">
@@ -348,7 +357,8 @@
             {% endif %}
             {% if "encrypt_" in escalation_reason.attachment.name %}
             <a class="btn show-data {% if not permission_to_edit %}disabled{% endif %}"
-            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id escalation_reason.attachment.id %}" 
+            data-url="{% url 'dashboard:grm:decrypt_issue_attachment' doc.auto_increment_id escalation_reason.attachment.id %}"
+            data-filename="{{ escalation_reason.attachment.name }}"
             id="show_data_attachment_{{ doc.auto_increment_id }}_{{ escalation_reason.attachment.id }}">
                 <i class="far fa-eye link show-data"></i>
             </a>
@@ -433,6 +443,7 @@
 {% endblock content %}
 
 {% block modals %}
+    {% include 'common/attachment_preview_modal.html' %}
     <div id="fileFormModal" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
     <div id="statusChangeModalForm" class="modal" role="dialog" aria-hidden="true" data-backdrop="static"></div>
 
@@ -512,6 +523,7 @@
     {{ block.super }}
     <script src="{% static 'js/csrfSafeMethodAjax.js' %}"></script>
     <script src="{% static 'js/formAjaxSubmit.js' %}"></script>
+    <script src="{% static 'js/attachment_preview_modal.js' %}"></script>
     <script type="text/javascript">
         let load_attachments_spin = $('#load-attachments-spin');
         let load_attachments_spin_reason = $('#load-attachments-spin-reason');
@@ -943,6 +955,7 @@
 
         var type_checking = "citizen"; //issue_description
         var attachment_url_view = null;
+        var attachment_name_view = null;
         function show_dta(){
             $(document).on('click', '.show-data', function () {
                 if(this.id == "show-data-description"){
@@ -950,8 +963,11 @@
                 }else if(this.id.includes("show_data_attachment_")){
                     type_checking = "issue_data_attachment";
                     attachment_url_view = $(this).data('url');
+                    attachment_name_view = $(this).data('filename');
                 }else if(this.id == "original-description"){
                     type_checking = "original_description";
+                }else{
+                    type_checking = "citizen";
                 }
                 $('#checkPasswordModal').modal('show');
             });
@@ -1002,7 +1018,11 @@
                         $('#checkPasswordModal').modal('hide');
                     }); {% endcomment %}
                     
-                    window.open(`${attachment_url_view}?_token={{csrf_token}}&_ttoken={{csrf_token}}&password=${$("#id_password").val()}&token={{csrf_token}}`,"_blank");
+                    $('#checkPasswordModal').modal('hide');
+                    window.openAttachmentPreview(
+                        `${attachment_url_view}?_token={{csrf_token}}&_ttoken={{csrf_token}}&password=${$("#id_password").val()}&token={{csrf_token}}`,
+                        attachment_name_view
+                    );
                 }
                 
             }else if(type_checking == "issue_description"){

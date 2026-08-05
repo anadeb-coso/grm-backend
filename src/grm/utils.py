@@ -4,6 +4,7 @@ from cryptography.fernet import Fernet
 import base64
 import os
 import magic
+import shortuuid as uuid
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from io import BytesIO
@@ -34,180 +35,166 @@ def unix_time_millis(dt):
     return int((dt - epoch).total_seconds() * 1000)
 
 
-def get_administrative_region_choices(adl_db, empty_choice=True):
-    country_id = adl_db.get_query_result(
-        {
-            "type": 'administrative_level',
-            "parent_id": None,
-        }
-    )[:][0]['administrative_id']
-    query_result = adl_db.get_query_result(
-        {
-            "type": 'administrative_level',
-            "parent_id": country_id,
-        }
-    )
-    choices = list()
-    for i in query_result:
-        choices.append((i['administrative_id'], f"{i['name']}"))
+def get_administrative_region_choices_using_mis(empty_choice=True):
+    """Équivalent Postgres (base `mis`) de l'ancienne `get_administrative_region_choices`
+    (CouchDB) : liste des régions (enfants directs du pays racine, `parent__isnull=True`)."""
+    country = mis_objects_call.filter_objects(
+        administrativelevels_models.AdministrativeLevel, parent__isnull=True, type='Country'
+    ).first()
+    choices = []
+    if country:
+        regions = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, parent_id=country.id,
+        )
+    else:
+        regions = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, parent__isnull=True
+        )
+    choices = [(str(r.id), r.name) for r in regions]
+
     if empty_choice:
         choices = [('', '')] + choices
     return choices
 
 
-def get_choices(query_result, empty_choice=True):
-    choices = [(i['id'], i['name']) for i in query_result]
+def get_administrative_regions_by_level_using_mis(level=None):
+    """Équivalent Postgres (base `mis`) de l'ancienne `get_administrative_regions_by_level`
+    (CouchDB) : enfants directs du premier niveau de type `level` (ou du pays racine si `level`
+    est omis) — même comportement de repli que l'original."""
+    if level:
+        adls = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, type=level,
+        )
+    else:
+        parent = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, parent__isnull=True, type='Country'
+        ).first()
+    if parent:
+        adls = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, parent_id=parent.id,
+        )
+    else:
+        adls = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, parent__isnull=True
+        )
+    return [
+        {
+            "administrative_id": str(c.id),
+            "name": c.name,
+            "administrative_level": c.type,
+            "type": "administrative_level",
+            "parent_id": str(c.parent_id) if c.parent_id else None,
+        }
+        for c in adls
+    ]
+
+
+def _model_choices(queryset, empty_choice):
+    """Construit une liste `(legacy_id, name)` à partir d'un queryset Postgres de référentiel
+    `issue.models` — remplace les anciens appels `grm_db.get_query_result({"type": ...})`
+    (dashboard web, désormais migré). `legacy_id` est utilisé comme clé plutôt que le pk UUID
+    pour rester compatible avec le code existant qui compare ces ids à des entiers littéraux."""
+    choices = [(obj.legacy_id, obj.name) for obj in queryset]
     if empty_choice:
         choices = [('', '')] + choices
     return choices
 
 
-def get_issue_age_group_choices(grm_db, empty_choice=True):
-    query_result = grm_db.get_query_result({"type": 'issue_age_group'})
-    return get_choices(query_result, empty_choice)
+def get_issue_age_group_choices(empty_choice=True):
+    from issue.models import IssueAgeGroup
+    return _model_choices(IssueAgeGroup.objects.all(), empty_choice)
 
 
-def get_issue_citizen_group_1_choices(grm_db, empty_choice=True):
-    query_result = grm_db.get_query_result({"type": 'issue_citizen_group_1'})
-    return get_choices(query_result, empty_choice)
+def get_issue_citizen_group_1_choices(empty_choice=True):
+    from issue.models import IssueCitizenGroup1
+    return _model_choices(IssueCitizenGroup1.objects.all(), empty_choice)
 
 
-def get_issue_citizen_group_2_choices(grm_db, empty_choice=True):
-    query_result = grm_db.get_query_result({"type": 'issue_citizen_group_2'})
-    return get_choices(query_result, empty_choice)
+def get_issue_citizen_group_2_choices(empty_choice=True):
+    from issue.models import IssueCitizenGroup2
+    return _model_choices(IssueCitizenGroup2.objects.all(), empty_choice)
 
 
-def get_issue_type_choices(grm_db, empty_choice=True):
-    query_result = grm_db.get_query_result({"type": 'issue_type'})
-    return get_choices(query_result, empty_choice)
+def get_issue_type_choices(empty_choice=True):
+    from issue.models import IssueType
+    return _model_choices(IssueType.objects.all(), empty_choice)
 
 
-def get_issue_category_choices(grm_db, empty_choice=True):
-    query_result = grm_db.get_query_result({"type": 'issue_category'})
-    return get_choices(query_result, empty_choice)
+def get_issue_category_choices(empty_choice=True):
+    from issue.models import IssueCategory
+    return _model_choices(IssueCategory.objects.all(), empty_choice)
 
 
-def get_issue_status_choices(grm_db, empty_choice=True):
-    query_result = grm_db.get_query_result({"type": 'issue_status'})
-    return get_choices(query_result, empty_choice)
+def get_issue_status_choices(empty_choice=True):
+    from issue.models import IssueStatus
+    return _model_choices(IssueStatus.objects.all(), empty_choice)
 
 
-def get_administrative_region_name(adl_db, administrative_id):
-    not_found_message = f'[Missing region with administrative_id "{administrative_id}"]'
-    if not administrative_id:
-        return not_found_message
+def get_auto_increment_id_using_postgres():
+    """Équivalent Postgres de l'ancienne `get_auto_increment_id` (vue CouchDB
+    `issues/auto_increment_id_stats`)."""
+    from django.db.models import Max
+    from issue.models import Issue
+    max_auto_increment_id = Issue.objects.aggregate(m=Max('auto_increment_id'))['m'] or 0
+    return max_auto_increment_id + 1
 
-    region_names = []
-    has_parent = True
-
-    while has_parent:
-        docs = adl_db.get_query_result({
-            "administrative_id": str(administrative_id),
-            "type": 'administrative_level'
-        })
-
-        try:
-            doc = adl_db[docs[0][0]['_id']]
-            region_names.append(doc['name'])
-            administrative_id = doc['parent_id']
-            has_parent = administrative_id is not None
-        except Exception:
-            region_names.append(not_found_message)
-            has_parent = False
-
-    return ', '.join(region_names)
-
-
-def get_base_administrative_id(adl_db, administrative_id, base_parent_id=None):
-    base_administrative_id = administrative_id
-    while True:
-        parent = get_parent_administrative_level(adl_db, administrative_id)
-        if parent:
-            base_administrative_id = administrative_id
-            administrative_id = parent['administrative_id']
-            if base_parent_id and parent['administrative_id'] == base_parent_id:
-                break
-        else:
-            break
-    return base_administrative_id
 
 def get_base_administrative_id_using_mis(administrative_id, base_parent_id=None):
+    """Remonte la chaîne des ancêtres de `administrative_id` jusqu'au niveau "région" attendu par
+    `get_administrative_region_choices_using_mis()` (le premier sélecteur en cascade des
+    formulaires de saisie/résumé d'issue).
+
+    `get_administrative_region_choices_using_mis()` gère deux cas : s'il existe un noeud
+    `type='Country'` dans `mis`, les choix sont ses enfants directs (les régions) ; sinon (cas réel
+    de cette base `mis`, qui ne modélise pas de niveau "Country" séparé — la région est elle-même
+    la racine, `parent_id IS NULL`), les choix sont directement les enregistrements sans parent.
+    Cette fonction doit donc s'arrêter au même niveau, faute de quoi l'id renvoyé (ex. une
+    préfecture) ne correspond à aucune `<option>` du sélecteur : rien ne s'affiche pré-sélectionné
+    sur la page de résumé (/new-issue-step-5/) alors que la localité avait bien été enregistrée à
+    l'étape précédente."""
+    has_country_level = mis_objects_call.filter_objects(
+        administrativelevels_models.AdministrativeLevel, parent__isnull=True, type='Country'
+    ).exists()
+
     base_administrative_id = administrative_id
     while True:
         parent = get_parent_administrative_level_using_mis(administrative_id)
-        
-        if parent:
-            base_administrative_id = administrative_id
-            administrative_id = parent['administrative_id']
-            if base_parent_id and parent['administrative_id'] == base_parent_id:
-                break
-        else:
+
+        if not parent:
+            # `administrative_id` n'a pas de parent : c'est une racine. Sans niveau Country
+            # séparé, c'est elle-même le niveau région à retourner ; avec un niveau Country, le
+            # niveau région est l'enfant juste en dessous, déjà mémorisé dans `base_administrative_id`.
+            if not has_country_level:
+                base_administrative_id = administrative_id
+            break
+
+        base_administrative_id = administrative_id
+        administrative_id = parent['administrative_id']
+        if base_parent_id and parent['administrative_id'] == base_parent_id:
             break
     return base_administrative_id
 
-def get_child_administrative_regions(adl_db, parent_id):
-    data = adl_db.get_query_result(
-        {
-            "type": 'administrative_level',
-            "parent_id": parent_id,
-        }
-    )
-    data = [doc for doc in data]
-    return data
+def get_ancestor_administrative_id_by_type_using_mis(administrative_id, level_type):
+    """Remonte la chaîne des ancêtres de `administrative_id` (inclus) jusqu'à trouver un niveau de
+    type `level_type` (ex. 'Region', 'Prefecture', 'Commune', 'Canton', 'Village') et renvoie son
+    id — utilisé par `dashboard/diagnostics/views.py::IssuesStatisticsView` pour regrouper les
+    issues par niveau administratif explicitement choisi (filtre `administrative_level_type`),
+    indépendamment du niveau où l'issue a été enregistrée.
 
+    Renvoie `None` si aucun ancêtre de ce type n'existe : c'est le cas quand l'issue a été
+    enregistrée à un niveau plus proche de la racine que `level_type` (ex. une issue enregistrée
+    au niveau Région n'a pas d'ancêtre "Village", Village étant un niveau plus fin qu'une région,
+    pas un ancêtre) — cette issue est alors exclue des statistiques pour ce type-là plutôt que
+    rattachée arbitrairement à l'un de ses descendants."""
+    obj = mis_objects_call.filter_objects(
+        administrativelevels_models.AdministrativeLevel, id=administrative_id
+    ).first()
+    while obj:
+        if obj.type == level_type:
+            return obj.id
+        obj = obj.parent
+    return None
 
-def get_administrative_regions_by_level(adl_db, level=None):
-    filters = {"type": 'administrative_level'}
-    if level:
-        filters['administrative_level'] = level
-    else:
-        filters['parent_id'] = None
-    parent_id = adl_db.get_query_result(filters)[:][0]['administrative_id']
-    data = adl_db.get_query_result(
-        {
-            "type": 'administrative_level',
-            "parent_id": parent_id,
-        }
-    )
-    data = [doc for doc in data]
-    return data
-
-
-def get_administrative_level_descendants(adl_db, parent_id, ids):
-    data = adl_db.get_query_result(
-        {
-            "type": 'administrative_level',
-            "parent_id": parent_id,
-        }
-    )
-    data = [doc for doc in data]
-    descendants_ids = [region["administrative_id"] for region in data]
-    for descendant_id in descendants_ids:
-        get_administrative_level_descendants(adl_db, descendant_id, ids)
-        ids.append(descendant_id)
-
-    return ids
-
-
-def get_parent_administrative_level(adl_db, administrative_id):
-    parent = None
-    docs = adl_db.get_query_result({
-        "administrative_id": administrative_id,
-        "type": 'administrative_level'
-    })
-
-    try:
-        doc = adl_db[docs[0][0]['_id']]
-        if 'parent_id' in doc and doc['parent_id']:
-            administrative_id = doc['parent_id']
-            docs = adl_db.get_query_result({
-                "administrative_id": administrative_id,
-                "type": 'administrative_level'
-            })
-            parent = adl_db[docs[0][0]['_id']]
-    except Exception:
-        pass
-    return parent
 
 def get_parent_administrative_level_using_mis(administrative_id):
     parent = None
@@ -227,31 +214,6 @@ def get_parent_administrative_level_using_mis(administrative_id):
 
     return parent
 
-def get_related_region_with_specific_level(adl_db, region_doc, level):
-    """
-    Returns the document of type=administrative_level related to the region_doc with
-    administrative_level=level. To find it, start from the region_doc and continue
-    through its ancestors until it is found, if it is not found, return the region_doc
-    """
-    has_parent = True
-    administrative_id = region_doc['administrative_id']
-    while has_parent and region_doc['administrative_level'] != level:
-        region_doc = get_parent_administrative_level(adl_db, administrative_id)
-        if region_doc:
-            administrative_id = region_doc['administrative_id']
-        else:
-            has_parent = False
-
-    return region_doc
-
-
-def belongs_to_region(adl_db, child_administrative_id, parent_administrative_id):
-    if parent_administrative_id == child_administrative_id:
-        belongs = True
-    else:
-        belongs = child_administrative_id in get_administrative_level_descendants(adl_db, parent_administrative_id, [])
-    return belongs
-
 def belongs_to_region_using_mis(adl_db, child_administrative_id, parent_administrative_id, user=None):
     if parent_administrative_id == child_administrative_id:
         belongs = True
@@ -259,34 +221,99 @@ def belongs_to_region_using_mis(adl_db, child_administrative_id, parent_administ
         belongs = child_administrative_id in get_administrative_level_descendants_using_mis(adl_db, parent_administrative_id, [], user)
     return belongs
 
-def get_auto_increment_id(grm_db):
-    try:
-        max_auto_increment_id = grm_db.get_view_result('issues', 'auto_increment_id_stats')[0][0]['value']['max']
-    except Exception:
-        max_auto_increment_id = 0
-    return max_auto_increment_id + 1
-    # date_now = datetime.now()
-    # max_auto_increment_id_2 = int(float(str(max_auto_increment_id).replace(',', '.')))
-    # auto_increment = int((str(date_now.timestamp()) + str(date_now.microsecond)).replace('.', ''))
-    # if auto_increment <= max_auto_increment_id_2:
-    #     auto_increment = max_auto_increment_id_2 + 1
-    # return auto_increment
-
-
 def get_administrative_level_descendants_using_mis(adl_db, parent_id, ids, user=None):
-    data = []
-    if parent_id:
-        if int(parent_id) == 1:
-            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(type="Region") #.filter_by_government_worker(user, False, False)
-        else:
-            data = administrativelevels_models.AdministrativeLevel.objects.using('mis').filter(parent_id=int(parent_id)) #.filter_by_government_worker(user, False, False)
-        
-    descendants_ids = [obj.id for obj in data]
-    for descendant_id in descendants_ids:
-        get_administrative_level_descendants_using_mis(adl_db, descendant_id, ids, user)
-        ids.append(str(descendant_id))
+    """Renvoie tous les descendants stricts de `parent_id` (id spécial `1` = tout le pays, cf.
+    `AdministrativeLevelsView`/`GovernmentWorker.administrative_id`), sans lui-même.
+
+    Parcours niveau par niveau (une requête SQL par profondeur) plutôt que récursif noeud par
+    noeud (une requête par appel) : l'ancienne implémentation déclenchait potentiellement plusieurs
+    centaines de requêtes séquentielles vers `mis` pour une seule région (mesuré : 475 requêtes
+    pour KARA) — assez pour dépasser le timeout serveur et provoquer un 500 sur
+    `/api/administrative-levels/` pour un agent dont le périmètre couvre une région entière.
+    L'ordre des ids retournés change (parcours en largeur au lieu d'un ordre post-order), mais
+    tous les appelants ne s'en servent que comme un ensemble d'ids pour filtrer/tester
+    l'appartenance (`+=`, `.update()`, `in ...`), jamais pour un affichage ordonné."""
+    if not parent_id:
+        return ids
+
+    if int(parent_id) == 1:
+        # Cas spécial "portée nationale" : les régions elles-mêmes comptent comme descendantes
+        # (l'id 1 est une racine virtuelle, pas un vrai niveau administratif).
+        frontier = list(
+            administrativelevels_models.AdministrativeLevel.objects.using('mis')
+            .filter(type="Region").values_list('id', flat=True)
+        )
+    else:
+        # Enfants directs de `parent_id` — pas `parent_id` lui-même, qui n'est jamais inclus dans
+        # le résultat (descendants STRICTS).
+        frontier = list(
+            administrativelevels_models.AdministrativeLevel.objects.using('mis')
+            .filter(parent_id=int(parent_id)).values_list('id', flat=True)
+        )
+
+    while frontier:
+        ids.extend(str(node_id) for node_id in frontier)
+        frontier = list(
+            administrativelevels_models.AdministrativeLevel.objects.using('mis')
+            .filter(parent_id__in=frontier).values_list('id', flat=True)
+        )
 
     return ids
+
+def get_related_region_with_specific_level_using_mis(administrative_id, level):
+    """Équivalent Postgres (base `mis`) de l'ancienne `get_related_region_with_specific_level`
+    (CouchDB) : remonte les ancêtres depuis `administrative_id` jusqu'à trouver un niveau de type
+    `level` ; si jamais trouvé, retourne le dernier niveau atteint (même repli que l'original)."""
+    try:
+        region = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, id=int(administrative_id),
+        ).first()
+    except (TypeError, ValueError):
+        return None
+    if region is None:
+        return None
+    while region.parent and region.parent_id and region.type != level:
+        next_region = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, id=region.parent_id,
+        ).first()
+        if next_region is None:
+            break
+        region = next_region
+    return {
+        "administrative_id": str(region.id),
+        "name": region.name,
+        "administrative_level": region.type,
+        "type": "administrative_level",
+        "parent_id": str(region.parent_id) if region.parent_id else None,
+        "latitude": None,
+        "longitude": None,
+    }
+
+
+def get_administrative_region_name_using_mis(administrative_id):
+    """Équivalent Postgres (base `mis`) de l'ancienne `get_administrative_region_name` (CouchDB) :
+    nom complet "Village, Canton, Préfecture, Région" en remontant les ancêtres."""
+    not_found_message = f'[Missing region with administrative_id "{administrative_id}"]'
+    if not administrative_id:
+        return not_found_message
+
+    region_names = []
+    try:
+        region = mis_objects_call.filter_objects(
+            administrativelevels_models.AdministrativeLevel, id=int(administrative_id),
+        ).first()
+    except (TypeError, ValueError):
+        region = None
+
+    if region is None:
+        return not_found_message
+
+    while region is not None:
+        region_names.append(region.name)
+        region = region.parent
+
+    return ', '.join(region_names)
+
 
 def get_child_administrative_regions_using_mis(adl_db, parent_id, user=None):
     data_ser = []
@@ -346,7 +373,7 @@ def cryptography_fernet_encrypt(data, password, _type="txt", filename=None):
         #     file_content = file.read()
         #     mime_type, file_extension = get_file_type(file_content)
         #     return convert_buffered_to_InMemoryUploadedFile(file_content, f'encrypt_{filename}', mime_type)
-        return convert_buffered_to_InMemoryUploadedFile(encrypted_content, f'encrypt_{filename}', data.content_type)
+        return convert_buffered_to_InMemoryUploadedFile(encrypted_content, f'encrypt_{filename if filename else str(uuid.uuid())}' if not filename or 'encrypt_' not in filename else filename, data.content_type)
         
     else:
         return fernet.encrypt(data.encode())

@@ -1,20 +1,18 @@
 from datetime import datetime
-from django.conf import settings
 from django.utils.translation import gettext_lazy
+from django.db.models import Q
 
 from django import template
 
 from authentication.utils import get_validation_code
-from client import get_db
 from dashboard.grm import CITIZEN_TYPE_CHOICES, CITIZEN_TYPE_CHOICES_ALT, CONTACT_CHOICES, MEDIUM_CHOICES
-from grm.utils import get_administrative_region_name as get_region_name
+from grm.utils import get_administrative_region_name_using_mis as get_region_name
 from grm.call_objects_from_other_db import mis_objects_call
 from administrativelevels.models import AdministrativeLevel
+from issue.models import Adl
 
 
 register = template.Library()
-
-COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 
 @register.filter
 def get(dictionary, key):
@@ -61,29 +59,42 @@ def date_order_format(date):
 
 @register.simple_tag
 def get_date(date_time):
-    data = date_time.split('T') if date_time else ''
-    if data:
-        data = data[0].split('-')
-        data = f'{data[2]}-{data[1]}-{data[0]}' if len(data) > 2 else ''
-    return data
+    if type(date_time) == str:
+        data = date_time.split('T') if date_time else ''
+        if data:
+            data = data[0].split('-')
+            data = f'{data[2]}-{data[1]}-{data[0]}' if len(data) > 2 else ''
+        return data
+    else:
+        return date_time.strftime("%d-%m-%Y") if date_time else ''
 
 
 @register.filter(expects_localtime=True)
 def string_to_date(date_time, date_format="%Y-%m-%dT%H:%M:%S.%fZ"):
-    if date_time:
+    if date_time and type(date_time) == str:
         return datetime.strptime(date_time, date_format)
+    
+    return date_time
 
 
 @register.simple_tag
 def get_days_until_today(date_time):
-    date = datetime.strptime(date_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    if type(date_time) == str:
+        date = datetime.strptime(date_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    else:
+        date = date_time
+
     delta = datetime.now() - date
     return delta.days
 
 
 @register.simple_tag
 def get_days_until_date(date_time):
-    date = datetime.strptime(date_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    if type(date_time) == str:
+        date = datetime.strptime(date_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    else:
+        date = date_time
+
     delta = date - datetime.now()
     return delta.days
 
@@ -141,16 +152,18 @@ def get_initials(string):
 
 @register.simple_tag
 def get_hour(date_time):
-    data = date_time.split('T') if date_time else ''
-    if data:
-        data = data[1].split('.')[0]
-    return data
+    if type(date_time) == str:
+        data = date_time.split('T') if date_time else ''
+        if data:
+            data = data[1].split('.')[0]
+        return data
+    else:
+        return date_time.strftime("%H:%M:%S") if date_time else ''
 
 
 @register.simple_tag
 def get_administrative_region_name(administrative_id):
-    adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-    return get_region_name(adl_db, administrative_id)
+    return get_region_name(administrative_id)
 
 
 
@@ -183,47 +196,62 @@ def get_group_high(user):
         - Minister              : Minister
         - Safeguard             : Safeguard
     """
-    if user.is_superuser:
-        return gettext_lazy("Principal Administrator").__str__()
-    
-    if user.groups.filter(name="Admin").exists():
-        return gettext_lazy("Administrator").__str__()
-    
-    if user.groups.filter(name="Minister").exists():
-        return gettext_lazy("Minister").__str__()
-    if user.groups.filter(name="Advisor").exists():
-        return gettext_lazy("Advisor").__str__()
-    if user.groups.filter(name="GeneralManager").exists():
-        return gettext_lazy("General Manager").__str__()
-    if user.groups.filter(name="NationalCoordinator").exists():
-        return gettext_lazy("National Coordinator").__str__()
-    if user.groups.filter(name="RegionalCoordinator").exists():
-        return gettext_lazy("Regional Coordinator").__str__()
-    if user.groups.filter(name="Director").exists():
-        return gettext_lazy("Director").__str__()
-    
-    if user.groups.filter(name="Evaluator").exists():
-        return gettext_lazy("Evaluator").__str__()
-    if user.groups.filter(name="Financial").exists():
-        return gettext_lazy("Financial ").__str__()
-    if user.groups.filter(name="ProcurementSpecialist").exists():
-        return gettext_lazy("Procurement Specialist").__str__()
-    if user.groups.filter(name="KnowledgeManager").exists():
-        return gettext_lazy("Knowledge manager").__str__()
-    if user.groups.filter(name="CDDSpecialist").exists():
-        return gettext_lazy("CDD Specialist").__str__()
-    if user.groups.filter(name="Accountant").exists():
-        return gettext_lazy("Accountant").__str__()
-    if user.groups.filter(name="Infra").exists():
-        return gettext_lazy("Infra").__str__()
-    if user.groups.filter(name="Supervisor").exists():
-        return gettext_lazy("Supervisor").__str__()
-    
-    if user.groups.filter(name="Validator").exists():
-        return gettext_lazy("Validator").__str__()
-
+    if user:
+        if user.is_superuser:
+            return gettext_lazy("Principal Administrator").__str__()
+        
+        if user.groups.filter(name="Admin").exists():
+            return gettext_lazy("Administrator").__str__()
+        
+        if user.groups.filter(name="Minister").exists():
+            return gettext_lazy("Minister").__str__()
+        if user.groups.filter(name="Advisor").exists():
+            return gettext_lazy("Advisor").__str__()
+        if user.groups.filter(name="GeneralManager").exists():
+            return gettext_lazy("General Manager").__str__()
+        if user.groups.filter(name="NationalCoordinator").exists():
+            return gettext_lazy("National Coordinator").__str__()
+        if user.groups.filter(name="RegionalCoordinator").exists():
+            return gettext_lazy("Regional Coordinator").__str__()
+        if user.groups.filter(name="Director").exists():
+            return gettext_lazy("Director").__str__()
+        
+        if user.groups.filter(name="Evaluator").exists():
+            return gettext_lazy("Evaluator").__str__()
+        if user.groups.filter(name="Financial").exists():
+            return gettext_lazy("Financial ").__str__()
+        if user.groups.filter(name="ProcurementSpecialist").exists():
+            return gettext_lazy("Procurement Specialist").__str__()
+        if user.groups.filter(name="KnowledgeManager").exists():
+            return gettext_lazy("Knowledge manager").__str__()
+        if user.groups.filter(name="CDDSpecialist").exists():
+            return gettext_lazy("CDD Specialist").__str__()
+        if user.groups.filter(name="Accountant").exists():
+            return gettext_lazy("Accountant").__str__()
+        if user.groups.filter(name="Infra").exists():
+            return gettext_lazy("Infra").__str__()
+        
+        if user.groups.filter(name="YouthProgramSpecialist").exists():
+            return gettext_lazy("Youth Program Specialist").__str__()
+        if user.groups.filter(name="LocalEconomicDevelopmentSpecialist").exists():
+            return gettext_lazy("Local Economic Development Specialist").__str__()
+        if user.groups.filter(name="CommunicationSpecialist").exists():
+            return gettext_lazy("Communication Specialist").__str__()
+        if user.groups.filter(name="CommunityFacilitator").exists():
+            return gettext_lazy("Community Facilitator").__str__()
+        if user.groups.filter(name="TechnicalFacilitator").exists():
+            return gettext_lazy("Technical Facilitator").__str__()
+        
+        if user.groups.filter(name="Supervisor").exists():
+            return gettext_lazy("Supervisor").__str__()
+        
+        if user.groups.filter(name="Validator").exists():
+            return gettext_lazy("Validator").__str__()
+        
+        
 
     return gettext_lazy("User").__str__()
+    
 
 @register.filter(name='has_specific_permission') 
 def has_specific_permission(user):
@@ -279,3 +307,25 @@ def adl_names(adl_doc):
     if obj_names:
         return ", ".join(obj_names)
     return '-'
+
+@register.filter(name="imgAWSS3Filter")
+def img_aws_s3_filter(uri):
+    return uri.split("?")[0]
+
+@register.filter(name="getADL")
+def get_adl_by_adm_id(adm_id, group_name=None):
+    adm_id = str(adm_id)
+    if group_name:
+        return Adl.objects.select_related('representative').filter(
+            Q(administrative_region_ids__contains=[adm_id]) | 
+            Q(smallest_administrative_level_ids__contains=[adm_id]),
+            representative__is_active=True, is_deleted=False, representative__isnull=False,
+            representative__groups__name__in=[group_name]
+        ).first()
+    else:
+        return Adl.objects.select_related('representative').filter(
+            Q(administrative_region_ids__contains=[adm_id]) | 
+            Q(smallest_administrative_level_ids__contains=[adm_id]),
+            representative__is_active=True, is_deleted=False, representative__isnull=False,
+            representative__groups__isnull=True
+        ).first()

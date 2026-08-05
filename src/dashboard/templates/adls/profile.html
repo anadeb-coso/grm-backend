@@ -242,6 +242,7 @@
 {% endblock content %}
 
 {% block modals %}
+    {% include 'common/attachment_preview_modal.html' %}
     {% for phase in adl.phases %}
         {% include 'adls/phase_detail.html' with phase=phase %}
     {% endfor %}
@@ -331,6 +332,7 @@
     <script src="{% static 'plugins/openlayers/ol.js' %}"></script>
     <script src="{% static 'js/csrfSafeMethodAjax.js' %}"></script>
     <script src="{% static 'js/formAjaxSubmit.js' %}"></script>
+    <script src="{% static 'js/attachment_preview_modal.js' %}"></script>
     <script type="text/javascript">
         let map_task_id_selector;
         $(document).on('click', '.task-detail-button button', function () {

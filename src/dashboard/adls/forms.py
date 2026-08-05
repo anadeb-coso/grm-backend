@@ -1,13 +1,12 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from authentication import ADL, MAJOR
-from client import get_db
 from dashboard.forms.forms import FileForm
 from dashboard.customers_fields import CustomerIntegerRangeField
 from authentication.models import User
 from administrativelevels.models import AdministrativeLevel
 from grm.call_objects_from_other_db import mis_objects_call
+from issue.models import Adl
 
 
 class PasswordConfirmForm(forms.Form):
@@ -27,30 +26,18 @@ class AdlProfileForm(FileForm):
         self.fields['file'].required = False
         self.fields['file'].widget.attrs["class"] = "hidden"
 
-        document = get_db()[self.doc_id]
-        self.fields['name'].initial = document['representative']['name']
-        self.fields['phone'].initial = document['representative']['phone']
-        self.fields['email'].initial = document['representative']['email']
+        adl = Adl.objects.select_related('representative').get(pk=self.doc_id)
+        representative = adl.representative
+        self.fields['name'].initial = representative.name if representative else ''
+        self.fields['phone'].initial = representative.phone_number if representative else ''
+        self.fields['email'].initial = representative.email if representative else ''
 
     def clean_email(self):
         email = self.cleaned_data['email'].lower()
-        selector = {
-            "$and": [
-                {
-                    "representative.email": email
-                },
-                {
-                    "type": {
-                        "$in": [ADL, MAJOR]
-                    }
-                }
-            ]
-        }
-        eadl_db = get_db()
-
-        docs = eadl_db.get_query_result(selector)
-        doc = docs[0][0] if docs[0] else None
-        if doc and doc['_id'] != self.doc_id:
+        existing = User.objects.filter(email=email).exclude(
+            adl_representations__pk=self.doc_id,
+        ).first()
+        if existing:
             self.add_error('email', _("This email is already registered."))
         return email
 
@@ -68,24 +55,24 @@ class GovernmentWorkerAdlProfileForm(forms.Form):
         self.doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
 
-        user_doc = get_db()[self.doc_id]
-        user_obj = User.objects.get(id=user_doc['representative']['id'])
-        
+        adl = Adl.objects.select_related('representative').get(pk=self.doc_id)
+        user_obj = adl.representative
+
         adls = [(str(obj.id), f'{obj.type}: {obj.name} {f"({obj.parent})" if obj.parent else "(TOGO)"}') for obj in mis_objects_call.get_all_objects(AdministrativeLevel)]
 
         self.fields['administrative_level'].choices = [('', '')] + adls
         self.fields['administrative_levels'].choices = adls
         self.fields['additional_administrative_ids'].choices = adls
-        
-        if hasattr(user_obj, 'governmentworker'):
+
+        if user_obj and hasattr(user_obj, 'governmentworker'):
             if user_obj.governmentworker.administrative_id:
                 self.fields['administrative_level'].initial = user_obj.governmentworker.administrative_id
             if user_obj.governmentworker.administrative_ids:
                 self.fields['administrative_levels'].initial = user_obj.governmentworker.administrative_ids
             if user_obj.governmentworker.additional_administrative_ids:
                 self.fields['additional_administrative_ids'].initial = user_obj.governmentworker.additional_administrative_ids
-        
-        
+
+
 class CreateAdlProfileForm(forms.Form):
     first_name = forms.CharField(max_length=250, label=_("First name"))
     last_name = forms.CharField(max_length=250, label=_("Last name"))

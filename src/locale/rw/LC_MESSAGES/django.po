@@ -1404,6 +1404,18 @@ msgstr ""
 msgid "Transfer file"
 msgstr ""
 
+#: dashboard/templates/common/attachment_preview_modal.html
+msgid "Download"
+msgstr ""
+
+#: dashboard/templates/common/attachment_preview_modal.html
+msgid "This file cannot be played in the browser. Please download it instead."
+msgstr ""
+
+#: dashboard/templates/common/attachment_preview_modal.html
+msgid "Please download the file and open it with a media player on your computer."
+msgstr ""
+
 #: dashboard/privacy
 msgid "COSO GRM - A new issue recorded"
 msgstr ""
@@ -1680,4 +1692,60 @@ msgstr ""
 
 #: dashboard
 msgid "Complaints"
+msgstr ""
+
+#: dashboard
+msgid "Reopen the issue"
+msgstr ""
+
+#: dashboard
+msgid "COSO GRM - Issue opened"
+msgstr ""
+
+#: dashboard
+msgid "COSO GRM - Issue investigation update"
+msgstr ""
+
+#: dashboard
+msgid "COSO GRM - Issue resolved"
+msgstr ""
+
+#: dashboard
+msgid "COSO GRM - Issue rejected"
+msgstr ""
+
+#: dashboard
+msgid "The issue was accepted"
+msgstr ""
+
+#: dashboard
+msgid "The issue was rejected"
+msgstr ""
+
+#: dashboard
+msgid "The issue was resolved"
+msgstr ""
+
+#: dashboard
+msgid "The issue wasn't resolved"
+msgstr ""
+
+#: dashboard
+msgid "The issue was reopened"
+msgstr ""
+
+#: dashboard
+msgid "Record a new decision or investigation step"
+msgstr ""
+
+#: dashboard
+msgid "Assigned to you"
+msgstr ""
+
+#: dashboard
+msgid "No staff member is designated to handle this issue. Please report it to the relevant department."
+msgstr ""
+
+#: dashboard
+msgid "Open in new tab"
 msgstr ""

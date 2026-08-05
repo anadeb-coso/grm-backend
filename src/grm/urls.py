@@ -22,10 +22,12 @@ from django.urls import path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf.urls.i18n import i18n_patterns
 from django.http import HttpResponse
 from . import views, upload_views
 from grm.my_librairies.download_file import download_file_view
+from sync.views import TokenBlacklistView
 
 handler400 = 'dashboard.authentication.views.handler400'
 handler403 = 'dashboard.authentication.views.handler403'
@@ -49,8 +51,20 @@ urlpatterns = [
     path('privacy/', include('privacy.urls')),
     path('issue/', include('issue.urls')),
     path('api/issue/', include('issue.urls')),
-    
+
     path('download-file-view/<str:path>/<str:content_type>/', download_file_view, name='download_file_view'),
+
+    # Stack Postgres/WatermelonDB (CLAUDE.md Section A) : additive, ne touche pas aux
+    # endpoints CouchDB existants ci-dessus.
+    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
+    path('api/', include('sync.urls')),
+
+    # Section B du CLAUDE.md : API inter-services (CDD, MIS) authentifiée par le secret partagé
+    # GRM_SECRET_KEY_GENRATE, remplace l'accès direct des autres plateformes aux bases CouchDB
+    # eadls/grm.
+    path('api/service/', include('service_api.urls')),
 ]
 
 schema_view = get_schema_view(

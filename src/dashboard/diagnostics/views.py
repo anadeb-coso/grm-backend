@@ -1,21 +1,17 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
-from client import get_db
 from dashboard.grm.forms import SearchIssueForm
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, PageMixin
 from grm.utils import (
-    get_administrative_level_descendants, get_base_administrative_id, 
-    get_administrative_level_descendants_using_mis, get_base_administrative_id_using_mis
+    get_administrative_level_descendants_using_mis, get_ancestor_administrative_id_by_type_using_mis,
 )
-from issue.models import Wave
-
-COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
-COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
+from grm.call_objects_from_other_db import mis_objects_call
+from administrativelevels.models import AdministrativeLevel
+from issue.models import Issue, Wave
 
 
 class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
@@ -26,109 +22,77 @@ class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # context['access_token'] = settings.MAPBOX_ACCESS_TOKEN
-        # context['lat'] = settings.DIAGNOSTIC_MAP_LATITUDE
-        # context['lng'] = settings.DIAGNOSTIC_MAP_LONGITUDE
-        # context['zoom'] = settings.DIAGNOSTIC_MAP_ZOOM
-        # context['ws_bound'] = settings.DIAGNOSTIC_MAP_WS_BOUND
-        # context['en_bound'] = settings.DIAGNOSTIC_MAP_EN_BOUND
-        # context['country_iso_code'] = settings.DIAGNOSTIC_MAP_ISO_CODE
-        
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        context['all_total_issues'] = len(list(grm_db.get_query_result({
-                "type": "issue",
-                "confirmed": True,
-                "auto_increment_id": {"$ne": ""},
-            })))
-        
+
+        context['all_total_issues'] = Issue.objects.filter(confirmed=True, is_deleted=False).count()
+
         return context
+
+
+ADMINISTRATIVE_LEVEL_TYPES = ('Region', 'Prefecture', 'Commune', 'Canton', 'Village')
 
 
 class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
     def get(self, request, *args, **kwargs):
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-
         start_date = self.request.GET.get('start_date')
         end_date = self.request.GET.get('end_date')
         category = self.request.GET.get('category')
-        # issue_type = self.request.GET.get('type')
         region = self.request.GET.get('region')
         wave = self.request.GET.get('wave')
+        # Filtre indépendant du "drill-down" par `region` (qui ne fait que restreindre QUELS
+        # issues sont pris en compte) : décide à QUEL niveau administratif `region_stats` doit
+        # regrouper/afficher les résultats dans #region-stats-container. 'Region' par défaut.
+        administrative_level_type = self.request.GET.get('administrative_level_type') or 'Region'
+        if administrative_level_type not in ADMINISTRATIVE_LEVEL_TYPES:
+            administrative_level_type = 'Region'
 
-        selector = {
-            "type": "issue",
-            "confirmed": True,
-            "auto_increment_id": {"$ne": ""},
-        }
+        queryset = Issue.objects.select_related('status', 'category').filter(confirmed=True, is_deleted=False)
 
         wave_administrative_ids = []
+        wave_object = None
         if wave:
             wave_object = Wave.objects.filter(id=wave).first()
             if wave_object:
                 wave_administrative_ids = wave_object.administrative_ids
-                selector["administrative_region.administrative_id"] = {
-                    "$in": wave_administrative_ids + [int(elt) for elt in wave_administrative_ids if isinstance(elt, str) and elt.isdigit() and int(elt) not in wave_administrative_ids]
-                }
+                wave_ids_int = [int(elt) for elt in wave_administrative_ids if str(elt).isdigit()]
+                queryset = queryset.filter(administrative_region_id__in=wave_ids_int)
 
         if start_date or wave_administrative_ids:
             if start_date:
-                start_date = datetime.strptime(start_date, '%d/%m/%Y').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                if wave_administrative_ids:
-                    wave_begin_date = wave_object.begin.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                    if start_date < wave_begin_date:
-                        start_date = wave_begin_date
-            elif wave_administrative_ids:
-                start_date = wave_object.begin.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            selector["intake_date"] = {"$gte": start_date}
-        if end_date or (wave_administrative_ids and wave_object.end):
-            if end_date:
-                # end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                end_date = datetime.strptime(end_date, '%d/%m/%Y').replace(
-                    hour=23,
-                    minute=59,
-                    second=59,
-                    microsecond=999999
-                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                if wave_administrative_ids and wave_object and wave_object.end:
-                    wave_end_date = wave_object.end.replace(
-                        hour=23,
-                        minute=59,
-                        second=59,
-                        microsecond=999999
-                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                    if end_date > wave_end_date:
-                        end_date = wave_end_date
-            elif wave_administrative_ids and wave_object and wave_object.end:
-                end_date = wave_object.end.replace(
-                    hour=23,
-                    minute=59,
-                    second=59,
-                    microsecond=999999
-                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                
-            if "intake_date" not in selector:
-                selector["intake_date"] = {"$lte": end_date}
+                start_date_dt = datetime.strptime(start_date, '%d/%m/%Y')
+                if wave_administrative_ids and wave_object and wave_object.begin and wave_object.begin > start_date_dt.date():
+                    start_date_dt = datetime.combine(wave_object.begin, datetime.min.time())
+            elif wave_administrative_ids and wave_object and wave_object.begin:
+                start_date_dt = datetime.combine(wave_object.begin, datetime.min.time())
             else:
-                selector["intake_date"]["$lte"] = end_date
-        
+                start_date_dt = None
+            if start_date_dt:
+                queryset = queryset.filter(intake_date__gte=start_date_dt)
+
+        if end_date or (wave_administrative_ids and wave_object and wave_object.end):
+            if end_date:
+                end_date_dt = datetime.strptime(end_date, '%d/%m/%Y').replace(hour=23, minute=59, second=59, microsecond=999999)
+                if wave_administrative_ids and wave_object and wave_object.end:
+                    wave_end_dt = datetime.combine(wave_object.end, datetime.max.time())
+                    if end_date_dt > wave_end_dt:
+                        end_date_dt = wave_end_dt
+            elif wave_administrative_ids and wave_object and wave_object.end:
+                end_date_dt = datetime.combine(wave_object.end, datetime.max.time())
+            else:
+                end_date_dt = None
+            if end_date_dt:
+                queryset = queryset.filter(intake_date__lte=end_date_dt)
+
         if category:
-            selector["category.id"] = int(category)
-        # if issue_type:
-        #     selector["issue_type.id"] = int(issue_type)
+            queryset = queryset.filter(category__legacy_id=int(category))
 
         if region:
-            # filter_regions = get_administrative_level_descendants(adl_db, region, []) + [region]
-            filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], request.user) + [region]
+            filter_regions = get_administrative_level_descendants_using_mis(None, region, [], request.user) + [region]
             if wave_administrative_ids:
-                filter_regions = list(set(filter_regions) & set(wave_administrative_ids))
-            selector["administrative_region.administrative_id"] = {
-                "$in": filter_regions + [int(elt) for elt in filter_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in filter_regions]
-            }
+                filter_regions = list(set(filter_regions) & set(str(w) for w in wave_administrative_ids))
+            filter_regions_int = [int(elt) for elt in filter_regions if str(elt).isdigit()]
+            queryset = queryset.filter(administrative_region_id__in=filter_regions_int)
 
-        issues = grm_db.get_query_result(selector)
-        issues = [doc for doc in issues]
-
+        issues = list(queryset)
         total_issues = len(issues)
         region_stats = {}
         region_stats_wave = {}
@@ -141,57 +105,59 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
             if key in stats:
                 stats[key]['count'] = stats[key]['count'] + 1
             else:
-                stats[key] = {
-                    'count': 1
-                }
+                stats[key] = {'count': 1}
             if name:
                 stats[key]['name'] = name
 
         def process_stats(stats: dict):
             for k in stats:
-                k = str(k)
-                stats[k]['percentage'] = round(stats[k]['count'] * 100 / total_issues)
+                stats[k]['percentage'] = round(stats[k]['count'] * 100 / total_issues) if total_issues else 0
                 stats[k]['issues'] = stats[k]['count']
-        
+
+        def build_ancestor_chain(level):
+            """Liste ordonnée [Région, ..., `level`] (`level` inclus) des `{type, name}` de chaque
+            ancêtre, du plus haut niveau (Région) au plus fin — permet au frontend de construire
+            les colonnes Région/Préfecture/Commune/Canton/Village de #region-stats-container sans
+            requête supplémentaire, quel que soit le niveau affiché."""
+            chain = []
+            node = level
+            while node:
+                chain.append({'type': node.type, 'name': node.name})
+                node = node.parent
+            chain.reverse()
+            return chain
+
         def fill_region_name_and_coords(stats: dict):
-            regions = [str(k) for k in stats]
-            selector = {
-                "type": "administrative_level",
-                "administrative_id": {
-                    "$in": regions
-                }
-            }
-            administrative_level_docs = adl_db.get_query_result(selector)
-            without_administrative_level_docs = True
-            for doc in administrative_level_docs:
-                without_administrative_level_docs = False
-                data = stats[doc['administrative_id']]
-                data['name'] = doc['name']
-                data['latitude'] = doc['latitude']
-                data['longitude'] = doc['longitude']
-                data['level'] = doc['administrative_level'].capitalize()
-            if without_administrative_level_docs:
-                stats = {}
+            if not stats:
+                return
+            regions = [int(k) for k in stats if str(k).isdigit()]
+            levels = mis_objects_call.filter_objects(AdministrativeLevel, id__in=regions)
+            for level in levels:
+                data = stats.get(str(level.id))
+                if data is None:
+                    continue
+                data['name'] = level.name
+                data['latitude'] = float(level.latitude) if level.latitude is not None else None
+                data['longitude'] = float(level.longitude) if level.longitude is not None else None
+                data['level'] = level.type.capitalize() if level.type else None
+                data['ancestors'] = build_ancestor_chain(level)
 
-
-        for doc in issues:
-            if 'administrative_region' in doc and 'administrative_id' in doc['administrative_region']:
-                # region_key = get_base_administrative_id(adl_db, doc['administrative_region']['administrative_id'], region)
-                region_key = get_base_administrative_id_using_mis(doc['administrative_region']['administrative_id'], region)
-                fill_count(region_key, region_stats)
+        for issue in issues:
+            if issue.administrative_region_id:
+                region_key = get_ancestor_administrative_id_by_type_using_mis(
+                    issue.administrative_region_id, administrative_level_type,
+                )
+                if region_key is not None:
+                    fill_count(region_key, region_stats)
 
                 if wave_administrative_ids:
-                    fill_count(doc['administrative_region']['administrative_id'], region_stats_wave)
-                
+                    fill_count(issue.administrative_region_id, region_stats_wave)
 
-            status_key = doc['status']['id']
-            fill_count(status_key, status_stats, doc['status']['name'])
+            if issue.status_id:
+                fill_count(issue.status.legacy_id, status_stats, issue.status.name)
 
-            # type_key = doc['issue_type']['id']
-            # fill_count(type_key, type_stats, doc['issue_type']['name'])
-
-            category_key = doc['category']['id']
-            fill_count(category_key, category_stats, doc['category']['name'])
+            if issue.category_id:
+                fill_count(issue.category.legacy_id, category_stats, issue.category.name)
 
         process_stats(region_stats)
         process_stats(region_stats_wave)
@@ -202,9 +168,6 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
         fill_region_name_and_coords(region_stats)
         fill_region_name_and_coords(region_stats_wave)
 
-
-
-        #'1955': {'count': 10, 'percentage': 62, 'issues': 10, 'name': 'KETAO', 'latitude': None, 'longitude': None, 'level': 'Village'}
         # Fill region_stats_wave statistics with wave administrative levels which haven't issues
         if wave_administrative_ids:
             for administrative_id in wave_administrative_ids:
@@ -215,11 +178,6 @@ class IssuesStatisticsView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMix
                         'issues': 0,
                     }
             fill_region_name_and_coords(region_stats_wave)
-        
-
-        # Sort region_stats and region_stats_wave by count descending
-        # region_stats = dict(sorted(region_stats.items(), key=lambda item: item[1]['count'], reverse=True))
-        # region_stats_wave = dict(sorted(region_stats_wave.items(), key=lambda item: item[1]['count'], reverse=True))
 
         statistics = {
             'region_stats': region_stats,

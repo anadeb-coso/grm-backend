@@ -137,6 +137,7 @@ class GovernmentWorkerAdmin(admin.ModelAdmin):
         'department',
         'administrative_id',
         'administrative_ids',
+        'additional_administrative_ids'
     )
     raw_id_fields = (
         'user',

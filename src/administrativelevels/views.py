@@ -10,7 +10,7 @@ from django.db.models import Q
 from administrativelevels.serializers import AdministrativeLevelSerializer
 from administrativelevels.models import AdministrativeLevel
 from administrativelevels.functions import get_cascade_administrative_levels_by_administrative_level_id
-from client import get_db
+from issue.models import Adl
 
 
 class RestAdministrativeLevelFilter(APIView):
@@ -60,23 +60,16 @@ class RestAdministrativeLevelFilterByADL(APIView):
         administrative_region = int(filters.get("administrative_region") if filters.get("administrative_region") not in ('undefined', 'null', None) else 0)
         email = str(filters.get("email") if filters.get("email") not in ('undefined', 'null', None) else '')
         
-        eadl_db = get_db()
-        doc_user = {}
-        
-        try:
-            doc_user = eadl_db[eadl_db.get_query_result({"type": "adl", "representative.email": email})[0][0]["_id"]]
+        adl = Adl.objects.filter(representative__email=email).first()
+        if adl:
             administrative_regions = list(
                 set(
-                    (doc_user['administrative_regions'] if 'administrative_regions' in doc_user else list()) + \
+                    (adl.administrative_region_ids or []) + \
                     ([administrative_region] if administrative_region else [])
                 )
             )
-            
-        except Exception as exc:
+        else:
             administrative_regions = [administrative_region] if administrative_region else []
-            # return Response({
-            #         'message' : 'error : ' + exc.__str__()
-            #     }, status.HTTP_400_BAD_REQUEST)
             
         cantons, villages = [], []
         for adm_region in administrative_regions:

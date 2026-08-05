@@ -4,21 +4,18 @@ from django.utils.translation import gettext_lazy as _
 from django.template.defaultfilters import filesizeformat
 
 from authentication.models import get_government_worker_choices
-from client import get_db
 from dashboard.forms.widgets import RadioSelect
 from dashboard.grm import (
     CHOICE_CONTACT, CITIZEN_TYPE_CHOICES, CONTACT_CHOICES, GENDER_CHOICES, MEDIUM_CHOICES,
     CITIZEN_OR_GROUP_CHOICES
 )
 from grm.utils import (
-    get_administrative_region_choices, get_base_administrative_id, get_administrative_regions_by_level,
+    get_administrative_region_choices_using_mis, get_administrative_regions_by_level_using_mis,
     get_issue_age_group_choices, get_issue_category_choices, get_issue_citizen_group_1_choices,
     get_issue_citizen_group_2_choices, get_issue_status_choices, get_issue_type_choices
 )
 from issue.models import Wave
 
-COUCHDB_GRM_DATABASE = settings.COUCHDB_GRM_DATABASE
-COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL = settings.COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL
 MAX_LENGTH = 65000
 
 
@@ -35,20 +32,17 @@ class NewIssueContactForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc')
         super().__init__(*args, **kwargs)
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
 
         self.fields['contact'].widget.attrs["placeholder"] = _("Please type the contact information")
 
-        document = grm_db[doc_id]
         if 'contact_medium' in document:
             self.fields['contact_medium'].initial = document['contact_medium']
             if document['contact_medium'] == CHOICE_CONTACT:
-                if 'type' in document['contact_information'] and document['contact_information']['type']:
+                if document.get('contact_information') and document['contact_information'].get('type'):
                     self.fields['contact_type'].initial = document['contact_information']['type']
-                if 'contact' in document['contact_information'] and document['contact_information']['contact']:
+                if document.get('contact_information') and document['contact_information'].get('contact'):
                     self.fields['contact'].initial = document['contact_information']['contact']
             else:
                 self.fields['contact'].widget.attrs["class"] = "hidden"
@@ -72,31 +66,27 @@ class NewIssuePersonForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc')
         super().__init__(*args, **kwargs)
 
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-
-        citizen_age_groups = get_issue_age_group_choices(grm_db)
+        citizen_age_groups = get_issue_age_group_choices()
         self.fields['citizen_age_group'].widget.choices = citizen_age_groups
         self.fields['citizen_age_group'].choices = citizen_age_groups
 
-        citizen_group_1_choices = get_issue_citizen_group_1_choices(grm_db)
+        citizen_group_1_choices = get_issue_citizen_group_1_choices()
         self.fields['citizen_group_1'].widget.choices = citizen_group_1_choices
         self.fields['citizen_group_1'].choices = citizen_group_1_choices
 
-        citizen_group_2_choices = get_issue_citizen_group_2_choices(grm_db)
+        citizen_group_2_choices = get_issue_citizen_group_2_choices()
         self.fields['citizen_group_2'].widget.choices = citizen_group_2_choices
         self.fields['citizen_group_2'].choices = citizen_group_2_choices
-
-        document = grm_db[doc_id]
 
         if 'citizen' in document:
             self.fields['citizen'].initial = document['citizen']
 
         if 'citizen_type' in document:
             self.fields['citizen_type'].initial = document['citizen_type']
-        
+
         if 'citizen_or_group' in document:
             self.fields['citizen_or_group'].initial = document['citizen_or_group']
 
@@ -111,7 +101,7 @@ class NewIssuePersonForm(forms.Form):
 
         if 'citizen_group_2' in document and document['citizen_group_2']:
             self.fields['citizen_group_2'].initial = document['citizen_group_2']['id']
-        
+
         if len(citizen_group_1_choices) <= 1:
             del self.fields['citizen_group_1']
         if len(citizen_group_2_choices) <= 1:
@@ -124,7 +114,6 @@ class NewIssueDetailsForm(forms.Form):
                                       help_text="Date when the issue was recorded on the GRM")
     issue_date = forms.DateTimeField(label=_('Date of issue'), input_formats=['%d/%m/%Y'],
                                      help_text="Date when the issue occurred")
-    # issue_type = forms.ChoiceField(label=_('What are you reporting'))
     category = forms.ChoiceField(label=_('Choose type of grievance'))
     description = forms.CharField(label=_('Briefly describe the issue'), max_length=2000, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Please describe the issue')}))
@@ -138,15 +127,11 @@ class NewIssueDetailsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc')
         user = initial.get('user')
         super().__init__(*args, **kwargs)
-        
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        # types = get_issue_type_choices(grm_db)
-        # self.fields['issue_type'].widget.choices = types
-        # self.fields['issue_type'].choices = types
-        categories = get_issue_category_choices(grm_db)
+
+        categories = get_issue_category_choices()
         categories = [cat for cat in categories if (str(cat[0]) not in ('4', '7')) or (str(cat[0]) in ('4', '7') and user.groups.filter(name="Privacy").exists())]
         self.fields['category'].widget.choices = categories
         self.fields['category'].choices = categories
@@ -157,11 +142,8 @@ class NewIssueDetailsForm(forms.Form):
         self.fields['issue_date'].widget.attrs['data-target'] = '#issue_date'
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view original description")+'</span>'
 
-        document = grm_db[doc_id]
         if 'description' in document and document['description']:
             self.fields['description'].initial = document['description']
-        # if 'issue_type' in document and document['issue_type']:
-        #     self.fields['issue_type'].initial = document['issue_type']['id']
         if 'category' in document and document['category']:
             self.fields['category'].initial = document['category']['id']
         if 'ongoing_issue' in document:
@@ -174,12 +156,11 @@ class NewIssueLocationForm(forms.Form):
     administrative_region = forms.ChoiceField()
     administrative_region_value = forms.CharField(label='', required=False)
     location_description = forms.CharField(label=_("Location description"), required=False,
-        help_text=_("Please enter additional details about the location\nthat might help resolve the issue (e.g. street\naddress, street corner, or description of location)."), 
+        help_text=_("Please enter additional details about the location\nthat might help resolve the issue (e.g. street\naddress, street corner, or description of location)."),
         max_length=2000, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Please provide any additional details.')}))
     structure_in_charge = forms.CharField(
-        # label=_('Structure in charge of this complaint'), 
-        label=_('Committee/Structure in charge'), 
+        label=_('Committee/Structure in charge'),
         required=False,
         help_text=_('This is an optional field'))
     structure_in_charge_phone = forms.CharField(label=_('Structure telephone number'), required=False,
@@ -189,35 +170,33 @@ class NewIssueLocationForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc')
         super().__init__(*args, **kwargs)
 
-        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-        label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()
+        label = get_administrative_regions_by_level_using_mis()[0]['administrative_level'].title()
         self.fields['administrative_region'].label = label
 
-        administrative_region_choices = get_administrative_region_choices(adl_db)
+        administrative_region_choices = get_administrative_region_choices_using_mis()
         self.fields['administrative_region'].widget.choices = administrative_region_choices
         self.fields['administrative_region'].choices = administrative_region_choices
         self.fields['administrative_region'].widget.attrs['class'] = "region"
         self.fields['administrative_region_value'].widget.attrs['class'] = "hidden"
 
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        if 'administrative_region' in document and document['administrative_region']:
+        if document.get('administrative_region'):
             administrative_id = document['administrative_region']['administrative_id']
             self.fields['administrative_region_value'].initial = administrative_id
-            self.fields['administrative_region'].initial = get_base_administrative_id(adl_db, administrative_id)
+            from grm.utils import get_base_administrative_id_using_mis
+            self.fields['administrative_region'].initial = get_base_administrative_id_using_mis(administrative_id)
 
-        if 'location_info' in document and 'location_description' in document['location_info'] and document['location_info']['location_description']:
+        if 'location_info' in document and document['location_info'] and document['location_info'].get('location_description'):
             self.fields['location_description'].initial = document['location_info']['location_description']
-            
-        if 'structure_in_charge' in document:
-            if 'name' in document['structure_in_charge'] and  document['structure_in_charge']['name']:
+
+        if document.get('structure_in_charge'):
+            if document['structure_in_charge'].get('name'):
                 self.fields['structure_in_charge'].initial = document['structure_in_charge']['name']
-            if 'phone' in document['structure_in_charge'] and  document['structure_in_charge']['phone']:
+            if document['structure_in_charge'].get('phone'):
                 self.fields['structure_in_charge_phone'].initial = document['structure_in_charge']['phone']
-            if 'email' in document['structure_in_charge'] and  document['structure_in_charge']['email']:
+            if document['structure_in_charge'].get('email'):
                 self.fields['structure_in_charge_email'].initial = document['structure_in_charge']['email']
 
 
@@ -237,7 +216,6 @@ class SearchIssueForm(forms.Form):
     code = forms.CharField(label=_('ID Number / Access Code'))
     assigned_to = forms.ChoiceField()
     category = forms.ChoiceField()
-    # type = forms.ChoiceField()
     status = forms.ChoiceField()
     administrative_region = forms.ChoiceField()
     other = forms.ChoiceField()
@@ -246,28 +224,33 @@ class SearchIssueForm(forms.Form):
 
     wave = forms.ChoiceField()
 
+    # Filtre du dashboard/diagnostics (#region-stats-container) : à quel niveau administratif
+    # regrouper les statistiques, indépendamment du "drill-down" par `administrative_region` —
+    # cf. dashboard/diagnostics/views.py::IssuesStatisticsView.ADMINISTRATIVE_LEVEL_TYPES.
+    administrative_level_type = forms.ChoiceField(
+        label=_('Administrative level'), required=False,
+        choices=[(t, _(t)) for t in ('Region', 'Prefecture', 'Commune', 'Canton', 'Village')],
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
+        self.fields['administrative_level_type'].initial = 'Region'
 
         self.fields['start_date'].widget.attrs['class'] = self.fields['end_date'].widget.attrs[
             'class'] = 'form-control datetimepicker-input'
         self.fields['start_date'].widget.attrs['data-target'] = '#start_date'
         self.fields['end_date'].widget.attrs['data-target'] = '#end_date'
         self.fields['assigned_to'].widget.choices = get_government_worker_choices()
-        self.fields['category'].widget.choices = get_issue_category_choices(grm_db)
-        # self.fields['type'].widget.choices = get_issue_type_choices(grm_db)
-        self.fields['status'].widget.choices = get_issue_status_choices(grm_db)
+        self.fields['category'].widget.choices = get_issue_category_choices()
+        self.fields['status'].widget.choices = get_issue_status_choices()
         self.fields['other'].widget.choices = [('', ''), ('Escalate', _('Escalated'))]
         self.fields['reported_by'].widget.choices = get_government_worker_choices()
         self.fields['publish'].widget.choices = [('', ''), (True, _('Publish')), (False, _('Unpublish'))]
         self.fields['wave'].widget.choices = [('', '')] + [(w.id, w.description) for w in Wave.objects.all()]
 
-        adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-        label = get_administrative_regions_by_level(adl_db)[0]['administrative_level'].title()
+        label = get_administrative_regions_by_level_using_mis()[0]['administrative_level'].title()
         self.fields['administrative_region'].label = label
-        self.fields['administrative_region'].widget.choices = get_administrative_region_choices(adl_db)
+        self.fields['administrative_region'].widget.choices = get_administrative_region_choices_using_mis()
         self.fields['administrative_region'].widget.attrs['class'] = "region"
 
 
@@ -276,13 +259,11 @@ class IssueDetailsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc')
         super().__init__(*args, **kwargs)
 
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
         self.fields['assignee'].widget.choices = get_government_worker_choices(True)
 
-        document = grm_db[doc_id]
         if type(document['assignee']) == dict:
             self.fields['assignee'].initial = document['assignee']['id']
 
@@ -310,16 +291,17 @@ class IssueReasonCommentForm(forms.Form):
 
 
 class IssueOpenStatusForm(forms.Form):
-    open_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+    open_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}), required=False)
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc') if initial else None
         super().__init__(*args, **kwargs)
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        self.fields['open_reason'].initial = document['open_reason'] if 'open_reason' in document else ''
+        # Le texte n'est plus pré-rempli en réouvrant cette modale (cf. simplification documentée
+        # dans dashboard/grm/serializers.py::_IGNORED_ON_SAVE — `open_reason` n'a pas de colonne
+        # Postgres dédiée, le texte reste néanmoins conservé de façon permanente dans l'historique
+        # de statut/commentaire).
+        self.fields['open_reason'].initial = ''
 
 
 class IssueResearchResultForm(forms.Form):
@@ -327,21 +309,18 @@ class IssueResearchResultForm(forms.Form):
     file_pdf = forms.FileField(label=_('Attach PV of reconciliation'), help_text=_('Allowed file size less than or equal to 2 MB'), required=True)
     issue_password = forms.CharField(label='', max_length=7, min_length=7, required=False,
                                             widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
-    
+
     default_error_messages = {
         'file_size': _('Select a file size less than or equal to %(max_size)s. The selected file size is %(size)s.')}
-    
+
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc') if initial else None
         super().__init__(*args, **kwargs)
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
+        self.fields['research_result'].initial = document['research_result'] if document and document.get('research_result') else ''
 
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        self.fields['research_result'].initial = document['research_result'] if 'research_result' in document else ''
-    
     def clean_file_pdf(self):
         max_upload_size = settings.MAX_UPLOAD_SIZE
         value = self.cleaned_data.get('file_pdf')
@@ -351,41 +330,34 @@ class IssueResearchResultForm(forms.Form):
                     'max_size': filesizeformat(max_upload_size),
                     'size': filesizeformat(value.size)})
         return value
-    
+
 class IssueSetUnresolvedForm(forms.Form):
     unresolved_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        self.fields['unresolved_reason'].initial = document['unresolved_reason'] if 'unresolved_reason' in document else ''
+        # cf. IssueOpenStatusForm : pas de pré-remplissage (simplification documentée).
+        self.fields['unresolved_reason'].initial = ''
 
 class IssueIssueEscalateForm(forms.Form):
     escalate_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
-    file_pdf = forms.FileField(label=_('Attach the complaint transfer file to the top level'), 
-                               help_text=_('Allowed file size less than or equal to 2 MB'), required=False)
+    file_pdf = forms.FileField(label=_('Attach the complaint transfer file to the top level'),
+                               help_text=_('Allowed file size less than or equal to 2 MB'), required=True)
     issue_password = forms.CharField(label='', max_length=7, min_length=7, required=False,
                                             widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
-    
+
     default_error_messages = {
         'file_size': _('Select a file size less than or equal to %(max_size)s. The selected file size is %(size)s.')}
-    
+
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
+        # cf. IssueOpenStatusForm : pas de pré-remplissage (simplification documentée).
+        self.fields['escalate_reason'].initial = ''
 
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        self.fields['escalate_reason'].initial = document['escalate_reason'] if 'escalate_reason' in document else ''
-    
     def clean_file_pdf(self):
         max_upload_size = settings.MAX_UPLOAD_SIZE
         value = self.cleaned_data.get('file_pdf')
@@ -402,19 +374,14 @@ class IssueIssuePublishForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc') if initial else None
         super().__init__(*args, **kwargs)
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        self.fields['issue_description'].initial = document['description'] if 'description' in document else ''
+        self.fields['issue_description'].initial = document['description'] if document and document.get('description') else ''
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view original description")+'</span>'
 
 class IssueIssueUnpublishForm(forms.Form):
-    
+
     def __init__(self, *args, **kwargs):
-        initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
 
 
@@ -424,12 +391,9 @@ class IssueRejectReasonForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
         super().__init__(*args, **kwargs)
-
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        document = grm_db[doc_id]
-        self.fields['reject_reason'].initial = document['reject_reason'] if 'reject_reason' in document else ''
+        # cf. IssueOpenStatusForm : pas de pré-remplissage (simplification documentée).
+        self.fields['reject_reason'].initial = ''
 
 
 class IssueCategoryForm(forms.Form):
@@ -437,17 +401,14 @@ class IssueCategoryForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
-        doc_id = initial.get('doc_id')
+        document = initial.get('doc')
         user = initial.get('user')
         super().__init__(*args, **kwargs)
 
-        grm_db = get_db(COUCHDB_GRM_DATABASE)
-        categories = get_issue_category_choices(grm_db)
+        categories = get_issue_category_choices()
         categories = [cat for cat in categories if (str(cat[0]) not in ('4', '7')) or (str(cat[0]) in ('4', '7') and user.groups.filter(name="Privacy").exists())]
         self.fields['category'].widget.choices = categories
         self.fields['category'].choices = categories
-        
-        document = grm_db[doc_id]
-        
+
         if 'category' in document and document['category']:
             self.fields['category'].initial = document['category']['id']

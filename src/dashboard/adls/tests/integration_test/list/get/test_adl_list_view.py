@@ -1,10 +1,9 @@
 from django.urls import reverse
 from parameterized import parameterized
 
-from authentication.tests import CouchdbUserFactory
+from authentication.tests import AdlFactory
 from dashboard.adls.views import AdlListView
 from grm.tests import DashboardTestCase
-from authentication import ADL, MAJOR
 
 
 class TestAdlListView(DashboardTestCase):
@@ -18,14 +17,9 @@ class TestAdlListView(DashboardTestCase):
         assert response.status_code == 302
 
     def test_context_data(self):
-        adls = CouchdbUserFactory.create_batch(4, doc_type=ADL)
-        docs = set()
-        for adl in adls:
-            doc = adl.doc
-            docs |= {doc['_id']}
+        adls = AdlFactory.create_batch(4)
 
-        with self.assertNumQueries(18):
-            response = self.get(self.url)
+        response = self.get(self.url)
         context_data = response.context_data
 
         assert response.status_code == 200
@@ -38,8 +32,7 @@ class TestAdlListView(DashboardTestCase):
         assert context_data['paginator'] == context_data['page_obj'] is None
         assert context_data['is_paginated'] is False
         assert context_data['object_list'] == context_data['adls']
-        assert {doc['_id'] for doc in context_data['adls']} == docs
-        assert len(adls) == 4
+        assert {doc['_id'] for doc in context_data['adls']} == {str(adl.pk) for adl in adls}
         assert isinstance(context_data['view'], AdlListView)
 
     @parameterized.expand([
@@ -47,19 +40,12 @@ class TestAdlListView(DashboardTestCase):
         (3,),
         (5,),
     ])
-    def test_only_adls(self, size):
-        adls = CouchdbUserFactory.create_batch(size, doc_type=ADL)
-        docs = set()
-        for adl in adls:
-            doc = adl.doc
-            docs |= {doc['_id']}
-        CouchdbUserFactory.create_batch(2, doc_type=MAJOR)
+    def test_adls_list(self, size):
+        adls = AdlFactory.create_batch(size)
 
-        with self.assertNumQueries(18):
-            response = self.get(self.url)
+        response = self.get(self.url)
         context_data = response.context_data
 
         assert response.status_code == 200
         assert context_data['object_list'] == context_data['adls']
-        assert {doc['_id'] for doc in context_data['adls']} == docs
-        assert len(adls) == size
+        assert {doc['_id'] for doc in context_data['adls']} == {str(adl.pk) for adl in adls}

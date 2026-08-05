@@ -1,0 +1,44 @@
+{% load i18n %}
+{% comment %}
+Modal de prévisualisation de pièce jointe (photo/PDF/audio/vidéo/autre), réutilisé partout où des
+liens de pièces jointes sont affichés — remplace l'ouverture dans un nouvel onglet (target=_blank).
+Un seul exemplaire de ce partial doit être inclus par page, dans son bloc "modals" ; les liens de
+pièces jointes, eux, portent la classe attachment-link et un attribut data-filename, y compris dans
+les fragments chargés en AJAX (issue_attachments*.html, issue_status_buttons.html) — la délégation
+d'événement ci-dessous (document.on click) les couvre donc aussi, sans réinitialisation nécessaire
+après un .load().
+{% endcomment %}
+<div class="modal fade" id="attachmentPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-truncate" id="attachmentPreviewModalLabel">&nbsp;</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center" id="attachmentPreviewModalBody"></div>
+            <div class="modal-footer">
+                <a href="#" id="attachmentPreviewDownloadLink" class="btn btn-outline-primary" download rel="noopener">
+                    <i class="fas fa-download mr-1"></i>{% translate "Download" %}
+                </a>
+                <a href="#" id="attachmentPreviewOpenLink" class="btn btn-outline-secondary" target="_blank" rel="noopener">
+                    <i class="fas fa-external-link-alt mr-1"></i>{% translate "Open in new tab" %}
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% translate "Close" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% comment %}
+Messages affichés par js/attachment_preview_modal.js — définis ici plutôt que codés en dur dans le
+fichier JS statique pour rester traduisibles via i18n.
+{% endcomment %}
+<script>
+    // Format connu pour n'être jamais lisible dans un navigateur (ex. 3GP/AMR des enregistrements
+    // vocaux de l'app mobile) — affiché immédiatement, sans même tenter la lecture.
+    var attachmentPreviewFormatUnsupportedMessage = "{% translate 'Please download the file and open it with a media player on your computer.' %}";
+    // Filet de sécurité générique si un format a priori lisible échoue quand même à charger
+    // (fichier corrompu, extension mal détectée...).
+    var attachmentPreviewGenericErrorMessage = "{% translate 'This file cannot be played in the browser. Please download it instead.' %}";
+</script>

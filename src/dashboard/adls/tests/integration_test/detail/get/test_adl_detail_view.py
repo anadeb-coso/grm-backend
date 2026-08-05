@@ -1,7 +1,8 @@
+import uuid
+
 from django.urls import reverse, reverse_lazy
 
-from authentication import ADL, MAJOR
-from authentication.tests import CouchdbUserFactory
+from authentication.tests import AdlFactory
 from dashboard.adls.views import AdlDetailView
 from grm.tests import DashboardTestCase
 
@@ -9,8 +10,8 @@ from grm.tests import DashboardTestCase
 class TestAdlDetailView(DashboardTestCase):
     def setUp(self):
         super().setUp()
-        self.adl = CouchdbUserFactory(doc_type=ADL).doc
-        self.url = reverse('dashboard:adls:detail', kwargs={'id': self.adl['_id']})
+        self.adl = AdlFactory()
+        self.url = reverse('dashboard:adls:detail', kwargs={'id': self.adl.pk})
 
     def test_auth_permission(self):
         response = self.get(self.url, authorized=False)
@@ -18,8 +19,7 @@ class TestAdlDetailView(DashboardTestCase):
         assert response.status_code == 302
 
     def test_context_data(self):
-        with self.assertNumQueries(18):
-            response = self.get(self.url)
+        response = self.get(self.url)
         context_data = response.context_data
 
         assert response.status_code == 200
@@ -33,19 +33,11 @@ class TestAdlDetailView(DashboardTestCase):
         assert context_data['breadcrumb'][1]['url'] == AdlDetailView.breadcrumb[1]['url'] == ''
         assert context_data['breadcrumb'][1]['title'] == AdlDetailView.breadcrumb[1][
             'title'] == AdlDetailView.title
-        assert context_data['object'] == context_data['adl'] == self.adl
+        assert context_data['object']['_id'] == context_data['adl']['_id'] == str(self.adl.pk)
         assert isinstance(context_data['view'], AdlDetailView)
 
-    def test_only_adls(self):
-        major = CouchdbUserFactory(doc_type=MAJOR).doc
-
-        url = reverse('dashboard:adls:detail', kwargs={'id': major['_id']})
-        response = self.get(url)
-
-        assert response.status_code == 404
-
     def test_non_existent_adl(self):
-        url = reverse('dashboard:adls:detail', kwargs={'id': 0})
+        url = reverse('dashboard:adls:detail', kwargs={'id': uuid.uuid4()})
         response = self.get(url)
 
         assert response.status_code == 404

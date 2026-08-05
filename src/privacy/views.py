@@ -17,9 +17,9 @@ class GetLastCategoryPasswordView(AJAXRequestMixin, LoginRequiredMixin, JSONResp
     
 
 class ValidatedMyPasswordByLastCategoryPasswordView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):
-    def get(self, request, *args, **kwargs):
-        category_id = request.GET.get('category_id')
-        password = request.GET.get('password')
+    def post(self, request, *args, **kwargs):
+        category_id = request.POST.get('category_id')
+        password = request.POST.get('password')
         
         last_category_password = get_last_category_password(category_id)
         

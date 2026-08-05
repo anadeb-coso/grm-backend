@@ -9,16 +9,16 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic
 from django.forms import Form
 
-from authentication import ADL
 from authentication.models import User, GovernmentWorker
 from authentication.utils import get_validation_code
 from authentication.functions import send_code_by_mail
-from client import COUCHDB_ATTACHMENT_DATABASE, get_db, upload_file
 from dashboard.adls.forms import AdlProfileForm, PasswordConfirmForm, GovernmentWorkerAdlProfileForm, CreateAdlProfileForm
+from dashboard.adls.serializers import adl_to_legacy_dict
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
 from authentication.permissions import SpecificPermissionRequiredMixin, AdminPermissionRequiredMixin
 from administrativelevels.models import AdministrativeLevel
 from grm.call_objects_from_other_db import mis_objects_call
+from issue.models import Adl
 
 
 class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin, generic.ListView):
@@ -34,8 +34,7 @@ class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin
     ]
 
     def get_queryset(self):
-        eadl_db = get_db()
-        return eadl_db.get_query_result({"type": {"$eq": ADL}})
+        return [adl_to_legacy_dict(a) for a in Adl.objects.select_related('representative').all()]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -45,15 +44,14 @@ class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin
 
 class ADLMixin(SpecificPermissionRequiredMixin, object):
     doc = None
+    adl = None
 
     def dispatch(self, request, *args, **kwargs):
-        eadl_db = get_db()
         try:
-            self.doc = eadl_db[kwargs['id']]
-            if self.doc['type'] != ADL:
-                raise Http404
-        except Exception:
+            self.adl = Adl.objects.select_related('representative').get(pk=kwargs['id'])
+        except (Adl.DoesNotExist, ValueError, Exception):
             raise Http404
+        self.doc = adl_to_legacy_dict(self.adl)
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -62,7 +60,6 @@ class AdlDetailView(ADLMixin, PageMixin, LoginRequiredMixin, generic.DetailView)
     context_object_name = 'adl'
     title = _('Facilitator Profile')
     active_level1 = 'adls'
-    model = User
     breadcrumb = [
         {
             'url': reverse_lazy('dashboard:adls:list'),
@@ -78,7 +75,7 @@ class AdlDetailView(ADLMixin, PageMixin, LoginRequiredMixin, generic.DetailView)
         context = super().get_context_data(**kwargs)
         context['password_confirm_form'] = PasswordConfirmForm()
         context['government_worker_form'] = GovernmentWorkerAdlProfileForm(
-            initial = {'doc_id': self.doc['_id']}
+            initial={'doc_id': self.doc['_id']}
         )
         return context
 
@@ -90,13 +87,13 @@ class ToggleAdlStatusView(SpecificPermissionRequiredMixin, LoginRequiredMixin, g
 
     def post(self, request, *args, **kwargs):
         doc_id = kwargs['id']
-        eadl_db = get_db()
         try:
-            document = eadl_db[doc_id]
-            if document['type'] != ADL:
+            adl = Adl.objects.select_related('representative').get(pk=doc_id)
+            representative = adl.representative
+            if representative is None:
                 raise Http404
 
-            if document['representative']['is_active']:
+            if representative.is_active:
                 form = PasswordConfirmForm(request.POST)
                 if not form.is_valid():
                     raise PermissionDenied()
@@ -106,33 +103,33 @@ class ToggleAdlStatusView(SpecificPermissionRequiredMixin, LoginRequiredMixin, g
                 if not current_user.check_password(password):
                     raise PermissionDenied()
 
-                document['representative']['is_active'] = False
-                document.save()
+                representative.is_active = False
+                representative.save(update_fields=['is_active'])
                 msg = _("The account was successfully deactivated.")
                 messages.add_message(request, messages.SUCCESS, msg, extra_tags='success')
             else:
-                document['representative']['is_active'] = True
-                document.save()
+                representative.is_active = True
+                representative.save(update_fields=['is_active'])
                 msg = _("The account was activated successfully.")
                 messages.add_message(request, messages.SUCCESS, msg, extra_tags='success')
 
         except PermissionDenied:
             msg = _("The password was not correct, we could not proceed with action.")
             messages.add_message(request, messages.ERROR, msg, extra_tags='danger')
-        except Exception:
+        except Adl.DoesNotExist:
             raise Http404
 
         return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[doc_id]))
 
 
 class CreateAdlGovernmentWorkerProfileFormView(LoginRequiredMixin, generic.View):
-    
+
     def _administrative_ids(self, ids, _id=None):
         if not ids:
             ids = []
-        if _id and not _id in ids:
+        if _id and _id not in ids:
             ids.append(_id)
-        
+
         """Search all villages with same cvd"""
         all_adl_on_cvd = []
         for _id in ids:
@@ -143,19 +140,16 @@ class CreateAdlGovernmentWorkerProfileFormView(LoginRequiredMixin, generic.View)
                         all_adl_on_cvd.append(str(_village.id))
             else:
                 all_adl_on_cvd.append(_id)
-        
+
         return list(set(all_adl_on_cvd))
-    
 
     def post(self, request, *args, **kwargs):
-        eadl_db = get_db()
-        
         try:
 
             form = CreateAdlProfileForm(request.POST)
             if not form.is_valid():
                 raise PermissionDenied()
-            
+
             data = form.cleaned_data
             email = data['email']
             first_name = data['first_name']
@@ -181,7 +175,7 @@ class CreateAdlGovernmentWorkerProfileFormView(LoginRequiredMixin, generic.View)
                     governmentworker.department = 1
 
                 governmentworker.administrative_id = data['administrative_level']
-                
+
                 if data['administrative_level'] != "1":
                     governmentworker.administrative_ids = self._administrative_ids(data['administrative_levels'], data['administrative_level'])
                     governmentworker.additional_administrative_ids = self._administrative_ids(data['additional_administrative_ids'])
@@ -193,11 +187,15 @@ class CreateAdlGovernmentWorkerProfileFormView(LoginRequiredMixin, generic.View)
 
                 msg = _("The account has been successfully created.")
                 messages.add_message(request, messages.SUCCESS, msg, extra_tags='success')
-                
-                return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[
-                    eadl_db.get_query_result({"type": "adl", "representative.id": user.id})[0][0]["_id"]
-                ]))
-            
+
+                # Un nouveau compte "agent" (GovernmentWorker) n'a pas nécessairement de profil
+                # `Adl` (facilitateur terrain) associé — contrairement à l'ancien code CouchDB qui
+                # supposait toujours l'existence d'un document `adl` correspondant (risque de
+                # crash sinon). On redirige vers le profil s'il existe, sinon vers la liste.
+                existing_adl = Adl.objects.filter(representative_id=user.id).first()
+                if existing_adl:
+                    return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[str(existing_adl.pk)]))
+
             else:
                 msg = _("There is already a user with this email address.")
                 messages.add_message(request, messages.ERROR, msg, extra_tags='success')
@@ -208,10 +206,10 @@ class CreateAdlGovernmentWorkerProfileFormView(LoginRequiredMixin, generic.View)
 
         except Exception as exc:
             messages.add_message(request, messages.ERROR, exc.__str__(), extra_tags='danger')
-        
+
         return HttpResponseRedirect(reverse('dashboard:adls:list'))
 
-    
+
 class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, JSONResponseMixin,
                              generic.FormView):
     form_class = AdlProfileForm
@@ -221,7 +219,7 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
     submit_button = _('Save')
 
     def get_context_data(self, **kwargs):
-        picture = self.doc["representative"]["photo"] if "photo" in self.doc["representative"] else ""
+        picture = self.doc['representative']['photo'] if self.doc.get('representative') else ""
         if picture:
             self.picture = picture
         context = super().get_context_data(**kwargs)
@@ -233,67 +231,56 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
 
     def form_valid(self, form):
         data = form.cleaned_data
-        doc = self.doc
-        photo = doc["representative"]["photo"] if "photo" in doc["representative"] else ""
+        user = self.adl.representative
+        if user is None:
+            raise Http404
+
+        photo_url = user.photo.url if user.photo else ''
         if data['file']:
-            response = upload_file(data['file'])
-            if response['ok']:
-                if photo:
-                    attachment_db = get_db(COUCHDB_ATTACHMENT_DATABASE)
-                    try:
-                        attachment_id = photo.split('/')[2]
-                        attachment_db[attachment_id].delete()
-                    except Exception:
-                        pass
-                photo = f'/attachments/{response["id"]}/{data["file"].name}'
-                doc["representative"]["photo"] = photo
-            else:
-                msg = _("An error has occurred that did not allow the profile picture to be uploaded to the database. "
-                        "Please report to IT staff.")
-                messages.add_message(self.request, messages.ERROR, msg, extra_tags='danger')
-        doc['representative']['name'] = data['name']
-        doc['representative']['phone'] = data['phone']
+            user.photo = data['file']
+            photo_url = None  # renseigné après save()
+
+        user.first_name = ' '.join(data['name'].split(' ')[:-1]) or data['name']
+        user.last_name = data['name'].split(' ')[-1] if ' ' in data['name'] else ''
+        user.phone_number = data['phone']
+
         email = data['email'].lower()
         adl_code = get_validation_code(email)
-        if doc['representative']['email'] != email:
+        if user.email != email:
             msg = _("Please note that the Facilitator Code has changed due to the email change.")
             messages.add_message(self.request, messages.INFO, msg, extra_tags='info')
-        doc['representative']['email'] = email
-        doc.save()
-        
-        """Edit User"""
-        user = User.objects.filter(id=doc['representative']['id']).first()
-        if user:
-            user.email = doc['representative']['email']
-            user.photo = doc['representative']['photo']
-            user.phone_number = doc['representative']['phone']
-            
-            last_name = doc['representative']['name'].split(' ')[-1]
-            first_name = ' '.join(doc['representative']['name'].split(' ')[:-1])
-            user.first_name = first_name
-            user.last_name = last_name
-            
-            user.save()
+        user.email = email
+        user.save()
+
+        if photo_url is None:
+            photo_url = user.photo.url if user.photo else ''
+
+        # `Adl.representative_name` est un cache dénormalisé (utilisé côté sync mobile) — on le
+        # garde synchronisé avec le nom réel de l'utilisateur.
+        self.adl.representative_name = data['name']
+        # `updated_at` explicitement listé : `save(update_fields=...)` n'applique `auto_now` que
+        # pour les champs listés — sans lui, ce renommage restait invisible au pull mobile
+        # (référentiel `adls`, lecture seule côté mobile).
+        self.adl.save(update_fields=['representative_name', 'updated_at'])
 
         msg = _("The profile information was successfully edited.")
         messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         context = {
             'msg': render(self.request, 'common/messages.html').content.decode("utf-8"),
             'adl_code': adl_code,
-            'photo': photo,
+            'photo': photo_url,
         }
         return self.render_to_json_response(context, safe=False)
 
 
-
 class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, LoginRequiredMixin, generic.View):
-    
+
     def _administrative_ids(self, ids, _id=None):
         if not ids:
             ids = []
-        if _id and not _id in ids:
+        if _id and _id not in ids:
             ids.append(_id)
-        
+
         """Search all villages with same cvd"""
         all_adl_on_cvd = []
         for _id in ids:
@@ -304,26 +291,24 @@ class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, Lo
                         all_adl_on_cvd.append(str(_village.id))
             else:
                 all_adl_on_cvd.append(_id)
-        
+
         return list(set(all_adl_on_cvd))
-    
 
     def post(self, request, *args, **kwargs):
         doc_id = kwargs['id']
-        eadl_db = get_db()
-        
+
         try:
-            user_doc = eadl_db[doc_id]
-            if user_doc['type'] != ADL:
+            adl = Adl.objects.select_related('representative').get(pk=doc_id)
+            if adl.representative is None:
                 raise Http404
 
             form = GovernmentWorkerAdlProfileForm(
-                request.POST, initial = {'doc_id': doc_id}
+                request.POST, initial={'doc_id': doc_id}
             )
             if not form.is_valid():
                 raise PermissionDenied()
-            
-            user_obj = User.objects.get(id=user_doc['representative']['id'])
+
+            user_obj = adl.representative
             data = form.cleaned_data
             if hasattr(user_obj, 'governmentworker'):
                 governmentworker = GovernmentWorker.objects.get(id=user_obj.governmentworker.id)
@@ -333,7 +318,7 @@ class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, Lo
                 governmentworker.department = 1
 
             governmentworker.administrative_id = data['administrative_level']
-            
+
             governmentworker.administrative_ids = self._administrative_ids(data['administrative_levels'], data['administrative_level'])
             governmentworker.additional_administrative_ids = self._administrative_ids(data['additional_administrative_ids'])
 
@@ -345,15 +330,13 @@ class EditAdlGovernmentWorkerProfileFormView(SpecificPermissionRequiredMixin, Lo
         except PermissionDenied:
             msg = _("An error has occurred...")
             messages.add_message(request, messages.ERROR, msg, extra_tags='danger')
-        except Exception:
+        except Adl.DoesNotExist:
             raise Http404
 
         return HttpResponseRedirect(reverse('dashboard:adls:detail', args=[doc_id]))
 
-    
 
-
-class SendUserCodeConfirmationView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin, 
+class SendUserCodeConfirmationView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRequiredMixin,
                                    JSONResponseMixin, generic.FormView):
     form_class = Form
     title = _('Send the confirmation code to this user')
@@ -363,16 +346,16 @@ class SendUserCodeConfirmationView(ADLMixin, AJAXRequestMixin, ModalFormMixin, L
 
     def post(self, request, *args, **kwargs):
         try:
+            email = self.doc['representative']['email']
             send_code_by_mail(
-                User.objects.get(email=self.doc['representative']['email']), 
-                get_validation_code(self.doc['representative']['email'])
-            ) # Send user account code on their Email
+                User.objects.get(email=email),
+                get_validation_code(email)
+            )  # Send user account code on their Email
             msg = _("Code was successfully sent.")
             messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
-        except:
+        except Exception:
             msg = _("An error occurred during transmission.")
             messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
 
-        
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)

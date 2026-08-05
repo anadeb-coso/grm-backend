@@ -1,9 +1,7 @@
-from django.conf import settings
 from parameterized import parameterized
 from rest_framework.reverse import reverse
 
-from authentication import ADL, MAJOR
-from authentication.tests import CouchdbUserFactory
+from authentication.tests import GovernmentWorkerFactory, UserFactory
 from authentication.utils import get_validation_code
 from grm.tests import BaseTestCase
 
@@ -14,6 +12,8 @@ class TestRegisterAPIView(BaseTestCase):
         'credentials': 'Unable to register with provided credentials.',
         'duplicated_email': 'A user with that email is already registered.',
         'wrong_validation_code': 'Unable to register with provided validation code.',
+        'not_found_email': 'A user with that email has not been found registered.',
+        'no_administrative_level_affected': 'No administrative level affected. Contact your superior.',
         'is_required': 'This field is required.',
         'may_not_be_blank': 'This field may not be blank.',
         'min_length': "This password is too short. It must contain at least %(min_length)d characters.",
@@ -25,35 +25,26 @@ class TestRegisterAPIView(BaseTestCase):
         super().setUp()
         self.url = reverse('authentication:register')
 
-    @parameterized.expand([
-        (ADL,),
-        (MAJOR,),
-    ])
-    def test_successful_register(self, doc_type):
-        user = CouchdbUserFactory(doc_type=doc_type)
-        doc = user.doc
+    def test_successful_register(self):
+        worker = GovernmentWorkerFactory()
+        user = worker.user
         input_data = {
             'password': ''.join(['p' for _ in range(16)]),
             'email': user.email,
             'validation_code': get_validation_code(user.email),
         }
 
-        with self.assertNumQueries(7):
-            response = self.post(self.url, input_data, authorized=False)
+        response = self.post(self.url, input_data, authorized=False)
         data = response.data
 
         assert response.status_code == 201
-        assert len(data) == 3
-        assert data['username'] == settings.COUCHDB_USERNAME
-        assert data['password'] == settings.COUCHDB_PASSWORD
-        assert data['doc_id'] == doc['_id']
+        assert len(data) == 2
+        assert data['doc_id'] == str(user.id)
 
-    @parameterized.expand([
-        ('commune',),
-        (None,),
-    ])
-    def test_invalid_type(self, doc_type):
-        user = CouchdbUserFactory(doc_type=doc_type)
+    def test_no_administrative_level(self):
+        # `User` sans `GovernmentWorker` rattaché : `user.administrative_level` (propriété) est
+        # None, l'inscription doit échouer avec le même message que l'ancien code CouchDB.
+        user = UserFactory()
         input_data = {
             'password': ''.join(['p' for _ in range(16)]),
             'email': user.email,
@@ -65,7 +56,21 @@ class TestRegisterAPIView(BaseTestCase):
 
         assert response.status_code == 400
         assert len(data) == 1
-        assert str(data['non_field_errors'][0]) == self.error_messages['credentials']
+        assert str(data['non_field_errors'][0]) == self.error_messages['no_administrative_level_affected']
+
+    def test_no_user_for_email(self):
+        input_data = {
+            'password': ''.join(['p' for _ in range(16)]),
+            'email': 'not-registered@example.com',
+            'validation_code': get_validation_code('not-registered@example.com'),
+        }
+
+        response = self.post(self.url, input_data, authorized=False)
+        data = response.data
+
+        assert response.status_code == 400
+        assert len(data) == 1
+        assert str(data['non_field_errors'][0]) == self.error_messages['not_found_email']
 
     def test_empty_field(self):
         input_data = {
@@ -92,7 +97,8 @@ class TestRegisterAPIView(BaseTestCase):
             assert str(data[k][0]) == self.error_messages['is_required']
 
     def test_inactive_user(self):
-        inactive_user = CouchdbUserFactory(is_active=False)
+        inactive_worker = GovernmentWorkerFactory(user__is_active=False)
+        inactive_user = inactive_worker.user
         input_data = {
             'password': ''.join(['p' for _ in range(16)]),
             'email': inactive_user.email,
@@ -107,12 +113,12 @@ class TestRegisterAPIView(BaseTestCase):
         assert str(data['non_field_errors'][0]) == self.error_messages['credentials']
 
     def test_invalid_validation_code(self):
-        user = CouchdbUserFactory(doc_type=ADL)
-        other_user = CouchdbUserFactory(doc_type=ADL)
+        worker = GovernmentWorkerFactory()
+        other_worker = GovernmentWorkerFactory()
         input_data = {
             'password': ''.join(['p' for _ in range(16)]),
-            'email': user.email,
-            'validation_code': get_validation_code(other_user.email),
+            'email': worker.user.email,
+            'validation_code': get_validation_code(other_worker.user.email),
         }
 
         response = self.post(self.url, input_data, authorized=False)
@@ -123,11 +129,11 @@ class TestRegisterAPIView(BaseTestCase):
         assert str(data['non_field_errors'][0]) == self.error_messages['wrong_validation_code']
 
     def test_short_password(self):
-        user = CouchdbUserFactory()
+        worker = GovernmentWorkerFactory()
         input_data = {
             'password': ''.join(['p' for _ in range(7)]),
-            'email': user.email,
-            'validation_code': get_validation_code(user.email),
+            'email': worker.user.email,
+            'validation_code': get_validation_code(worker.user.email),
         }
 
         response = self.post(self.url, input_data, authorized=False)
@@ -138,11 +144,11 @@ class TestRegisterAPIView(BaseTestCase):
         assert str(data['password'][0]) == self.error_messages['min_length'] % {'min_length': 8}
 
     def test_long_password(self):
-        user = CouchdbUserFactory()
+        worker = GovernmentWorkerFactory()
         input_data = {
             'password': ''.join(['p' for _ in range(17)]),
-            'email': user.email,
-            'validation_code': get_validation_code(user.email),
+            'email': worker.user.email,
+            'validation_code': get_validation_code(worker.user.email),
         }
 
         response = self.post(self.url, input_data, authorized=False)
@@ -153,11 +159,11 @@ class TestRegisterAPIView(BaseTestCase):
         assert str(data['password'][0]) == self.error_messages['max_length'] % {'max_length': 16}
 
     def test_numeric_password(self):
-        user = CouchdbUserFactory()
+        worker = GovernmentWorkerFactory()
         input_data = {
             'password': '12345678',
-            'email': user.email,
-            'validation_code': get_validation_code(user.email),
+            'email': worker.user.email,
+            'validation_code': get_validation_code(worker.user.email),
         }
 
         response = self.post(self.url, input_data, authorized=False)
@@ -168,11 +174,11 @@ class TestRegisterAPIView(BaseTestCase):
         assert str(data['password'][0]) == self.error_messages['password_entirely_numeric']
 
     def test_user_is_already_register(self):
-        registered_user = CouchdbUserFactory(password='not_empty', doc_type=ADL)
+        worker = GovernmentWorkerFactory(user__password='not_empty')
         input_data = {
             'password': '123a5b78',
-            'email': registered_user.email,
-            'validation_code': get_validation_code(registered_user.email),
+            'email': worker.user.email,
+            'validation_code': get_validation_code(worker.user.email),
         }
 
         response = self.post(self.url, input_data, authorized=False)

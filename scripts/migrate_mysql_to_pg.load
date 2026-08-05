@@ -1,0 +1,22 @@
+-- Alternative à dumpdata/loaddata pour le transfert MySQL -> Postgres de l'app existante
+-- (CLAUDE.md §5.2). pgloader n'est pas disponible sous Windows dans cet environnement : ce
+-- fichier est fourni pour un environnement Linux/CI où pgloader est installable
+-- (`apt-get install pgloader`), en alternative plus rapide sur de gros volumes que
+-- dumpdata/loaddata (utilisé à la place dans cette session, voir scripts/verify_migration.py).
+
+LOAD DATABASE
+     FROM mysql://root:@localhost/grm
+     INTO postgresql://postgres:root@localhost/grm_db
+
+WITH include drop, create tables, create indexes, reset sequences,
+     workers = 4, concurrency = 1,
+     data only = false
+
+SET PostgreSQL PARAMETERS
+     maintenance_work_mem to '256MB',
+     work_mem to '128MB'
+
+CAST type tinyint to boolean using tinyint-to-boolean,
+     type datetime to timestamptz
+
+;

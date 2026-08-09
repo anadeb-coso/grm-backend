@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#: dashboard/grm/forms.py:49
+#: .\dashboard\grm\forms.py:54
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-23 23:35+0200\n"
+"POT-Creation-Date: 2026-08-07 12:46+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,677 +18,1278 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: attachments/serializers.py:22
+#: .\attachments\serializers.py:22
 msgid "Unauthorized access with the credentials provided."
 msgstr ""
 
-#: attachments/serializers.py:40 dashboard/forms/forms.py:11
+#: .\attachments\serializers.py:41 .\dashboard\forms\forms.py:14
+#: .\dashboard\grm\forms.py:314 .\dashboard\grm\forms.py:351
 #, python-format
 msgid ""
 "Select a file size less than or equal to %(max_size)s. The selected file "
 "size is %(size)s."
 msgstr ""
 
-#: authentication/models.py:21
-msgid "email address"
+#: .\authentication\admin.py:129 .\issue\admin.py:26
+msgid "The 'administrative levels' isn't validated"
 msgstr ""
 
-#: authentication/models.py:22 dashboard/grm/__init__.py:18
-msgid "phone number"
+#: .\authentication\api\auth\login.py:22
+msgid "Username or token is required"
 msgstr ""
 
-#: authentication/models.py:23
-msgid "photo"
+#: .\authentication\api\auth\login.py:24
+msgid "Password is required"
 msgstr ""
 
-#: authentication/models.py:40
-msgid "department"
+#: .\authentication\api\auth\login.py:28
+msgid "Invalid token"
 msgstr ""
 
-#: authentication/models.py:42
-msgid "administrative level"
+#: .\authentication\api\auth\login.py:36
+msgid "Your account is inactive"
 msgstr ""
 
-#: authentication/models.py:45
-msgid "Government Worker"
+#: .\authentication\api\auth\login.py:39
+msgid ""
+"Incorrect credentials. If you have recently changed your password on one of "
+"our platforms, we recommend that you log out and log back in to that "
+"application. Thanks!"
 msgstr ""
 
-#: authentication/models.py:46
-msgid "Government Workers"
+#: .\authentication\functions.py:11 .\authentication\functions.py:15
+msgid "Validation code for your GRM account"
 msgstr ""
 
-#: authentication/serializers.py:19 dashboard/authentication/forms.py:11
-#: dashboard/templates/adls/profile.html:51
+#: .\authentication\functions.py:15 .\dashboard\grm\functions.py:186
+#: .\dashboard\grm\functions.py:216 .\dashboard\grm\functions.py:247
+#: .\dashboard\grm\functions.py:294
+msgid "Title"
+msgstr ""
+
+#: .\authentication\functions.py:16 .\dashboard\authentication\forms.py:115
+#: .\dashboard\grm\functions.py:187 .\dashboard\grm\functions.py:217
+#: .\dashboard\grm\functions.py:248 .\dashboard\grm\functions.py:295
+msgid "Code"
+msgstr ""
+
+#: .\authentication\functions.py:17 .\dashboard\grm\functions.py:302
+msgid "Comment"
+msgstr ""
+
+#: .\authentication\functions.py:17
+msgid "Please do not share this code with anyone until it has been used."
+msgstr ""
+
+#: .\authentication\functions.py:20 .\dashboard\adls\forms.py:17
+#: .\dashboard\templates\adls\list.html:39
+#: .\dashboard\templates\grm\issue_detail.html:172
+msgid "Name"
+msgstr ""
+
+#: .\authentication\functions.py:21
+#: .\dashboard\templates\grm\issue_list.html:160
+msgid "Phone"
+msgstr ""
+
+#: .\authentication\functions.py:22 .\authentication\serializers.py:58
+#: .\dashboard\authentication\forms.py:18
+#: .\dashboard\authentication\forms.py:38
+#: .\dashboard\templates\adls\profile.html:64
 msgid "Email"
 msgstr ""
 
-#: authentication/serializers.py:21
+#: .\authentication\functions.py:25
+msgid "Please find below your account information."
+msgstr ""
+
+#: .\authentication\functions.py:26 .\dashboard\grm\functions.py:262
+msgid "Hello"
+msgstr ""
+
+#: .\authentication\functions.py:27 .\dashboard\grm\functions.py:263
+msgid "Mr./Mrs."
+msgstr ""
+
+#: .\authentication\models.py:30
+msgid "email address"
+msgstr ""
+
+#: .\authentication\models.py:31
+msgid "phone number"
+msgstr ""
+
+#: .\authentication\models.py:32
+msgid "photo"
+msgstr ""
+
+#: .\authentication\models.py:79
+msgid "department"
+msgstr ""
+
+#: .\authentication\models.py:81 .\dashboard\adls\forms.py:47
+#: .\dashboard\adls\forms.py:82
+#: .\dashboard\templates\grm\review_issues.html:517
+msgid "administrative level"
+msgstr ""
+
+#: .\authentication\models.py:82 .\issue\models.py:13
+msgid "administrative levels"
+msgstr ""
+
+#: .\authentication\models.py:83
+msgid "Additional administrative levels"
+msgstr ""
+
+#: .\authentication\models.py:86
+msgid "Government Worker"
+msgstr ""
+
+#: .\authentication\models.py:87
+msgid "Government Workers"
+msgstr ""
+
+#: .\authentication\models.py:134
+msgid "Country"
+msgstr ""
+
+#: .\authentication\permissions.py:54 .\authentication\permissions.py:73
+#: .\authentication\permissions.py:95 .\authentication\permissions.py:116
+#: .\authentication\permissions.py:137 .\authentication\permissions.py:158
+#: .\authentication\permissions.py:179 .\authentication\permissions.py:201
+#: .\authentication\permissions.py:222 .\authentication\permissions.py:243
+#: .\authentication\permissions.py:265 .\authentication\permissions.py:287
+msgid "Page not found"
+msgstr ""
+
+#: .\authentication\serializers.py:60 .\dashboard\adls\forms.py:13
+#: .\dashboard\authentication\forms.py:40 .\dashboard\forms\forms.py:10
+#: .\dashboard\grm\forms.py:24 .\dashboard\grm\forms.py:120
+#: .\dashboard\grm\forms.py:121 .\dashboard\grm\forms.py:275
+#: .\dashboard\grm\forms.py:286 .\dashboard\grm\forms.py:311
+#: .\dashboard\grm\forms.py:348 .\dashboard\grm\forms.py:373
+#: .\privacy\admin.py:34 .\privacy\models.py:12
 msgid "Password"
 msgstr ""
 
-#: authentication/serializers.py:28 authentication/serializers.py:75
+#: .\authentication\serializers.py:67 .\authentication\serializers.py:97
+#: .\dashboard\authentication\forms.py:117 .\issue\serializers.py:13
+#: .\issue\serializers.py:38
 #, python-brace-format
 msgid "Invalid data. Expected a dictionary, but got {datatype}."
 msgstr ""
 
-#: authentication/serializers.py:29
+#: .\authentication\serializers.py:68 .\issue\serializers.py:14
+#: .\issue\serializers.py:39
 msgid "Unable to log in with provided credentials."
 msgstr ""
 
-#: authentication/serializers.py:63
+#: .\authentication\serializers.py:84
 msgid "Must include \"email\" and \"password\"."
 msgstr ""
 
-#: authentication/serializers.py:76
+#: .\authentication\serializers.py:98 .\dashboard\authentication\forms.py:53
+#: .\dashboard\authentication\forms.py:118
 msgid "Unable to register with provided credentials."
 msgstr ""
 
-#: authentication/serializers.py:77
+#: .\authentication\serializers.py:99 .\dashboard\authentication\forms.py:52
+#: .\dashboard\authentication\forms.py:119
 msgid "A user with that email is already registered."
 msgstr ""
 
-#: authentication/serializers.py:78
+#: .\authentication\serializers.py:100 .\dashboard\authentication\forms.py:120
 msgid "Unable to register with provided validation code."
 msgstr ""
 
-#: dashboard/adls/forms.py:14 dashboard/templates/adls/list.html:25
-#: dashboard/templates/grm/issue_detail.html:77
-msgid "Name"
+#: .\authentication\serializers.py:101
+msgid "A user with that email has not been found registered."
 msgstr ""
 
-#: dashboard/adls/forms.py:15 dashboard/templates/adls/profile.html:49
+#: .\authentication\serializers.py:102 .\dashboard\authentication\forms.py:55
+msgid "No administrative level affected. Contact your superior."
+msgstr ""
+
+#: .\dashboard\adls\forms.py:18 .\dashboard\adls\forms.py:79
+#: .\dashboard\templates\adls\profile.html:62
 msgid "Tel"
 msgstr ""
 
-#: dashboard/adls/forms.py:50
+#: .\dashboard\adls\forms.py:41
 msgid "This email is already registered."
 msgstr ""
 
-#: dashboard/adls/views.py:22 dashboard/adls/views.py:59
-#: dashboard/templates/layouts/sidebar.html:42
+#: .\dashboard\adls\forms.py:48 .\dashboard\adls\forms.py:83
+msgid "Area of ​​intervention"
+msgstr ""
+
+#: .\dashboard\adls\forms.py:49 .\dashboard\adls\forms.py:84
+msgid "Additional locations"
+msgstr ""
+
+#: .\dashboard\adls\forms.py:77
+msgid "First name"
+msgstr ""
+
+#: .\dashboard\adls\forms.py:78
+msgid "Last name"
+msgstr ""
+
+#: .\dashboard\adls\functions.py:117
+msgid "Success!"
+msgstr ""
+
+#: .\dashboard\adls\functions.py:119
+msgid "No items have been saved!"
+msgstr ""
+
+#: .\dashboard\adls\functions.py:121
+msgid "A problem has occurred!"
+msgstr ""
+
+#: .\dashboard\adls\functions.py:123
+msgid "Some element(s) have not been saved!"
+msgstr ""
+
+#: .\dashboard\adls\views.py:27 .\dashboard\adls\views.py:66
+#: .\dashboard\templates\layouts\sidebar.html:47
 msgid "Administrative Levels"
 msgstr ""
 
-#: dashboard/adls/views.py:53
+#: .\dashboard\adls\views.py:61
 msgid "Facilitator Profile"
 msgstr ""
 
-#: dashboard/adls/views.py:98
+#: .\dashboard\adls\views.py:108
 msgid "The account was successfully deactivated."
 msgstr ""
 
-#: dashboard/adls/views.py:103
+#: .\dashboard\adls\views.py:113
 msgid "The account was activated successfully."
 msgstr ""
 
-#: dashboard/adls/views.py:107
+#: .\dashboard\adls\views.py:117 .\dashboard\grm\views.py:1391
+#: .\dashboard\grm\views.py:1445 .\dashboard\grm\views.py:1526
 msgid "The password was not correct, we could not proceed with action."
 msgstr ""
 
-#: dashboard/adls/views.py:118
+#: .\dashboard\adls\views.py:188
+msgid "The account has been successfully created."
+msgstr ""
+
+#: .\dashboard\adls\views.py:200
+msgid "There is already a user with this email address."
+msgstr ""
+
+#: .\dashboard\adls\views.py:204 .\dashboard\adls\views.py:331
+#: .\dashboard\general\views.py:48 .\grm\upload_views.py:49
+msgid "An error has occurred..."
+msgstr ""
+
+#: .\dashboard\adls\views.py:216
 msgid "Profile information"
 msgstr ""
 
-#: dashboard/adls/views.py:121 dashboard/grm/views.py:779
-#: dashboard/grm/views.py:826 dashboard/templates/grm/issue_detail.html:171
+#: .\dashboard\adls\views.py:219 .\dashboard\grm\views.py:1017
+#: .\dashboard\grm\views.py:1058 .\dashboard\grm\views.py:1115
+#: .\dashboard\grm\views.py:1144 .\dashboard\grm\views.py:1304
+#: .\dashboard\templates\adls\list.html:111
+#: .\dashboard\templates\adls\profile.html:317
+#: .\dashboard\templates\grm\issue_detail.html:84
+#: .\dashboard\templates\grm\issue_detail.html:85
+#: .\dashboard\templates\grm\issue_detail.html:429
+#: .\dashboard\templates\grm\review_issues.html:171
 msgid "Save"
 msgstr ""
 
-#: dashboard/adls/views.py:151
-msgid ""
-"An error has occurred that did not allow the profile picture to be uploaded "
-"to the database. Please report to IT staff."
-msgstr ""
-
-#: dashboard/adls/views.py:159
+#: .\dashboard\adls\views.py:250
 msgid ""
 "Please note that the Facilitator Code has changed due to the email change."
 msgstr ""
 
-#: dashboard/adls/views.py:164
+#: .\dashboard\adls\views.py:266 .\dashboard\adls\views.py:327
 msgid "The profile information was successfully edited."
 msgstr ""
 
-#: dashboard/diagnostics/views.py:19
-#: dashboard/templates/layouts/sidebar.html:35
+#: .\dashboard\adls\views.py:342
+msgid "Send the confirmation code to this user"
+msgstr ""
+
+#: .\dashboard\adls\views.py:343
+msgid "Send"
+msgstr ""
+
+#: .\dashboard\adls\views.py:354
+msgid "Code was successfully sent."
+msgstr ""
+
+#: .\dashboard\adls\views.py:357
+msgid "An error occurred during transmission."
+msgstr ""
+
+#: .\dashboard\authentication\forms.py:48
+#, python-format
+msgid "Please enter the correct %(email)s sent to you by your supervisor"
+msgstr ""
+
+#: .\dashboard\authentication\forms.py:50
+msgid "This account is inactive."
+msgstr ""
+
+#: .\dashboard\authentication\forms.py:51
+#: .\dashboard\authentication\forms.py:121
+msgid "Password invalidate"
+msgstr ""
+
+#: .\dashboard\authentication\forms.py:54
+#: .\dashboard\authentication\forms.py:122 .\grm\form_utils.py:7
+msgid "At least eight characters, including at least one letter and one number"
+msgstr ""
+
+#: .\dashboard\diagnostics\views.py:20
+#: .\dashboard\templates\layouts\sidebar.html:39
 msgid "Diagnostics"
 msgstr ""
 
-#: dashboard/forms/forms.py:8
+#: .\dashboard\forms\forms.py:8 .\dashboard\grm\forms.py:309
+#: .\dashboard\grm\forms.py:346
 msgid "Allowed file size less than or equal to 2 MB"
 msgstr ""
 
-#: dashboard/grm/__init__.py:7
+#: .\dashboard\forms\forms.py:18 .\dashboard\grm\forms.py:279
+#: .\dashboard\grm\forms.py:290 .\dashboard\grm\forms.py:321
+#: .\dashboard\grm\forms.py:357
+msgid "Password used to view the add."
+msgstr ""
+
+#: .\dashboard\general\forms.py:7
+msgid "Please check this box and click the confirmation button for validation."
+msgstr ""
+
+#: .\dashboard\general\views.py:19
+msgid "Confirm deletion"
+msgstr ""
+
+#: .\dashboard\general\views.py:20
+#: .\dashboard\templates\authentication\confirm_code.html:54
+msgid "Confirm"
+msgstr ""
+
+#: .\dashboard\general\views.py:75
+msgid "The Step was successfully removed."
+msgstr ""
+
+#: .\dashboard\grm\__init__.py:7
 msgid "Remain anonymous"
 msgstr ""
 
-#: dashboard/grm/__init__.py:8
+#: .\dashboard\grm\__init__.py:8
 msgid "Receive updates from facilitator"
 msgstr ""
 
-#: dashboard/grm/__init__.py:9
+#: .\dashboard\grm\__init__.py:9
 msgid "Receive updates directly"
 msgstr ""
 
-#: dashboard/grm/__init__.py:17
+#: .\dashboard\grm\__init__.py:19
 msgid "email"
 msgstr ""
 
-#: dashboard/grm/__init__.py:26
+#: .\dashboard\grm\__init__.py:20
+msgid "phone call"
+msgstr ""
+
+#: .\dashboard\grm\__init__.py:21
+msgid "sms"
+msgstr ""
+
+#: .\dashboard\grm\__init__.py:23
+msgid "by letter (correspondence)"
+msgstr ""
+
+#: .\dashboard\grm\__init__.py:30
 msgid ""
 "Keep name confidential. Only the person resolving the issue will see the "
 "name."
 msgstr ""
 
-#: dashboard/grm/__init__.py:27
+#: .\dashboard\grm\__init__.py:31
 msgid "This is an individual filing on behalf of someone else."
 msgstr ""
 
-#: dashboard/grm/__init__.py:28
+#: .\dashboard\grm\__init__.py:32
 msgid "This is an organization filing on behalf of someone else."
 msgstr ""
 
-#: dashboard/grm/__init__.py:31
+#: .\dashboard\grm\__init__.py:35
 msgid "Complainant"
 msgstr ""
 
-#: dashboard/grm/__init__.py:35
+#: .\dashboard\grm\__init__.py:39
 msgid "Citizen on behalf of others"
 msgstr ""
 
-#: dashboard/grm/__init__.py:36
+#: .\dashboard\grm\__init__.py:40
 msgid "Organization on behalf of others"
 msgstr ""
 
-#: dashboard/grm/forms.py:20
+#: .\dashboard\grm\__init__.py:59
+msgid "Individual"
+msgstr ""
+
+#: .\dashboard\grm\__init__.py:60
+msgid "Group"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:28
 msgid "How does the citizen wish to be contacted?"
 msgstr ""
 
-#: dashboard/grm/forms.py:32
+#: .\dashboard\grm\forms.py:38
 msgid "Please type the contact information"
 msgstr ""
 
-#: dashboard/grm/forms.py:47
-msgid "Enter name of the citizen"
-msgstr ""
-
-#: dashboard/grm/forms.py:47
+#: .\dashboard\grm\forms.py:52
 msgid "Enter name of the citizen or of the group"
 msgstr ""
 
-#: dashboard/grm/forms.py:48 dashboard/grm/forms.py:50
-#: dashboard/grm/forms.py:52 dashboard/grm/forms.py:53
-#: dashboard/grm/forms.py:56 dashboard/grm/forms.py:58
+#: .\dashboard\grm\forms.py:53 .\dashboard\grm\forms.py:55
+#: .\dashboard\grm\forms.py:57 .\dashboard\grm\forms.py:59
+#: .\dashboard\grm\forms.py:60 .\dashboard\grm\forms.py:63
+#: .\dashboard\grm\forms.py:65 .\dashboard\grm\forms.py:165
+#: .\dashboard\grm\forms.py:167 .\dashboard\grm\forms.py:169
 msgid "This is an optional field"
 msgstr ""
 
-#: dashboard/grm/forms.py:51
+#: .\dashboard\grm\forms.py:56
+msgid "Complainant type"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:58
 msgid "Enter age group"
 msgstr ""
 
-#: dashboard/grm/forms.py:53
+#: .\dashboard\grm\forms.py:60
 msgid "Choose gender"
 msgstr ""
 
-#: dashboard/grm/forms.py:55 dashboard/grm/forms.py:57
+#: .\dashboard\grm\forms.py:62 .\dashboard\grm\forms.py:64
 msgid "Religion, Nationality"
 msgstr ""
 
-#: dashboard/grm/forms.py:101
+#: .\dashboard\grm\forms.py:113
 msgid "Date of intake"
 msgstr ""
 
-#: dashboard/grm/forms.py:103
+#: .\dashboard\grm\forms.py:115
 msgid "Date of issue"
 msgstr ""
 
-#: dashboard/grm/forms.py:105
-msgid "What are you reporting"
-msgstr ""
-
-#: dashboard/grm/forms.py:106
+#: .\dashboard\grm\forms.py:117
 msgid "Choose type of grievance"
 msgstr ""
 
-#: dashboard/grm/forms.py:107
+#: .\dashboard\grm\forms.py:118
 msgid "Briefly describe the issue"
 msgstr ""
 
-#: dashboard/grm/forms.py:108
+#: .\dashboard\grm\forms.py:119
 msgid "Please describe the issue"
 msgstr ""
 
-#: dashboard/grm/forms.py:109
-msgid "Current event or multiple occurrences"
+#: .\dashboard\grm\forms.py:123
+msgid "On going event"
 msgstr ""
 
-#: dashboard/grm/forms.py:178
+#: .\dashboard\grm\forms.py:125
+msgid "Event has occurred several times"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:143 .\dashboard\grm\forms.py:380
+msgid "Password used to view original description"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:158 .\dashboard\templates\grm\issue_detail.html:233
+#: .\dashboard\templates\grm\new_issue_confirmation.html:231
+msgid "Location description"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:159
+msgid ""
+"Please enter additional details about the location\n"
+"that might help resolve the issue (e.g. street\n"
+"address, street corner, or description of location)."
+msgstr ""
+
+#: .\dashboard\grm\forms.py:161
+msgid "Please provide any additional details."
+msgstr ""
+
+#: .\dashboard\grm\forms.py:163
+msgid "Committee/Structure in charge"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:166
+msgid "Structure telephone number"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:168
+msgid "Structure e-mail address"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:214
 msgid "Start Date"
 msgstr ""
 
-#: dashboard/grm/forms.py:179
+#: .\dashboard\grm\forms.py:215
 msgid "End Date"
 msgstr ""
 
-#: dashboard/grm/forms.py:180
+#: .\dashboard\grm\forms.py:216
 msgid "ID Number / Access Code"
 msgstr ""
 
-#: dashboard/grm/forms.py:209 dashboard/templates/grm/issue_list.html:9
-#: dashboard/templates/grm/review_issues.html:212
+#: .\dashboard\grm\forms.py:231
+msgid "Administrative level"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:246
+#: .\dashboard\templates\grm\review_issues.html:521
+msgid "Escalated"
+msgstr "Remontée"
+
+#: .\dashboard\grm\forms.py:248 .\dashboard\grm\views.py:1224
+#: .\dashboard\templates\grm\review_issues.html:534
+msgid "Publish"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:248 .\dashboard\grm\views.py:1281
+msgid "Unpublish"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:258 .\dashboard\grm\functions.py:227
+#: .\dashboard\grm\functions.py:258 .\dashboard\grm\functions.py:306
+#: .\dashboard\templates\grm\issue_list.html:52
+#: .\dashboard\templates\grm\review_issues.html:501
 msgid "Assigned to"
 msgstr ""
 
-#: dashboard/grm/forms.py:225
+#: .\dashboard\grm\forms.py:273
 msgid "Add comment"
 msgstr ""
 
-#: dashboard/grm/views.py:33 dashboard/grm/views.py:377
-#: dashboard/grm/views.py:393 dashboard/grm/views.py:410
-#: dashboard/grm/views.py:424 dashboard/grm/views.py:443
-#: dashboard/grm/views.py:494 dashboard/grm/views.py:515
-#: dashboard/grm/views.py:613 dashboard/templates/adls/profile.html:111
-#: dashboard/templates/layouts/sidebar.html:63
+#: .\dashboard\grm\forms.py:284
+msgid "Add decision"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:309
+msgid "Attach PV of reconciliation"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:345
+msgid "Attach the complaint transfer file to the top level"
+msgstr ""
+
+#: .\dashboard\grm\forms.py:400 .\dashboard\grm\functions.py:188
+#: .\dashboard\grm\functions.py:218 .\dashboard\grm\functions.py:249
+#: .\dashboard\grm\functions.py:296
+#: .\dashboard\templates\diagnostics\home.html:28
+#: .\dashboard\templates\diagnostics\home.html:260
+#: .\dashboard\templates\grm\issue_list.html:50
+#: .\dashboard\templates\grm\review_issues.html:505 .\privacy\models.py:11
+msgid "Category"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:186
+msgid "COSO GRM - A new issue recorded"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:189 .\dashboard\grm\functions.py:219
+#: .\dashboard\grm\functions.py:250 .\dashboard\grm\functions.py:297
+#: .\dashboard\templates\grm\new_issue_confirmation.html:162
+msgid "Description"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:190
+msgid "Date of incident/complaint"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:191
+#: .\dashboard\templates\grm\issue_list.html:55
+msgid "Date of registration"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:192 .\dashboard\grm\functions.py:251
+#: .\dashboard\grm\functions.py:299
+#: .\dashboard\templates\grm\issue_status_buttons.html:18
+#: .\dashboard\templates\grm\new_issue_location.html:35
+msgid "Level"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:195 .\dashboard\grm\functions.py:254
+msgid "Source"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:198 .\dashboard\grm\functions.py:257
+#: .\dashboard\grm\functions.py:305
+#: .\dashboard\templates\grm\issue_detail.html:139
+msgid "Reporter"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:216
+msgid "COSO GRM - A new issue scaled"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:220
+msgid "Up to level"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:221
+msgid "Comment on the unresolution"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:222
+msgid "Unresolution date"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:223
+msgid "Comments on the scalation"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:224
+msgid "Scalation date"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:247
+msgid "COSO GRM - You have been assigned a issue"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:261
+msgid ""
+"Please find below the information concerning the new issue that has just "
+"been assigned to you."
+msgstr ""
+
+#: .\dashboard\grm\functions.py:282
+msgid "COSO GRM - Issue opened"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:283
+msgid "COSO GRM - Issue investigation update"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:284
+msgid "COSO GRM - Issue resolved"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:285
+msgid "COSO GRM - Issue rejected"
+msgstr ""
+
+#: .\dashboard\grm\functions.py:298
+#: .\dashboard\templates\adls\task_detail.html:25
+#: .\dashboard\templates\diagnostics\home.html:25
+#: .\dashboard\templates\grm\issue_list.html:59
+#: .\dashboard\templates\grm\issue_status_buttons.html:7
+#: .\dashboard\templates\grm\review_issues.html:513
+msgid "Status"
+msgstr ""
+
+#: .\dashboard\grm\views.py:94 .\dashboard\grm\views.py:532
+#: .\dashboard\grm\views.py:545 .\dashboard\grm\views.py:559
+#: .\dashboard\grm\views.py:573 .\dashboard\grm\views.py:595
+#: .\dashboard\grm\views.py:650 .\dashboard\grm\views.py:669
+#: .\dashboard\grm\views.py:785 .\dashboard\templates\adls\profile.html:133
+#: .\dashboard\templates\authentication\confirm_code.html:40
+#: .\dashboard\templates\authentication\login.html:40
+#: .\dashboard\templates\authentication\register.html:40
+#: .\dashboard\templates\layouts\sidebar.html:69
 msgid "GRM"
 msgstr ""
 
-#: dashboard/grm/views.py:134
+#: .\dashboard\grm\views.py:227
 msgid "Add attachment"
 msgstr ""
 
-#: dashboard/grm/views.py:135
+#: .\dashboard\grm\views.py:228
+#: .\grm\templates\components\modal_upload_one_sheet.html:62
+#: .\grm\templates\upload.html:55 .\grm\upload_views.py:27
 msgid "Upload"
 msgstr ""
 
-#: dashboard/grm/views.py:155
+#: .\dashboard\grm\views.py:248
+msgid ""
+"The file has not been saved. No password is defined for this category of "
+"complaint."
+msgstr ""
+
+#: .\dashboard\grm\views.py:252
+msgid "The file has not been saved. The password does not match."
+msgstr ""
+
+#: .\dashboard\grm\views.py:261
 msgid "The attachment was successfully uploaded."
 msgstr ""
 
-#: dashboard/grm/views.py:158
-msgid ""
-"An error has occurred that did not allow the attachment to be uploaded to "
-"the database. Please report to IT staff."
-msgstr ""
-
-#: dashboard/grm/views.py:162
+#: .\dashboard\grm\views.py:264
 #, python-format
 msgid ""
 "The file could not be uploaded because it has already reached the limit of "
 "%(max)d attachments."
 msgstr ""
 
-#: dashboard/grm/views.py:186
+#: .\dashboard\grm\views.py:297
 msgid "The attachment was successfully deleted."
 msgstr ""
 
-#: dashboard/grm/views.py:359
+#: .\dashboard\grm\views.py:514
 msgid ""
-"There is no staff member to assign the issue to. Please report to IT staff."
+"No staff member is designated to handle this issue. Please report it to the "
+"relevant department."
 msgstr ""
 
-#: dashboard/grm/views.py:510 dashboard/grm/views.py:617
+#: .\dashboard\grm\views.py:664 .\dashboard\grm\views.py:789
 msgid "Review Issues"
 msgstr ""
 
-#: dashboard/grm/views.py:608
+#: .\dashboard\grm\views.py:715
+#, python-format
+msgid "%(total_cvds)d CVDs, including %(total_villages)d villages"
+msgstr ""
+
+#: .\dashboard\grm\views.py:780
 msgid "Issue Detail"
 msgstr ""
 
-#: dashboard/grm/views.py:665
+#: .\dashboard\grm\views.py:861 .\dashboard\grm\views.py:903
 msgid "The issue was successfully edited."
 msgstr ""
 
-#: dashboard/grm/views.py:697
+#: .\dashboard\grm\views.py:935 .\dashboard\grm\views.py:1069
+#: .\dashboard\grm\views.py:1155
+msgid ""
+"The information has not been registered. No password is defined for this "
+"category of complaint."
+msgstr ""
+
+#: .\dashboard\grm\views.py:939 .\dashboard\grm\views.py:1073
+#: .\dashboard\grm\views.py:1159
+msgid "The information has not been saved. The password does not match."
+msgstr ""
+
+#: .\dashboard\grm\views.py:954
 msgid "The comment was sent successfully."
 msgstr ""
 
-#: dashboard/grm/views.py:700
+#: .\dashboard\grm\views.py:957
 msgid "Comment cannot be empty."
 msgstr ""
 
-#: dashboard/grm/views.py:768 dashboard/grm/views.py:814
-#: dashboard/grm/views.py:861
+#: .\dashboard\grm\views.py:1016
+msgid "Enter a comment"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1043 .\dashboard\grm\views.py:1044
+msgid "The issue was reopened"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1043 .\dashboard\grm\views.py:1044
+msgid "The issue was accepted"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1047 .\dashboard\grm\views.py:1103
+#: .\dashboard\grm\views.py:1132 .\dashboard\grm\views.py:1212
+#: .\dashboard\grm\views.py:1269 .\dashboard\grm\views.py:1292
+#: .\dashboard\grm\views.py:1321
 msgid "The issue status was successfully updated."
 msgstr ""
 
-#: dashboard/grm/views.py:778
+#: .\dashboard\grm\views.py:1057
 msgid "Please enter the resolution reached for this issue"
 msgstr ""
 
-#: dashboard/grm/views.py:825
+#: .\dashboard\grm\views.py:1089
+msgid "The issue was resolved"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1114
+msgid ""
+"Please enter the reason for changing the status to unresolved for this issue"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1127
+msgid "The issue wasn't resolved"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1143
+msgid "Please enter the reason of the escalate for this issue"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1171
+#: .\dashboard\templates\grm\issue_detail.html:316
+msgid "The issue was escalated"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1223
+msgid "Please edit the description before publish"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1240
+msgid ""
+"The complaint has not been published. No password is defined for this "
+"category of complaint."
+msgstr ""
+
+#: .\dashboard\grm\views.py:1243
+msgid "The complaint has not been published. The password does not match."
+msgstr ""
+
+#: .\dashboard\grm\views.py:1280
+msgid "Hide issue"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1303
 msgid "Enter the reason for rejecting this issue"
 msgstr ""
 
-#: dashboard/logs/views.py:10 dashboard/templates/layouts/sidebar.html:75
+#: .\dashboard\grm\views.py:1317
+msgid "The issue was rejected"
+msgstr ""
+
+#: .\dashboard\grm\views.py:1374
+msgid "You are not authorized to view this information."
+msgstr ""
+
+#: .\dashboard\grm\views_issues_mangement_file.py:251
+#: .\dashboard\templates\common\attachment_preview_modal.html:24
+msgid "Download"
+msgstr ""
+
+#: .\dashboard\logs\views.py:10
 msgid "Logs"
 msgstr ""
 
-#: dashboard/participatory_budget/forms.py:22
+#: .\dashboard\participatory_budget\forms.py:30
 msgid "Show:"
 msgstr ""
 
-#: dashboard/participatory_budget/forms.py:32
+#: .\dashboard\participatory_budget\forms.py:41
 msgid "This month"
 msgstr ""
 
-#: dashboard/participatory_budget/views.py:13
+#: .\dashboard\participatory_budget\views.py:14
 msgid "Participatory Budget"
 msgstr ""
 
-#: dashboard/subprojects/views.py:10
+#: .\dashboard\subprojects\views.py:10
 msgid "Subprojects"
 msgstr ""
 
-#: dashboard/tasks.py:202
+#: .\dashboard\tasks.py:160
+msgid "Automatic update"
+msgstr ""
+
+#: .\dashboard\tasks.py:164
+msgid "Issue opened"
+msgstr ""
+
+#: .\dashboard\tasks.py:188
 #, python-format
 msgid ""
 "Your issue submitted has been accepted into the system with the code "
 "%s(tracking_code)s"
 msgstr ""
 
-#: dashboard/tasks.py:204
+#: .\dashboard\tasks.py:190
 #, python-format
 msgid ""
 "Your issue %s(tracking_code)s has been rejected with the following response: "
 "%s(reason)s"
 msgstr ""
 
-#: dashboard/tasks.py:206
+#: .\dashboard\tasks.py:192
 #, python-format
 msgid ""
 "Your issue %s(tracking_code)s has been resolved with the following response: "
 "%s(resolution)s"
 msgstr ""
 
-#: dashboard/templates/adls/list.html:11
-#: dashboard/templates/participatory_budget/dashboard.html:97
+#: .\dashboard\templates\adls\list.html:11
+#: .\dashboard\templates\participatory_budget\dashboard.html:97
 msgid "Search"
 msgstr ""
 
-#: dashboard/templates/adls/list.html:15
+#: .\dashboard\templates\adls\list.html:20
+#: .\dashboard\templates\adls\list.html:104
+#: .\dashboard\templates\authentication\login.html:57
+msgid "Create an account"
+msgstr ""
+
+#: .\dashboard\templates\adls\list.html:28
 msgid "Export complete list"
 msgstr ""
 
-#: dashboard/templates/adls/list.html:23
-#: dashboard/templates/adls/profile.html:40
+#: .\dashboard\templates\adls\list.html:36
+#: .\dashboard\templates\adls\profile.html:42
 msgid "Administrative Level"
 msgstr ""
 
-#: dashboard/templates/adls/list.html:24
+#: .\dashboard\templates\adls\list.html:37
+msgid "Location Name"
+msgstr ""
+
+#: .\dashboard\templates\adls\list.html:38
 msgid "Photo"
 msgstr ""
 
-#: dashboard/templates/adls/list.html:26
-msgid "Last activity"
-msgstr ""
-
-#: dashboard/templates/adls/list.html:28
+#: .\dashboard\templates\adls\list.html:44
 msgid "Action"
 msgstr ""
 
-#: dashboard/templates/adls/list.html:50
+#: .\dashboard\templates\adls\list.html:69
 msgid "See profile"
 msgstr ""
 
-#: dashboard/templates/adls/phase_detail.html:37
-#: dashboard/templates/adls/task_detail.html:28
-#: dashboard/templates/common/progress_bar.html:6
-#: dashboard/templates/participatory_budget/dashboard.html:5
-#: dashboard/templates/participatory_budget/statement.html:3
-#: dashboard/templates/participatory_budget/task_list.html:27
+#: .\dashboard\templates\adls\list.html:210
+#: .\dashboard\templates\adls\list.html:215
+#: .\dashboard\templates\adls\list.html:220
+#: .\dashboard\templates\adls\profile.html:549
+#: .\dashboard\templates\adls\profile.html:554
+#: .\dashboard\templates\adls\profile.html:559
+#: .\dashboard\templates\diagnostics\home.html:717
+#: .\dashboard\templates\grm\new_issue_confirm.html:183
+#: .\dashboard\templates\grm\new_issue_confirm.html:350
+#: .\dashboard\templates\grm\new_issue_location.html:64
+#: .\dashboard\templates\grm\new_issue_location.html:80
+#: .\dashboard\templates\grm\review_issues.html:426
+msgid "Click to select location"
+msgstr ""
+
+#: .\dashboard\templates\adls\phase_detail.html:37
+#: .\dashboard\templates\adls\task_detail.html:28
+#: .\dashboard\templates\common\progress_bar.html:6
+#: .\dashboard\templates\participatory_budget\dashboard.html:5
+#: .\dashboard\templates\participatory_budget\statement.html:3
+#: .\dashboard\templates\participatory_budget\task_list.html:27
 msgid "Completed"
 msgstr ""
 
-#: dashboard/templates/adls/phase_detail.html:39
-#: dashboard/templates/adls/task_detail.html:30
-#: dashboard/templates/participatory_budget/task_list.html:29
+#: .\dashboard\templates\adls\phase_detail.html:39
+#: .\dashboard\templates\adls\task_detail.html:30
+#: .\dashboard\templates\participatory_budget\task_list.html:29
 msgid "In progress"
 msgstr ""
 
-#: dashboard/templates/adls/phase_detail.html:41
-#: dashboard/templates/adls/task_detail.html:32
-#: dashboard/templates/participatory_budget/task_list.html:31
+#: .\dashboard\templates\adls\phase_detail.html:41
+#: .\dashboard\templates\adls\task_detail.html:32
+#: .\dashboard\templates\participatory_budget\task_list.html:31
 msgid "Pending"
 msgstr ""
 
-#: dashboard/templates/adls/phase_detail.html:50
-#: dashboard/templates/adls/task_detail.html:12
+#: .\dashboard\templates\adls\phase_detail.html:50
+#: .\dashboard\templates\adls\task_detail.html:12
 msgid "Estimated Date"
 msgstr ""
 
-#: dashboard/templates/adls/phase_detail.html:56
-#: dashboard/templates/adls/task_detail.html:15
+#: .\dashboard\templates\adls\phase_detail.html:56
+#: .\dashboard\templates\adls\task_detail.html:15
 msgid "indefinite date"
 msgstr ""
 
-#: dashboard/templates/adls/phase_detail.html:62
+#: .\dashboard\templates\adls\phase_detail.html:62
 msgid "Document Task"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:29
+#: .\dashboard\templates\adls\profile.html:29
 msgid "Facilitator not assigned"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:45
+#: .\dashboard\templates\adls\profile.html:47
 msgid "No administrative level assigned"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:57
-#: dashboard/templates/adls/profile.html:258
+#: .\dashboard\templates\adls\profile.html:70
+#: .\dashboard\templates\adls\profile.html:279
 msgid "Deactivate Account"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:64
+#: .\dashboard\templates\adls\profile.html:77
 msgid "Activate Account"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:77
+#: .\dashboard\templates\adls\profile.html:90
 msgid "Last Activity"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:83
+#: .\dashboard\templates\adls\profile.html:96
 msgid "Facilitator Code"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:127
+#: .\dashboard\templates\adls\profile.html:149
 msgid "Participatory monitoring"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:143
+#: .\dashboard\templates\adls\profile.html:165
 msgid "Participatory diagnostics"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:251
+#: .\dashboard\templates\adls\profile.html:272
 msgid "Please enter your password to deactivate the facilitator account!"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:297
+#: .\dashboard\templates\adls\profile.html:310
+msgid "Assigning intervention locations"
+msgstr ""
+
+#: .\dashboard\templates\adls\profile.html:358
 msgid "Expand / Collapse"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:301
+#: .\dashboard\templates\adls\profile.html:362
 msgid "Initial position"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:347
+#: .\dashboard\templates\adls\profile.html:408
 msgid "Zoom in"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:349
+#: .\dashboard\templates\adls\profile.html:410
 msgid "Zoom out"
 msgstr ""
 
-#: dashboard/templates/adls/profile.html:406
+#: .\dashboard\templates\adls\profile.html:467
 msgid "Edit Profile Picture"
 msgstr ""
 
-#: dashboard/templates/adls/task_detail.html:9
+#: .\dashboard\templates\adls\task_detail.html:9
 msgid "Go to the phase"
 msgstr ""
 
-#: dashboard/templates/adls/task_detail.html:25
-#: dashboard/templates/diagnostics/home.html:19
-#: dashboard/templates/grm/issue_list.html:13
-#: dashboard/templates/grm/issue_status_buttons.html:5
-#: dashboard/templates/grm/review_issues.html:224
-msgid "Status"
-msgstr ""
-
-#: dashboard/templates/adls/task_detail.html:37
-#: dashboard/templates/grm/issue_attachments.html:7
-#: dashboard/templates/grm/issue_attachments_column1.html:7
-#: dashboard/templates/grm/new_issue_confirmation.html:176
+#: .\dashboard\templates\adls\task_detail.html:37
+#: .\dashboard\templates\grm\issue_attachments.html:7
+#: .\dashboard\templates\grm\issue_attachments_column1.html:7
+#: .\dashboard\templates\grm\new_issue_confirmation.html:187
 msgid "Attachments"
 msgstr ""
 
-#: dashboard/templates/adls/task_detail.html:45
+#: .\dashboard\templates\adls\task_detail.html:45
 msgid "No attachments"
 msgstr ""
 
-#: dashboard/templates/adls/task_detail.html:48
+#: .\dashboard\templates\adls\task_detail.html:48
 msgid "Notes"
 msgstr ""
 
-#: dashboard/templates/adls/task_detail.html:49
+#: .\dashboard\templates\adls\task_detail.html:49
 msgid "No notes"
 msgstr ""
 
-#: dashboard/templates/adls/task_detail.html:56
-#: dashboard/templates/diagnostics/home.html:196
-#: dashboard/templates/grm/issue_detail.html:108
-#: dashboard/templates/grm/new_issue_confirmation.html:195
+#: .\dashboard\templates\adls\task_detail.html:56
+#: .\dashboard\templates\diagnostics\home.html:273
+#: .\dashboard\templates\grm\issue_detail.html:215
+#: .\dashboard\templates\grm\new_issue_confirmation.html:222
 msgid "Location"
 msgstr ""
 
-#: dashboard/templates/authentication/login.html:17
-#: dashboard/templates/authentication/login.html:54
+#: .\dashboard\templates\authentication\confirm_code.html:17
+#: .\dashboard\templates\authentication\confirm_code.html:57
+#: .\dashboard\templates\authentication\login.html:17
+#: .\dashboard\templates\authentication\login.html:54
+#: .\dashboard\templates\authentication\register.html:17
+#: .\dashboard\templates\authentication\register.html:57
 msgid "Log in"
 msgstr ""
 
-#: dashboard/templates/authentication/login.html:45
+#: .\dashboard\templates\authentication\confirm_code.html:45
+msgid "Code confirmation"
+msgstr ""
+
+#: .\dashboard\templates\authentication\confirm_code.html:57
+#: .\dashboard\templates\authentication\register.html:57
+msgid "I have an account"
+msgstr ""
+
+#: .\dashboard\templates\authentication\login.html:45
 msgid "Log in to start your session"
 msgstr ""
 
-#: dashboard/templates/common/400.html:10
+#: .\dashboard\templates\authentication\login.html:57
+msgid "No I don't have an account"
+msgstr ""
+
+#: .\dashboard\templates\authentication\login.html:59
+msgid "Password forgotten?"
+msgstr ""
+
+#: .\dashboard\templates\authentication\login.html:59
+msgid "Reset"
+msgstr ""
+
+#: .\dashboard\templates\authentication\register.html:45
+msgid "Register your account"
+msgstr ""
+
+#: .\dashboard\templates\authentication\register.html:54
+msgid "Sign Up"
+msgstr ""
+
+#: .\dashboard\templates\common\400.html:10
 msgid "BAD REQUEST"
 msgstr ""
 
-#: dashboard/templates/common/400.html:13
+#: .\dashboard\templates\common\400.html:13
 msgid "The server could not understand the request due to invalid syntax."
 msgstr ""
 
-#: dashboard/templates/common/403.html:10
+#: .\dashboard\templates\common\403.html:10
 msgid "Access Denied"
 msgstr ""
 
-#: dashboard/templates/common/403.html:13
+#: .\dashboard\templates\common\403.html:13
 msgid "Full authentication is required to access this resource."
 msgstr ""
 
-#: dashboard/templates/common/404.html:10
+#: .\dashboard\templates\common\404.html:10
 msgid "Sorry but we couldn't find this page"
 msgstr ""
 
-#: dashboard/templates/common/404.html:13
+#: .\dashboard\templates\common\404.html:13
 msgid "This page you are looking for does not exist."
 msgstr ""
 
-#: dashboard/templates/common/500.html:10
+#: .\dashboard\templates\common\500.html:10
 msgid "Internal Server Error"
 msgstr ""
 
-#: dashboard/templates/common/500.html:13
+#: .\dashboard\templates\common\500.html:13
 msgid ""
 "We track these errors automatically, but if the problem persists feel free "
 "to contact us. In the meantime, try refreshing."
 msgstr ""
 
-#: dashboard/templates/common/under_construction.html:7
-#: dashboard/templates/common/under_construction_col.html:5
+#: .\dashboard\templates\common\attachment_preview_modal.html:27
+msgid "Open in new tab"
+msgstr ""
+
+#: .\dashboard\templates\common\attachment_preview_modal.html:29
+#: .\grm\templates\components\modal_upload_one_sheet.html:60
+#: .\grm\templates\upload.html:53
+msgid "Close"
+msgstr ""
+
+#: .\dashboard\templates\common\attachment_preview_modal.html:41
+msgid ""
+"Please download the file and open it with a media player on your computer."
+msgstr ""
+
+#: .\dashboard\templates\common\attachment_preview_modal.html:44
+msgid "This file cannot be played in the browser. Please download it instead."
+msgstr ""
+
+#: .\dashboard\templates\common\attachment_preview_modal.html:49
+msgid "Downloading..."
+msgstr ""
+
+#: .\dashboard\templates\common\attachment_preview_modal.html:50
+msgid "Download complete"
+msgstr ""
+
+#: .\dashboard\templates\common\attachment_preview_modal.html:51
+msgid "Download failed. Please try again."
+msgstr ""
+
+#: .\dashboard\templates\common\under_construction.html:7
+#: .\dashboard\templates\common\under_construction_col.html:5
 msgid "Oops!"
 msgstr ""
 
-#: dashboard/templates/common/under_construction.html:9
+#: .\dashboard\templates\common\under_construction.html:9
 msgid "This section is under construction"
 msgstr ""
 
-#: dashboard/templates/common/under_construction_col.html:6
+#: .\dashboard\templates\common\under_construction_col.html:6
 msgid "Under construction"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:17
+#: .\dashboard\templates\diagnostics\home.html:23
+#: .\dashboard\templates\diagnostics\home.html:296
 msgid "Number"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:18
+#: .\dashboard\templates\diagnostics\home.html:24
+#: .\dashboard\templates\diagnostics\home.html:297
+#: .\dashboard\templates\grm\issue_list.html:171
 msgid "Percentage"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:20
-#: dashboard/templates/diagnostics/home.html:192
-#: dashboard/templates/grm/issue_detail.html:132
-#: dashboard/templates/grm/issue_list.html:12
-#: dashboard/templates/grm/review_issues.html:220
-msgid "Type"
+#: .\dashboard\templates\diagnostics\home.html:29
+#: .\dashboard\templates\diagnostics\home.html:303
+#: .\dashboard\templates\grm\issue_list.html:152
+msgid "Region"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:21
-#: dashboard/templates/diagnostics/home.html:188
-#: dashboard/templates/grm/issue_detail.html:122
-#: dashboard/templates/grm/issue_list.html:11
-#: dashboard/templates/grm/review_issues.html:216
-msgid "Category"
+#: .\dashboard\templates\diagnostics\home.html:30
+#: .\dashboard\templates\diagnostics\home.html:304
+#: .\dashboard\templates\grm\issue_list.html:153
+msgid "Prefecture"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:29
-#: dashboard/templates/grm/review_issues.html:24
+#: .\dashboard\templates\diagnostics\home.html:31
+#: .\dashboard\templates\diagnostics\home.html:305
+#: .\dashboard\templates\grm\issue_list.html:154
+#: .\dashboard\templates\participatory_budget\task_list.html:21
+msgid "Commune"
+msgstr ""
+
+#: .\dashboard\templates\diagnostics\home.html:32
+#: .\dashboard\templates\diagnostics\home.html:306
+#: .\dashboard\templates\grm\issue_list.html:155
+msgid "Canton"
+msgstr ""
+
+#: .\dashboard\templates\diagnostics\home.html:33
+#: .\dashboard\templates\diagnostics\home.html:307
+msgid "Village"
+msgstr ""
+
+#: .\dashboard\templates\diagnostics\home.html:41
 msgid "Filter by"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:49
-#: dashboard/templates/grm/review_issues.html:42
+#: .\dashboard\templates\diagnostics\home.html:64
+#: .\dashboard\templates\grm\issue_list.html:14
+msgid "Total complaints in your administrative level"
+msgstr ""
+
+#: .\dashboard\templates\diagnostics\home.html:69
+#: .\dashboard\templates\grm\review_issues.html:214
 msgid "Clear all filters"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:447
-#: dashboard/templates/grm/issue_list.html:34
-msgid "No issues found"
+#: .\dashboard\templates\diagnostics\home.html:264
+#: .\dashboard\templates\diagnostics\home.html:659
+#: .\dashboard\templates\grm\review_issues.html:529
+msgid "Wave"
 msgstr ""
 
-#: dashboard/templates/diagnostics/home.html:477
-#: dashboard/templates/grm/new_issue_confirm.html:171
-#: dashboard/templates/grm/new_issue_confirm.html:336
-#: dashboard/templates/grm/new_issue_location.html:56
-#: dashboard/templates/grm/new_issue_location.html:69
-msgid "Click to select location"
+#: .\dashboard\templates\grm\dashboard.html:25
+msgid "List"
 msgstr ""
 
-#: dashboard/templates/grm/dashboard.html:13
-msgid "Resources & Announcements"
-msgstr ""
-
-#: dashboard/templates/grm/dashboard.html:22
-msgid ""
-"- We have added new codes for classifying issues. Click here for more "
-"information."
-msgstr ""
-
-#: dashboard/templates/grm/dashboard.html:26
-msgid ""
-"- We’re getting great feedback! Click here to see some articles about how "
-"well our work is being received."
-msgstr ""
-
-#: dashboard/templates/grm/dashboard.html:37
-msgid "ENTER NEW ISSUES"
-msgstr ""
-
-#: dashboard/templates/grm/dashboard.html:45
+#: .\dashboard\templates\grm\dashboard.html:27
 msgid "REVIEW ISSUES"
 msgstr ""
 
-#: dashboard/templates/grm/issue_attachments.html:10
-#: dashboard/templates/grm/issue_attachments_column1.html:10
+#: .\dashboard\templates\grm\dashboard.html:39
+msgid "Add"
+msgstr ""
+
+#: .\dashboard\templates\grm\dashboard.html:41
+msgid "ENTER NEW ISSUES"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_attachments.html:10
+#: .\dashboard\templates\grm\issue_attachments_column1.html:10
 #, python-format
 msgid ""
 "\n"
@@ -696,1056 +1297,585 @@ msgid ""
 "                "
 msgstr ""
 
-#: dashboard/templates/grm/issue_attachments.html:44
-#: dashboard/templates/grm/issue_attachments_column1.html:43
-msgid "Add attachments"
-msgstr ""
-
-#: dashboard/templates/grm/issue_comments.html:31
-msgid "No comments found"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:18
-#: dashboard/templates/grm/issue_list.html:8
-msgid "Summary"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:46
-msgid "Reporter"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:56
-msgid "Reported"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:66
-msgid "Lodged by"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:82
-#: dashboard/templates/grm/issue_detail.html:98
-#: dashboard/templates/grm/issue_detail.html:113
-msgid "Confidential"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:93
-#: dashboard/templates/grm/new_issue_confirmation.html:88
-msgid "Age"
-msgstr ""
-
-#: dashboard/templates/grm/issue_detail.html:149
-msgid "Steps Taken"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html:6
-#: dashboard/templates/grm/new_issue_confirmation.html:34
-msgid "ID Number"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html:7
-msgid "Access Code"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html:10
-msgid "Days Open"
-msgstr ""
-
-#: dashboard/templates/grm/issue_status_buttons.html:15
-msgid "Open Issue"
-msgstr ""
-
-#: dashboard/templates/grm/issue_status_buttons.html:29
-msgid "Record Resolution"
-msgstr ""
-
-#: dashboard/templates/grm/issue_status_buttons.html:42
-msgid "Reject Issue"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:9
-msgid "Edit"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:19
-#: dashboard/templates/grm/new_issue_confirmation.html:18
-#: dashboard/templates/grm/new_issue_contact.html:18
-#: dashboard/templates/grm/new_issue_location.html:18
-#: dashboard/templates/grm/new_issue_person.html:18
-msgid "Enter New Issue"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:26
-#: dashboard/templates/grm/new_issue_confirmation.html:25
-#: dashboard/templates/grm/new_issue_contact.html:25
-#: dashboard/templates/grm/new_issue_details.html:25
-#: dashboard/templates/grm/new_issue_location.html:25
-#: dashboard/templates/grm/new_issue_person.html:25
-msgid "Step"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:29
-msgid "Confirm & Submit"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:119
-#: dashboard/templates/grm/new_issue_contact.html:51
-#: dashboard/templates/grm/new_issue_details.html:44
-#: dashboard/templates/grm/new_issue_location.html:38
-#: dashboard/templates/grm/new_issue_person.html:38
-msgid "SAVE & NEXT"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:124
-#: dashboard/templates/grm/new_issue_details.html:49
-#: dashboard/templates/grm/new_issue_location.html:43
-#: dashboard/templates/grm/new_issue_person.html:43
-msgid "BACK"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:141
-#: dashboard/templates/grm/new_issue_contact.html:63
-msgid "Click to select contact method"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:146
-#: dashboard/templates/grm/new_issue_person.html:55
-msgid "Click to select age group"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:150
-#: dashboard/templates/grm/new_issue_person.html:59
-msgid "Click to select gender"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:153
-#: dashboard/templates/grm/new_issue_person.html:62
-msgid "Click to select religion, nationality"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:163
-#: dashboard/templates/grm/new_issue_details.html:65
-msgid "Click to select the report"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirm.html:167
-#: dashboard/templates/grm/new_issue_details.html:69
-msgid "Click to select the type of grievance"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:28
-msgid "Confirmation"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:42
-msgid "Citizen contact"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:68
-msgid "Citizen name"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:98
-msgid "Gender"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:143
-msgid "Report"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:151
-msgid "Type of grievance"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:159
-msgid "Description"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_confirmation.html:207
-msgid "Done"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_contact.html:28
-msgid "Preferred Method of Contact"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_details.html:18
-msgid "Details of issue of Feedback"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_details.html:28
-msgid "Basic Information"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_location.html:28
-msgid "Location of Issue or Feedback"
-msgstr ""
-
-#: dashboard/templates/grm/new_issue_person.html:28
-msgid "Name of Person or Group"
-msgstr ""
-
-#: dashboard/templates/grm/review_issues.html:12
-msgid "Search Results"
-msgstr ""
-
-#: dashboard/templates/layouts/base_error.html:14
-msgid "Error"
-msgstr ""
-
-#: dashboard/templates/layouts/footer.html:5
-msgid "Copyright"
-msgstr ""
-
-#: dashboard/templates/layouts/footer.html:7
-msgid "All rights reserved"
-msgstr ""
-
-#: dashboard/templates/layouts/footer.html:9
-msgid "Version"
-msgstr ""
-
-#: dashboard/templates/layouts/navbar.html:21
-msgid "Welcome"
-msgstr ""
-
-#: dashboard/templates/layouts/navbar.html:30
-msgid "Resources"
-msgstr ""
-
-#: dashboard/templates/layouts/navbar.html:35
-msgid "Help / FAQ"
-msgstr ""
-
-#: dashboard/templates/layouts/navbar.html:63
-msgid "Logout"
-msgstr ""
-
-#: dashboard/templates/layouts/sidebar.html:86
-msgid "Toggle Sidebar"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:15
-msgid "Have started the participatory budgeting process"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:37
-msgid "Updated Tasks"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:41
-msgid "No notifications found"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:44
-msgid "Load more notifications"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:58
-msgid "Average budget allocated to the BP"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:63
-msgid "See the communes"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/dashboard.html:75
-msgid "Participatory Budget Statement"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/statement.html:22
-msgid "Month without budget statement"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/task_list.html:8
-msgid "Task"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/task_list.html:18
-msgid "Phase"
-msgstr ""
-
-#: dashboard/templates/participatory_budget/task_list.html:21
-msgid "Commune"
-msgstr ""
-
-#: grm/settings.py:131
-msgid "English"
-msgstr ""
-
-#: grm/settings.py:132
-msgid "French"
-msgstr ""
-
-#: grm/settings.py:133
-msgid "Kinyarwanda"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "You don't have permission to request this request."
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Enter a comment"
-msgstr ""
-
-#: dashboard/templates/authentication/login.html
-msgid "No I don't have an account"
-msgstr ""
-
-#: dashboard/templates/authentication/login.html
-msgid "Create an account"
-msgstr ""
-
-#: dashboard/templates/authentication/register.html
-msgid "Register your account"
-msgstr ""
-
-#: dashboard/templates/authentication/register.html
-msgid "Sign Up"
-msgstr ""
-
-#: dashboard/authentication/forms.py
-msgid "Please enter the correct %(email)s sent to you by your supervisor"
-msgstr ""
-
-#: dashboard/templates/authentication/register.html
-msgid "I have an account"
-msgstr ""
-
-#: dashboard/templates/authentication/register.html
-msgid "Confirm"
-msgstr ""
-
-#: dashboard/authentication/forms.py
-msgid "Code"
-msgstr ""
-
-#: dashboard/authentication/forms.py
-msgid "Password invalidate"
-msgstr ""
-
-#: attachments/serializers.py
-msgid "A user with that email has not been found registered."
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "Other"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "For"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "Me"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "Decisions"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "No reasons found"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "Comments"
-msgstr ""
-
-#: dashboard/grm/forms.py
-msgid "Escalated"
-msgstr "Remontée"
-
-#: dashboard/grm/forms.py
-msgid "To Me"
-msgstr ""
-
-#: dashboard/grm/forms.py
-msgid "By Me"
-msgstr ""
-
-#: dashboard/grm/forms.py
-msgid "To Others"
-msgstr ""
-
-#: dashboard/grm/forms.py
-msgid "By Others"
-msgstr ""
-
-#: dashboard/templates/grm/issue_list.html
-msgid "Reported by"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Principal Administrator"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Administrator"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "CDD Specialist"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Evaluator"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Accountant"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Regional Coordinator"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "National Coordinator"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "General Manager"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Director"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Advisor"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Minister"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "Backup Specialist"
-msgstr ""
-
-#: .\dashboard\templatetags\custom_tags.py
-msgid "The issue was escalated"
-msgstr ""
-
-#: dashboard/templates/grm/issue_status_buttons.html
-msgid "Set to unresolved"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Please enter the reason for changing the status to unresolved for this issue"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Escalate Issue"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Please enter the reason of the escalate for this issue"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Issue rejected"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Issue escalated"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Unresolved Issue"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Issue resolved"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Issue opened"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "to"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Please edit the description before publish"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Publish"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Unpublish"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Unpublished"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Password used to view original description"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Hide issue"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Add decision"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Password used to view the add."
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "An error occurred. Probably, your password is wrong."
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "The attachment was successfully download."
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Original description"
-msgstr ""
-
-#: dashboard/grm/__init__.py
-msgid "Male"
-msgstr ""
-
-#: dashboard/grm/__init__.py
-msgid "Female"
-msgstr ""
-
-#: dashboard/grm/__init__.py
-msgid "Rather not say"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
+#: .\dashboard\templates\grm\issue_attachments.html:30
+#: .\dashboard\templates\grm\issue_attachments_column1.html:31
+#: .\dashboard\templates\grm\issue_attachments_column2 copy.html:77
+#: .\dashboard\templates\grm\issue_attachments_column2.html:75
 msgid "Unsynchronized"
 msgstr ""
 
-#: dashboard/templates/grm/issue_attachments.html
-msgid "At least eight characters, including at least one letter and one number"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "Safeguard"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "Country"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "Nation"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "List"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "Location Name"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "On going event"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "Event has occurred several times"
-msgstr ""
-
-#: dashboard/templates/grm/issue_attachments.html
-msgid "Category change"
-msgstr ""
-
-#: dashboard/grm/views.py
-msgid "Confirm deletion"
-msgstr ""
-
-#: dashboard/templates/authentication/register.html
-msgid "Please check this box and click the confirmation button for validation."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The password must have 8 characters minimum."
-msgstr ""
-
-#: dashboard/privacy
-msgid "You can't edit the password information."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The complaint has not been published. No password is defined for this category of complaint."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The complaint has not been published. The password does not match."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The file has not been saved. No password is defined for this category of complaint."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The file has not been saved. The password does not match."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The information has not been registered. No password is defined for this category of complaint."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The information has not been saved. The password does not match."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Set to publish"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Publish the issue"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Set to unpublish"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Please fill the password field"
-msgstr ""
-
-#: dashboard/privacy
-msgid "We can't find this category informations."
-msgstr ""
-
-#: dashboard/privacy
-msgid "You are not authorized to view this information."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Check password"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Level"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Organization (Structure) in charge"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Committee/Structure in charge"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Complainant type"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Individual"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Group"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Please enter your password to show sensitive data"
-msgstr ""
-
-#: dashboard/privacy
-msgid "phone call"
-msgstr ""
-
-#: dashboard/privacy
-msgid "by letter (correspondence)"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Validation code for your GRM account"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Please do not share this code with anyone until it has been used."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Mail sent successfully"
-msgstr ""
-
-#: dashboard/privacy
-msgid "An error occurred while sending the email"
-msgstr ""
-
-#: dashboard/privacy
-msgid "See PV"
-msgstr ""
-
-#: dashboard/privacy
-msgid "See PV de reconciliation"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Attach PV of reconciliation"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Attach the complaint transfer file to the top level"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Transfer file"
-msgstr ""
-
-#: dashboard/templates/common/attachment_preview_modal.html
-msgid "Download"
-msgstr ""
-
-#: dashboard/templates/common/attachment_preview_modal.html
-msgid "This file cannot be played in the browser. Please download it instead."
-msgstr ""
-
-#: dashboard/templates/common/attachment_preview_modal.html
-msgid "Please download the file and open it with a media player on your computer."
-msgstr ""
-
-#: dashboard/privacy
-msgid "COSO GRM - A new issue recorded"
-msgstr ""
-
-#: dashboard/privacy
-msgid "COSO GRM - A new issue scaled"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Comment on the unresolution"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Comments on the scalation"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Unresolution date"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Scalation date"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Up to level"
-msgstr ""
-
-#: dashboard/privacy
-msgid "No administrative level affected. Contact your superior."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Below is your account information."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Hello"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Comment"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Title"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Phone"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Mr./Mrs."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Code was successfully sent."
-msgstr ""
-
-#: dashboard/privacy
-msgid "An error occurred during transmission."
-msgstr ""
-
-#: dashboard/privacy
-msgid "The user has not been found."
-msgstr ""
-
-#: dashboard/privacy
-msgid "Send the confirmation code to this user"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Send"
-msgstr ""
-
-#: dashboard/privacy
-msgid "administrative levels"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Assigning intervention locations"
-msgstr ""
-
-#: dashboard/privacy
-msgid "The 'administrative levels' isn't validated"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Categories password"
-msgstr ""
-
-#: dashboard/privacy
-msgid "Category Password"
-msgstr ""
-
-#: dashboard/privacy
-msgid "COSO GRM - You have been assigned a issue"
-msgstr ""
-#: dashboard/privacy
-msgid "Please find below the information concerning the new issue that has just been assigned to you."
-msgstr ""
-
-#: dashboard
-msgid "Investigations"
-msgstr ""
-
-#: dashboard
-msgid "Total complaints in your administrative level"
-msgstr ""
-
-#: dashboard
-msgid "Date of registration"
-msgstr ""
-
-#: dashboard
-msgid "Date of incident/complaint"
-msgstr ""
-
-#: dashboard
-msgid "See All"
-msgstr ""
-
-#: dashboard
-msgid "Locality"
-msgstr ""
-
-#: dashboard
-msgid "Date of complaint"
-msgstr ""
-
-#: dashboard
-msgid "Delete issue"
-msgstr ""
-
-#: .\dashboard
-msgid "Financial "
-msgstr ""
-
-#: .\dashboard
-msgid "Procurement Specialist"
-msgstr ""
-
-#: .\dashboard
-msgid "Knowledge manager"
-msgstr ""
-
-#: .\dashboard
-msgid "Download full database datas"
-msgstr ""
-
-#: .\dashboard
-msgid "Download in progress..."
-msgstr ""
-
-#: .\dashboard
-msgid "Download complete!"
-msgstr ""
-
-#: .\dashboard
-msgid "Reset"
-msgstr ""
-
-#: .\dashboard
-msgid "Password forgotten"
-msgstr ""
-
-#: .\dashboard
-msgid "Password forgotten?"
-msgstr ""
-
-#: .\dashboard
-msgid "See more details"
-msgstr ""
-#: .\dashboard
-msgid "During this update, we noticed that some data had been stored locally on your phone but were not automatically synced during yours recordings. We want to assure you that this issue has now been resolved. To ensure proper automatic syncing in the future, please clear the MGP app's storage data via your phone settings, or uninstall and reinstall the app."
-msgstr ""
-
-#: .\dashboard
-msgid "Automatic update"
-msgstr ""
-
-#: .\dashboard
+#: .\dashboard\templates\grm\issue_attachments.html:58
+#: .\dashboard\templates\grm\issue_attachments_column1.html:50
+#: .\dashboard\templates\grm\issue_attachments_column2 copy.html:93
+#: .\dashboard\templates\grm\issue_attachments_column2.html:91
+#: .\dashboard\templates\grm\issue_detail.html:354
+#: .\dashboard\templates\grm\issue_status_buttons.html:94
+#: .\dashboard\templates\grm\new_issue_confirmation.html:215
 msgid "We can't see the file name"
 msgstr ""
 
-#: .\dashboard
-msgid "Additional locations"
+#: .\dashboard\templates\grm\issue_attachments.html:68
+#: .\dashboard\templates\grm\issue_attachments_column1.html:60
+msgid "Add attachments"
 msgstr ""
 
-#: .\dashboard
-msgid "Area of ​​intervention"
+#: .\dashboard\templates\grm\issue_attachments_column2 copy.html:114
+#: copy.html:123 .\dashboard\templates\grm\issue_attachments_column2.html:112
+#: .\dashboard\templates\grm\issue_attachments_column2.html:121
+msgid "No reasons found"
 msgstr ""
 
-#: dashboard/adls/views.py:164
-msgid "The account has been successfully created."
+#: .\dashboard\templates\grm\issue_comments.html:42
+msgid "No comments found"
 msgstr ""
 
-#: dashboard/adls/views.py:164
-msgid "There is already a user with this email address."
+#: .\dashboard\templates\grm\issue_detail.html:13
+msgid "Unpublished"
 msgstr ""
 
-#: dashboard/adls/views.py:164
-msgid "First name"
+#: .\dashboard\templates\grm\issue_detail.html:21
+#: .\dashboard\templates\grm\issue_list.html:49
+msgid "Summary"
 msgstr ""
 
-#: dashboard/adls/views.py:164
-msgid "Last name"
+#: .\dashboard\templates\grm\issue_detail.html:26
+#: .\dashboard\templates\grm\issue_detail.html:180
+#: .\dashboard\templates\grm\issue_detail.html:188
+#: .\dashboard\templates\grm\issue_detail.html:296
+#: .\dashboard\templates\grm\issue_detail.html:1002
+#: .\dashboard\templates\grm\issue_detail.html:1057
+msgid "Show sensitive data"
 msgstr ""
 
-#: .\administrativelevels\functions.py:62
-msgid "Success!"
+#: .\dashboard\templates\grm\issue_detail.html:44
+msgid "Decisions"
 msgstr ""
 
-#: .\administrativelevels\functions.py:64
-msgid "No items have been saved!"
+#: .\dashboard\templates\grm\issue_detail.html:44
+msgid "Investigations"
 msgstr ""
 
-#: .\administrativelevels\functions.py:66
-msgid "A problem has occurred!"
-msgstr ""
-
-#: .\administrativelevels\functions.py
-msgid "A problem has occurred! The name(s) of the village(s) is wrong."
-msgstr ""
-
-#: .\administrativelevels\functions.py:68
-msgid "Some element(s) have not been saved!"
-msgstr ""
-
-#: .\administrativelevels\functions.py
-msgid "Some element(s) have not been saved! The name(s) of the village(s) is wrong."
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "Load file"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "Upload CSV file"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "Close"
-msgstr ""
-
-#: .\administrativelevels\templates\components\modal_upload_one_sheet.html
-msgid "Sheet Name"
-msgstr ""
-
-#: .\administrativelevels\templates\components\modal_upload_one_sheet.html
-msgid "Just this village"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "Wave"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "List of Pilot Localities"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "Total number of CVD"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "Total number of Villages"
-msgstr ""
-
-#: .\administrativelevels\templates\upload.html
-msgid "%(total_cvds)d CVDs, including %(total_villages)d villages"
-msgstr ""
-
-#: dashboard
-msgid "Complaints"
-msgstr ""
-
-#: dashboard
-msgid "Reopen the issue"
-msgstr ""
-
-#: dashboard
-msgid "COSO GRM - Issue opened"
-msgstr ""
-
-#: dashboard
-msgid "COSO GRM - Issue investigation update"
-msgstr ""
-
-#: dashboard
-msgid "COSO GRM - Issue resolved"
-msgstr ""
-
-#: dashboard
-msgid "COSO GRM - Issue rejected"
-msgstr ""
-
-#: dashboard
-msgid "The issue was accepted"
-msgstr ""
-
-#: dashboard
-msgid "The issue was rejected"
-msgstr ""
-
-#: dashboard
-msgid "The issue was resolved"
-msgstr ""
-
-#: dashboard
-msgid "The issue wasn't resolved"
-msgstr ""
-
-#: dashboard
-msgid "The issue was reopened"
-msgstr ""
-
-#: dashboard
-msgid "Record a new decision or investigation step"
-msgstr ""
-
-#: dashboard
+#: .\dashboard\templates\grm\issue_detail.html:49
 msgid "Assigned to you"
 msgstr ""
 
-#: dashboard
-msgid "No staff member is designated to handle this issue. Please report it to the relevant department."
+#: .\dashboard\templates\grm\issue_detail.html:66
+msgid "Record a new decision or investigation step"
 msgstr ""
 
-#: dashboard
-msgid "Open in new tab"
+#: .\dashboard\templates\grm\issue_detail.html:92
+msgid "Attach a file"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:149
+msgid "Reported"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:160
+msgid "Lodged by"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:183
+#: .\dashboard\templates\grm\issue_detail.html:205
+#: .\dashboard\templates\grm\issue_detail.html:222
+#: .\dashboard\templates\grm\issue_detail.html:240
+#: .\dashboard\templates\grm\issue_detail.html:274
+msgid "Confidential"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:198
+#: .\dashboard\templates\grm\new_issue_confirmation.html:90
+msgid "Age"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:265
+#: .\dashboard\templates\grm\new_issue_confirmation.html:241
+msgid "Structure in charge"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:289
+msgid "Original description"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:352
+msgid "Transfer file"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:389
+msgid "Delete issue"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:407
+msgid "Comments"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:474
+msgid "Please enter your password to show sensitive data"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:480
+msgid "Check password"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:564
+#: .\dashboard\templates\grm\issue_detail.html:815
+#: .\dashboard\templates\grm\issue_detail.html:875
+#: .\dashboard\templates\grm\issue_detail.html:941
+#: .\dashboard\templates\grm\issue_detail.html:1072
+#: .\dashboard\templates\grm\issue_detail.html:1129
+#: .\dashboard\templates\grm\issue_detail.html:1162
+#: .\dashboard\templates\grm\issue_detail.html:1227
+msgid "You don't have permission to request this request."
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_detail.html:882
+#: .\dashboard\templates\grm\issue_detail.html:948
+msgid "Please fill the password field"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:23
+#: .\dashboard\templates\grm\issue_list.html:138
+msgid "List of Pilot Localities"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:28
+msgid "Download full database datas"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:32
+msgid "Download in progress..."
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:33
+msgid "Download complete!"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:48
+msgid "Access Code"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:51
+#: .\dashboard\templates\grm\review_issues.html:525
+msgid "Reported by"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:53
+msgid "Days Open"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:54
+msgid "Date of complaint"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:56
+msgid "Locality"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:119
+msgid "No issues found"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:156
+msgid "CVD"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:157
+msgid "Villages"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:165
+msgid "AC"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:166
+msgid "AC Phone"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:167
+msgid "AC Email"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_list.html:170
+msgid "Complaints"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:23
+msgid "Nation"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:37
+msgid "Publish the issue"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:52
+msgid "Set to unpublish"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:69
+msgid "Reopen the issue"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:71
+msgid "Open Issue"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:85
+msgid "Record Resolution"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:92
+msgid "See PV de reconciliation"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:126
+msgid "Set to unresolved"
+msgstr ""
+
+#: .\dashboard\templates\grm\issue_status_buttons.html:140
+msgid "Escalate Issue"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:9
+msgid "Edit"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:19
+#: .\dashboard\templates\grm\new_issue_confirmation.html:18
+#: .\dashboard\templates\grm\new_issue_contact.html:18
+#: .\dashboard\templates\grm\new_issue_location.html:18
+#: .\dashboard\templates\grm\new_issue_person.html:18
+msgid "Enter New Issue"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:26
+#: .\dashboard\templates\grm\new_issue_confirmation.html:25
+#: .\dashboard\templates\grm\new_issue_contact.html:25
+#: .\dashboard\templates\grm\new_issue_details.html:25
+#: .\dashboard\templates\grm\new_issue_location.html:25
+#: .\dashboard\templates\grm\new_issue_person.html:25
+msgid "Step"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:29
+msgid "Confirm & Submit"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:129
+#: .\dashboard\templates\grm\new_issue_contact.html:51
+#: .\dashboard\templates\grm\new_issue_details.html:45
+#: .\dashboard\templates\grm\new_issue_location.html:46
+#: .\dashboard\templates\grm\new_issue_person.html:38
+msgid "SAVE & NEXT"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:134
+#: .\dashboard\templates\grm\new_issue_details.html:50
+#: .\dashboard\templates\grm\new_issue_location.html:51
+#: .\dashboard\templates\grm\new_issue_person.html:43
+msgid "BACK"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:152
+#: .\dashboard\templates\grm\new_issue_contact.html:63
+msgid "Click to select contact method"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:157
+#: .\dashboard\templates\grm\new_issue_person.html:55
+msgid "Click to select age group"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:161
+#: .\dashboard\templates\grm\new_issue_person.html:59
+msgid "Click to select gender"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:164
+#: .\dashboard\templates\grm\new_issue_person.html:62
+msgid "Click to select religion, nationality"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirm.html:179
+#: .\dashboard\templates\grm\new_issue_details.html:72
+msgid "Click to select the type of grievance"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirmation.html:28
+msgid "Confirmation"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirmation.html:34
+msgid "ID Number"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirmation.html:42
+msgid "Citizen contact"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirmation.html:100
+msgid "Gender"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirmation.html:154
+msgid "Type of grievance"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_confirmation.html:256
+msgid "Done"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_contact.html:28
+msgid "Preferred Method of Contact"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_details.html:18
+msgid "Details of issue of Feedback"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_details.html:28
+msgid "Basic Information"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_location.html:28
+msgid "Location of Issue or Feedback"
+msgstr ""
+
+#: .\dashboard\templates\grm\new_issue_person.html:28
+msgid "Name of Person or Group"
+msgstr ""
+
+#: .\dashboard\templates\grm\review_issues.html:150
+msgid "Search Results"
+msgstr ""
+
+#: .\dashboard\templates\grm\review_issues.html:193
+msgid "See All"
+msgstr ""
+
+#: .\dashboard\templates\grm\review_issues.html:509
+msgid "Type"
+msgstr ""
+
+#: .\dashboard\templates\layouts\base_error.html:14
+msgid "Error"
+msgstr ""
+
+#: .\dashboard\templates\layouts\footer.html:5
+msgid "Copyright"
+msgstr ""
+
+#: .\dashboard\templates\layouts\footer.html:7
+msgid "All rights reserved"
+msgstr ""
+
+#: .\dashboard\templates\layouts\footer.html:9
+msgid "Version"
+msgstr ""
+
+#: .\dashboard\templates\layouts\navbar.html:21
+msgid "Welcome"
+msgstr ""
+
+#: .\dashboard\templates\layouts\navbar.html:63
+msgid "Logout"
+msgstr ""
+
+#: .\dashboard\templates\layouts\sidebar.html:77
+#: .\dashboard\templatetags\custom_tags.py:204
+msgid "Administrator"
+msgstr ""
+
+#: .\dashboard\templates\layouts\sidebar.html:111
+msgid "Profile"
+msgstr ""
+
+#: .\dashboard\templates\layouts\sidebar.html:138
+msgid "Toggle Sidebar"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:15
+msgid "Have started the participatory budgeting process"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:37
+msgid "Updated Tasks"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:41
+msgid "No notifications found"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:44
+msgid "Load more notifications"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:58
+msgid "Average budget allocated to the BP"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:63
+msgid "See the communes"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\dashboard.html:75
+msgid "Participatory Budget Statement"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\statement.html:22
+msgid "Month without budget statement"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\task_list.html:8
+msgid "Task"
+msgstr ""
+
+#: .\dashboard\templates\participatory_budget\task_list.html:18
+msgid "Phase"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:201
+msgid "Principal Administrator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:207
+msgid "Minister"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:209
+msgid "Advisor"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:211
+msgid "General Manager"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:213
+msgid "National Coordinator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:215
+msgid "Regional Coordinator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:217
+msgid "Director"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:220
+msgid "Evaluator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:222
+msgid "Financial "
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:224
+msgid "Procurement Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:226
+msgid "Knowledge manager"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:228
+msgid "CDD Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:230
+msgid "Accountant"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:232
+msgid "Infra"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:235
+msgid "Youth Program Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:237
+msgid "Local Economic Development Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:239
+msgid "Communication Specialist"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:241
+msgid "Community Facilitator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:243
+msgid "Technical Facilitator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:246
+msgid "Supervisor"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:249
+msgid "Validator"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py:253 .\privacy\models.py:13
+msgid "User"
+msgstr ""
+
+#: .\grm\my_librairies\mail\send_mail.py:32
+msgid "See more details"
+msgstr ""
+
+#: .\grm\settings.py:162
+msgid "English"
+msgstr ""
+
+#: .\grm\settings.py:163
+msgid "French"
+msgstr ""
+
+#: .\grm\templates\components\modal_upload_one_sheet.html:5
+#: .\grm\templates\upload.html:19
+msgid "Load file"
+msgstr ""
+
+#: .\grm\templates\components\modal_upload_one_sheet.html:19
+#: .\grm\templates\upload.html:33
+msgid "Upload CSV file"
+msgstr ""
+
+#: .\grm\templates\components\modal_upload_one_sheet.html:31
+msgid "Sheet Name"
+msgstr ""
+
+#: .\grm\templates\components\modal_upload_one_sheet.html:49
+msgid "Just this village"
+msgstr ""
+
+#: .\issue\serializers.py:26 .\issue\serializers.py:51
+msgid "Must include \"username\" and \"password\"."
+msgstr ""
+
+#: .\issue\views_rest.py:104
+msgid ""
+"During this update, we noticed that some data had been stored locally on "
+"your phone but were not automatically synced during yours recordings. We "
+"want to assure you that this issue has now been resolved. To ensure proper "
+"automatic syncing in the future, please clear the MGP app's storage data via "
+"your phone settings, or uninstall and reinstall the app."
+msgstr ""
+
+#: .\privacy\admin.py:61
+msgid "You can't edit the password information."
+msgstr ""
+
+#: .\privacy\admin.py:79
+msgid "We can't find this category informations."
+msgstr ""
+
+#: .\privacy\models.py:18
+msgid "Category Password"
+msgstr ""
+
+#: .\privacy\models.py:19
+msgid "Categories password"
 msgstr ""

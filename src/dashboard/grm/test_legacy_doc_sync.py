@@ -47,11 +47,12 @@ def auth_client(django_user_model):
     resp = client.post('/api/auth/token/', {'username': 'agent', 'password': 'pass1234'})
     assert resp.status_code == 200, resp.data
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {resp.data['access']}")
+    client.user = user
     return client
 
 
 @pytest.fixture
-def issue():
+def issue(auth_client):
     region = AdministrativeLevel(id=FAKE_REGION_ID, name='Village Test', type='Village')
     status = IssueStatus.objects.create(name='Enregistrée', initial_status=True)
     category = IssueCategory.objects.create(name='Demande de renseignement')
@@ -62,6 +63,10 @@ def issue():
         description='Description initiale', confirmed=True, source='web',
         created_date=now, intake_date=now, issue_date=now,
         status=status, category=category, issue_type=issue_type, administrative_region=region,
+        # Requis depuis le scoping du pull/push (sync/views.py::_issue_visibility_filter/
+        # _issue_owned_by) : ce fixture teste la propagation de `updated_at`, pas le scoping —
+        # on rend donc l'issue visible/modifiable par `auth_client` en la lui faisant "reporter".
+        reporter=auth_client.user,
     )
 
 

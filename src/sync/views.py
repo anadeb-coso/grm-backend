@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -88,6 +88,66 @@ OWNER_LOOKUPS = {name: owner for name, (_m, _s, owner) in SYNC_OWNED_MODELS.item
 PAGE_SIZE = 500
 
 
+def _user_administrative_ids(user):
+    """Union des 4 champs `Adl.*administrative*_ids` sur TOUS les `Adl` non supprimés rattachés à
+    `user` (jamais un seul via `.first()`) : `authentication.models.create_or_update_user`
+    (signal `post_save` sur `User`) crée automatiquement un `Adl` vide dès l'inscription d'un
+    compte — un représentant peut donc avoir plusieurs lignes `Adl` (celle auto-créée, plus
+    celle(s) réellement renseignée(s) via le dashboard/la migration `migrate_eadls`). Sans union,
+    piocher `.first()` retournerait un résultat non déterministe (`Adl` a pour pk un UUID, et
+    `.first()` trie implicitement par pk faute d'`ordering` explicite)."""
+    administrative_ids = set()
+    for adl in Adl.objects.filter(representative=user, is_deleted=False):
+        for values in (
+            adl.administrative_region_ids_value, adl.smallest_administrative_level_ids_value,
+            adl.additional_administrative_region_ids_value,
+            adl.additional_smallest_administrative_level_ids_value,
+        ):
+            administrative_ids.update(str(v) for v in (values or []))
+    return administrative_ids
+
+
+def _issue_full_access(user):
+    """True si `user` peut voir/synchroniser TOUTES les issues, indépendamment de ses localités
+    d'intervention : `GovernmentWorker.administrative_id == "1"` (même convention de portée
+    nationale que `sync.administrative_levels_views.AdministrativeLevelsView`), ou "1" inclus
+    dans les `Adl.administrative_region_ids` d'un des facilitateurs associés à ce compte."""
+    government_worker = getattr(user, 'governmentworker', None)
+    if government_worker and government_worker.administrative_id == "1":
+        return True
+    return "1" in _user_administrative_ids(user)
+
+
+def _issue_visibility_filter(user):
+    """`Q()` restreignant les `Issue` visibles par `user` au pull à : ses localités
+    d'intervention (les 4 champs `Adl.*administrative*_ids`, cf. `issue.models.Adl`), les issues
+    qu'il a enregistrées (`reporter`), et celles qui lui sont assignées (`assignee`). Retourne
+    `None` si `user` a un accès complet (`_issue_full_access`) — dans ce cas l'appelant ne doit
+    appliquer aucun filtre."""
+    if _issue_full_access(user):
+        return None
+
+    administrative_ids = _user_administrative_ids(user)
+    region_ids = [int(v) for v in administrative_ids if str(v).lstrip('-').isdigit()]
+    return Q(administrative_region_id__in=region_ids) | Q(reporter=user) | Q(assignee=user)
+
+
+def _issue_owned_by(user, existing_instance, record):
+    """Restreint les écritures mobile (push) sur `Issue` aux seules issues que `user` a
+    enregistrées ou qui lui sont assignées : c'est uniquement sur celles-ci qu'il aura besoin de
+    faire des modifications depuis le mobile, quelle que soit l'étendue de sa visibilité en
+    lecture (`_issue_visibility_filter` peut, elle, inclure des issues d'autres agents situées
+    dans ses localités d'intervention)."""
+    if existing_instance is not None:
+        return existing_instance.reporter_id == user.id or existing_instance.assignee_id == user.id
+    reporter_id = record.get('reporter')
+    assignee_id = record.get('assignee')
+    return (
+        (reporter_id is not None and str(reporter_id) == str(user.id))
+        or (assignee_id is not None and str(assignee_id) == str(user.id))
+    )
+
+
 def _update_pull_sync_log(request, last_pulled_at_dt):
     device_id = request.GET.get('device_id')
     if not device_id or not request.user or not request.user.is_authenticated:
@@ -126,6 +186,10 @@ class PullView(APIView):
        grm-frontend/src/database/sync.js).
     3. **Tables "possédées"** (`SYNC_OWNED_MODELS`, domaine budget participatif) : filtrées par
        `request.user` via `owner_lookup` — jamais diffusées à d'autres facilitateurs.
+    4. **Issues scopées par localité** : la table `issues` est en plus filtrée par
+       `_issue_visibility_filter` — un utilisateur ne reçoit que les issues de ses localités
+       d'intervention (`Adl.*administrative*_ids`), celles qu'il a enregistrées, et celles qui
+       lui sont assignées, sauf s'il a un accès complet (`_issue_full_access`, id "1").
     """
     permission_classes = [IsAuthenticated]
 
@@ -151,6 +215,11 @@ class PullView(APIView):
         raw_cursor = request.GET.get('cursor') or ''
         offsets = self._parse_cursor(raw_cursor)
 
+        # Calculé une seule fois par requête (indépendant de `last_pulled_at`/pagination) :
+        # `None` signifie accès complet, sinon un `Q()` appliqué uniquement à la table `issues`
+        # ci-dessous (cf. docstring de la classe, point 4).
+        issue_visibility_q = _issue_visibility_filter(request.user)
+
         changes = {}
         next_offsets = {}
         has_more = False
@@ -159,6 +228,7 @@ class PullView(APIView):
             offset = offsets.get(table_name, 0)
             owner_lookup = OWNER_LOOKUPS.get(table_name)
             owner_filter = {owner_lookup: request.user} if owner_lookup else {}
+            is_issues_table = table_name == 'issues'
 
             # Le client WatermelonDB est configuré avec `sendCreatedAsUpdated: true`
             # (grm-frontend/src/database/sync.js) : par convention documentée de la librairie
@@ -170,7 +240,10 @@ class PullView(APIView):
             changed_qs = Model.objects.filter(
                 Q(created_at__gt=last_pulled_dt) | Q(updated_at__gt=last_pulled_dt),
                 is_deleted=False, **owner_filter,
-            ).order_by('updated_at', 'id')
+            )
+            if is_issues_table and issue_visibility_q is not None:
+                changed_qs = changed_qs.filter(issue_visibility_q)
+            changed_qs = changed_qs.order_by('updated_at', 'id')
 
             all_changed_ids = list(changed_qs.values_list('id', flat=True))
             page_ids = all_changed_ids[offset:offset + PAGE_SIZE]
@@ -191,7 +264,10 @@ class PullView(APIView):
             # les tables synchronisées, écriture ou lecture seule.
             deleted_qs = Model.objects.filter(
                 updated_at__gt=last_pulled_dt, is_deleted=True, **owner_filter,
-            ).order_by('updated_at', 'id')
+            )
+            if is_issues_table and issue_visibility_q is not None:
+                deleted_qs = deleted_qs.filter(issue_visibility_q)
+            deleted_qs = deleted_qs.order_by('updated_at', 'id')
             table_changes['deleted'] = list(deleted_qs.values_list('id', flat=True)) if offset == 0 else []
 
             changes[table_name] = table_changes
@@ -245,7 +321,14 @@ class PushView(APIView):
     `grm.routers.MisRouter` vers la base `mis`) — `is_valid(raise_exception=True)` échoue donc
     proprement avec un 400 explicite si une référence (statut, catégorie, niveau administratif...)
     n'existe pas, plutôt que de laisser remonter une `IntegrityError` en base. Le `try/except`
-    autour de la transaction est un filet de sécurité pour les cas restants."""
+    autour de la transaction est un filet de sécurité pour les cas restants.
+
+    Restriction spécifique à `issues` : contrairement au pull (qui peut renvoyer des issues
+    d'autres agents situées dans les localités d'intervention de l'utilisateur, cf.
+    `_issue_visibility_filter`), le push d'une `Issue` n'est accepté que si l'utilisateur en est
+    l'auteur (`reporter`) ou l'assigné (`assignee`) — c'est uniquement sur celles-ci qu'il a
+    besoin de faire des modifications depuis le mobile (`_issue_owned_by`), y compris pour un
+    utilisateur ayant un accès complet en lecture."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -255,8 +338,13 @@ class PushView(APIView):
             with transaction.atomic():
                 for table_name, (Model, Serializer) in SYNC_WRITABLE_MODELS.items():
                     table_changes = changes.get(table_name, {})
+                    is_issues_table = table_name == 'issues'
 
                     for record in table_changes.get('created', []):
+                        if is_issues_table and not _issue_owned_by(request.user, None, record):
+                            raise PermissionDenied(
+                                'You can only sync issues you registered or that are assigned to you.',
+                            )
                         serializer = Serializer(data=record)
                         serializer.is_valid(raise_exception=True)
                         Model.objects.update_or_create(
@@ -264,9 +352,21 @@ class PushView(APIView):
                         )
 
                     for record in table_changes.get('updated', []):
+                        if is_issues_table:
+                            existing = Model.objects.filter(id=record['id']).first()
+                            if existing is not None and not _issue_owned_by(request.user, existing, record):
+                                raise PermissionDenied(
+                                    'You can only sync issues you registered or that are assigned to you.',
+                                )
                         self._merge_update(Model, Serializer, record)
 
                     for record_id in table_changes.get('deleted', []):
+                        if is_issues_table:
+                            existing = Model.objects.filter(id=record_id).first()
+                            if existing is not None and not _issue_owned_by(request.user, existing, {}):
+                                raise PermissionDenied(
+                                    'You can only sync issues you registered or that are assigned to you.',
+                                )
                         # `updated_at` doit être forcé explicitement : `QuerySet.update()` ne
                         # déclenche jamais `auto_now` (contrairement à `Model.save()`). Sans ça, le
                         # tombstone (`is_deleted=True`) posé par CET appareil ne serait jamais vu

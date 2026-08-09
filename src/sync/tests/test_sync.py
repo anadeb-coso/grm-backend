@@ -41,6 +41,13 @@ def auth_client(django_user_model):
     resp = client.post('/api/auth/token/', {'username': 'agent', 'password': 'pass1234'})
     assert resp.status_code == 200, resp.data
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {resp.data['access']}")
+    # Exposé pour que les tests puissent poser `reporter`/`assignee` sur les issues qu'ils
+    # manipulent — depuis le scoping introduit dans sync/views.py (_issue_visibility_filter/
+    # _issue_owned_by, voir sync/tests/test_issue_scope.py), le pull comme le push d'une `Issue`
+    # sont restreints à ce que cet utilisateur a enregistré, ce qui lui est assigné, ou ses
+    # localités d'intervention — aucune de ces conditions n'est vraie par défaut pour un compte
+    # sans `Adl`/`GovernmentWorker` comme celui-ci.
+    client.user = user
     return client
 
 
@@ -84,7 +91,10 @@ def _issue_payload(reference_data, **overrides):
 
 def test_push_creates_issue(auth_client, reference_data):
     """Un enregistrement créé côté mobile (offline) doit apparaître en base après push."""
-    payload = {'changes': {'issues': {'created': [_issue_payload(reference_data)], 'updated': [], 'deleted': []}}}
+    payload = {'changes': {'issues': {
+        'created': [_issue_payload(reference_data, reporter=auth_client.user.id)],
+        'updated': [], 'deleted': [],
+    }}}
     resp = auth_client.post('/api/sync/push/', payload, format='json')
     assert resp.status_code == 204, resp.data
     assert Issue.objects.filter(internal_code=payload['changes']['issues']['created'][0]['internal_code']).exists()
@@ -96,7 +106,7 @@ def test_push_rejects_unknown_fk_with_400(auth_client, reference_data):
     payload = {
         'changes': {
             'issues': {
-                'created': [_issue_payload(reference_data, status=999999)],
+                'created': [_issue_payload(reference_data, status=999999, reporter=auth_client.user.id)],
                 'updated': [], 'deleted': [],
             }
         }
@@ -110,7 +120,9 @@ def test_push_rejects_unknown_administrative_region_with_400(auth_client, refere
     payload = {
         'changes': {
             'issues': {
-                'created': [_issue_payload(reference_data, administrative_region=123456789)],
+                'created': [_issue_payload(
+                    reference_data, administrative_region=123456789, reporter=auth_client.user.id,
+                )],
                 'updated': [], 'deleted': [],
             }
         }
@@ -128,6 +140,9 @@ def test_push_merges_only_changed_fields(auth_client, reference_data):
         confirmed=True, source='mobile', created_date=now, intake_date=now, issue_date=now,
         status=reference_data['status'], category=reference_data['category'],
         issue_type=reference_data['issue_type'], administrative_region=reference_data['region'],
+        # Requis depuis le scoping du push (_issue_owned_by, sync/views.py) : seul le
+        # reporter/assignee de l'issue peut la modifier depuis le mobile.
+        reporter=auth_client.user,
     )
     issue.research_result = 'Modifié côté serveur entre-temps'
     issue.save()
@@ -159,6 +174,10 @@ def test_pull_returns_changes_since_last_pulled_at(auth_client, reference_data):
         confirmed=True, source='web', created_date=now, intake_date=now, issue_date=now,
         status=reference_data['status'], category=reference_data['category'],
         issue_type=reference_data['issue_type'], administrative_region=reference_data['region'],
+        # Requis depuis le scoping du pull (_issue_visibility_filter, sync/views.py) : sans
+        # localité d'intervention (Adl) ni accès complet, seules les issues enregistrées/
+        # assignées à l'utilisateur lui sont diffusées.
+        reporter=auth_client.user,
     )
     resp = auth_client.get('/api/sync/pull/', {'last_pulled_at': 0})
     assert resp.status_code == 200
@@ -186,6 +205,7 @@ def test_pull_pagination_sets_has_more(auth_client, reference_data):
             intake_date=now, issue_date=now,
             status=reference_data['status'], category=reference_data['category'],
             issue_type=reference_data['issue_type'], administrative_region=reference_data['region'],
+            reporter=auth_client.user,
         )
     resp = auth_client.get('/api/sync/pull/', {'last_pulled_at': 0})
     assert resp.data['has_more'] is True

@@ -19,6 +19,7 @@ après un .load().
             </div>
             <div class="modal-body text-center" id="attachmentPreviewModalBody"></div>
             <div class="modal-footer">
+                <span id="attachmentPreviewDownloadStatus" class="mr-auto small d-none"></span>
                 <a href="#" id="attachmentPreviewDownloadLink" class="btn btn-outline-primary" download rel="noopener">
                     <i class="fas fa-download mr-1"></i>{% translate "Download" %}
                 </a>
@@ -41,4 +42,11 @@ fichier JS statique pour rester traduisibles via i18n.
     // Filet de sécurité générique si un format a priori lisible échoue quand même à charger
     // (fichier corrompu, extension mal détectée...).
     var attachmentPreviewGenericErrorMessage = "{% translate 'This file cannot be played in the browser. Please download it instead.' %}";
+    // Retour visuel pendant/après le téléchargement du bouton "Download" (cf.
+    // attachmentPreviewDownloadStatus, static/js/attachment_preview_modal.js) — le téléchargement
+    // natif via <a download> ne déclenche aucun événement JS exploitable (pas de progression, pas
+    // de confirmation de fin), d'où le passage par fetch() pour pouvoir en informer l'utilisateur.
+    var attachmentPreviewDownloadingMessage = "{% translate 'Downloading...' %}";
+    var attachmentPreviewDownloadedMessage = "{% translate 'Download complete' %}";
+    var attachmentPreviewDownloadErrorMessage = "{% translate 'Download failed. Please try again.' %}";
 </script>

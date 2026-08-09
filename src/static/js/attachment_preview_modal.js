@@ -34,6 +34,85 @@
         return target + (downloadUrl ? '' : sep + 'download=1');
     }
 
+    // `<a download>` seul (comportement précédent) télécharge bien le fichier, mais en passant
+    // entièrement par la gestion native du navigateur : aucun événement JS n'est déclenché pour
+    // suivre l'avancement ni détecter la fin — l'utilisateur cliquait sans plus jamais savoir si
+    // le téléchargement avait réellement abouti. On reproduit donc le téléchargement nous-mêmes
+    // via fetch()/ReadableStream (en lisant `Content-Length`, fourni par `FileResponse`, cf.
+    // attachments/views.py::GetAttachmentAPIView) pour afficher une progression, puis on déclenche
+    // la sauvegarde du fichier via un lien `Blob` temporaire — le résultat final pour l'utilisateur
+    // (boîte de dialogue "Enregistrer sous"/fichier dans ses téléchargements) est identique.
+    function setDownloadStatus(html, cssClass) {
+        $('#attachmentPreviewDownloadStatus')
+            .removeClass('d-none text-muted text-success text-danger')
+            .addClass(cssClass)
+            .html(html);
+    }
+
+    function resetDownloadStatus() {
+        $('#attachmentPreviewDownloadStatus').addClass('d-none').empty();
+    }
+
+    function downloadWithProgress(url, filename) {
+        var $link = $('#attachmentPreviewDownloadLink');
+        if ($link.hasClass('disabled')) return; // téléchargement déjà en cours, ignore le double-clic
+
+        $link.addClass('disabled').attr('aria-disabled', 'true');
+        setDownloadStatus('<i class="fas fa-spinner fa-spin mr-1"></i>' + attachmentPreviewDownloadingMessage, 'text-muted');
+
+        fetch(url, { credentials: 'same-origin' })
+            .then(function (response) {
+                if (!response.ok || !response.body) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                var total = parseInt(response.headers.get('Content-Length') || '0', 10);
+                var loaded = 0;
+                var reader = response.body.getReader();
+                var chunks = [];
+
+                function pump() {
+                    return reader.read().then(function (result) {
+                        if (result.done) {
+                            return new Blob(chunks);
+                        }
+                        chunks.push(result.value);
+                        loaded += result.value.length;
+                        // Sans `Content-Length` (ex. réponse chunked), on garde le message générique
+                        // "Téléchargement en cours..." plutôt qu'un pourcentage impossible à calculer.
+                        if (total > 0) {
+                            var percent = Math.min(100, Math.round((loaded / total) * 100));
+                            setDownloadStatus(
+                                '<i class="fas fa-spinner fa-spin mr-1"></i>' + attachmentPreviewDownloadingMessage + ' (' + percent + '%)',
+                                'text-muted'
+                            );
+                        }
+                        return pump();
+                    });
+                }
+                return pump();
+            })
+            .then(function (blob) {
+                var blobUrl = URL.createObjectURL(blob);
+                var $tempLink = $('<a></a>').attr({ href: blobUrl, download: filename || 'download' });
+                $('body').append($tempLink);
+                $tempLink[0].click();
+                $tempLink.remove();
+                // Délai avant révocation : certains navigateurs lisent l'URL blob de façon asynchrone
+                // pour amorcer le téléchargement, la révoquer immédiatement peut l'interrompre.
+                setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 30000);
+
+                setDownloadStatus('<i class="fas fa-check-circle mr-1"></i>' + attachmentPreviewDownloadedMessage, 'text-success');
+                setTimeout(resetDownloadStatus, 4000);
+            })
+            .catch(function (err) {
+                console.error('Attachment download failed', err);
+                setDownloadStatus('<i class="fas fa-exclamation-triangle mr-1"></i>' + attachmentPreviewDownloadErrorMessage, 'text-danger');
+            })
+            .finally(function () {
+                $link.removeClass('disabled').attr('aria-disabled', 'false');
+            });
+    }
+
     // Exposée globalement : réutilisée par le flux "pièce jointe chiffrée" (voir issue_detail.html,
     // `.show-data` -> vérification du mot de passe -> ouverture du fichier déchiffré), qui ne peut
     // pas passer par la délégation de clic sur `.attachment-link` ci-dessous puisque l'URL finale
@@ -48,9 +127,13 @@
         $('#attachmentPreviewModalLabel').text(name || '');
         // Le lien "Ouvrir dans un nouvel onglet" garde l'ancien comportement (target=_blank, URL
         // telle quelle) ; le lien "Download" pointe vers l'endpoint qui force réellement le
-        // téléchargement (cf. buildDownloadUrl ci-dessus).
-        $('#attachmentPreviewDownloadLink').attr('href', buildDownloadUrl(downloadUrl, url));
+        // téléchargement (cf. buildDownloadUrl ci-dessus) et porte aussi le nom de fichier à
+        // utiliser pour la sauvegarde locale (cf. downloadWithProgress, déclenché au clic).
+        $('#attachmentPreviewDownloadLink')
+            .attr('href', buildDownloadUrl(downloadUrl, url))
+            .data('filename', name || '');
         $('#attachmentPreviewOpenLink').attr('href', url);
+        resetDownloadStatus();
         $body.empty();
 
         if (IMAGE_EXTS.indexOf(ext) !== -1) {
@@ -107,9 +190,19 @@
         window.openAttachmentPreview(href, $(this).data('filename'), $(this).data('download-url'));
     });
 
-    // Vide le lecteur (surtout utile pour l'audio/vidéo : arrête la lecture) à la fermeture.
+    $(document).on('click', '#attachmentPreviewDownloadLink', function (e) {
+        e.preventDefault();
+        var $this = $(this);
+        var href = $this.attr('href');
+        if (!href || $this.hasClass('disabled')) return;
+        downloadWithProgress(href, $this.data('filename'));
+    });
+
+    // Vide le lecteur (surtout utile pour l'audio/vidéo : arrête la lecture) et le statut de
+    // téléchargement à la fermeture.
     $(document).on('hidden.bs.modal', '#attachmentPreviewModal', function () {
         $('#attachmentPreviewModalBody').empty();
+        resetDownloadStatus();
     });
 
     // Cas "checkPasswordModal -> openAttachmentPreview" (issue_detail.html) : la modale mot de

@@ -364,7 +364,7 @@ msgstr "Au moins huit caractères, dont au moins une lettre et un chiffre"
 #: .\dashboard\diagnostics\views.py:20
 #: .\dashboard\templates\layouts\sidebar.html:39
 msgid "Diagnostics"
-msgstr "Diagnostique"
+msgstr "Diagnostics"
 
 #: .\dashboard\forms\forms.py:8 .\dashboard\grm\forms.py:309
 #: .\dashboard\grm\forms.py:346
@@ -1966,3 +1966,155 @@ msgstr "Mot de passe de la categorie"
 #: .\privacy\models.py:19
 msgid "Categories password"
 msgstr "Mot de passe des categories"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "Search filters"
+msgstr "Filtres de recherche"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "Total"
+msgstr "Total"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "See all results"
+msgstr "Voir tous les résultats"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "See all"
+msgstr "Voir tout"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "Import"
+msgstr "Importer"
+
+#: .\dashboard\templates\grm\review_issues.html .\dashboard\templates\grm\issue_list.html
+msgid "Download full database"
+msgstr "Télécharger toute la base de données"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "From"
+msgstr "Du"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "To"
+msgstr "Au"
+
+#: .\dashboard\templates\grm\review_issues.html
+msgid "on"
+msgstr "activé"
+
+#: .\dashboard\templates\grm\issue_list.html
+msgid "Issues"
+msgstr "Plaintes"
+
+#: .\dashboard\templates\grm\issue_list.html
+msgid "Unassigned"
+msgstr "Non assigné"
+
+#: .\dashboard\templates\grm\issue_list.html
+msgid "Complaints in your administrative level"
+msgstr "Plaintes dans votre niveau administratif"
+
+#: .\dashboard\templates\grm\issue_list.html
+msgid "Show all"
+msgstr "Tout afficher"
+
+#: .\dashboard\adls\views.py
+msgid "Active"
+msgstr "Actif"
+
+#: .\dashboard\adls\views.py
+msgid "Inactive"
+msgstr "Inactif"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Complaint Management Mechanism"
+msgstr "Mécanisme de Gestion des Plaintes"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Welcome back, %(name)s"
+msgstr "Bon retour, %(name)s"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Record new complaints, track their progress and follow them through to resolution — all from one place."
+msgstr "Enregistrez les nouvelles plaintes, suivez leur avancement et accompagnez-les jusqu'à leur résolution — le tout au même endroit."
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Total complaints"
+msgstr "Total des plaintes"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "in the last 7 days"
+msgstr "sur les 7 derniers jours"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Registered"
+msgstr "Enregistrées"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Awaiting review"
+msgstr "En attente de traitement"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "unresolved / rejected"
+msgstr "non résolues / rejetées"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Resolved"
+msgstr "Résolues"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "resolution rate"
+msgstr "taux de résolution"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Enter a new complaint"
+msgstr "Enregistrer une nouvelle plainte"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Open the guided form to record a citizen complaint or request step by step."
+msgstr "Ouvrez le formulaire guidé pour enregistrer, étape par étape, une plainte ou une demande d'un citoyen."
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Start now"
+msgstr "Commencer"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Review complaints"
+msgstr "Consulter les plaintes"
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Browse, filter and follow up on every complaint until it is resolved."
+msgstr "Parcourez, filtrez et assurez le suivi de chaque plainte jusqu'à sa résolution."
+
+#: .\dashboard\templates\grm\dashboard.html
+msgid "Open the list"
+msgstr "Ouvrir la liste"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "Geographic breakdown"
+msgstr "Répartition géographique"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "Complaints map"
+msgstr "Carte des plaintes"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "By category"
+msgstr "Par catégorie"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "By status"
+msgstr "Par statut"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "complaints located on the map"
+msgstr "plaintes localisées sur la carte"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "Grouped"
+msgstr "Groupé"
+
+#: .\dashboard\templates\diagnostics\home.html
+msgid "Detailed"
+msgstr "Détaillé"

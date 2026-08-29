@@ -1,106 +1,273 @@
 {% extends 'layouts/base.html' %}
 {% load bootstrap4 static i18n %}
 
+{% block extracss %}
+    {{ block.super }}
+    <style>
+        :root {
+            --grm-green: #24c38b;
+            --grm-green-dark: #1a9c6e;
+            --grm-ink: #2f3a45;
+            --grm-muted: #8a97a3;
+            --grm-line: #edf1f3;
+            --grm-bg-soft: #f6f8f9;
+        }
+
+        .grm-home { display: flex; flex-direction: column; gap: 22px; }
+
+        /* ---------- Hero ---------- */
+        .grm-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            padding: 34px 38px;
+            color: #fff;
+            background: linear-gradient(135deg, #24c38b 0%, #17a978 55%, #0f8f65 100%);
+            box-shadow: 0 18px 40px rgba(20, 150, 110, .28);
+        }
+        .grm-hero::after {
+            content: "";
+            position: absolute;
+            right: -60px; top: -80px;
+            width: 320px; height: 320px;
+            background: radial-gradient(circle at center, rgba(255,255,255,.18), rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+        }
+        .grm-hero::before {
+            content: "";
+            position: absolute;
+            right: 40px; bottom: -120px;
+            width: 260px; height: 260px;
+            border: 40px solid rgba(255,255,255,.08);
+            border-radius: 50%;
+        }
+        .grm-hero .hero-eyebrow {
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            font-size: 12px;
+            font-weight: 700;
+            opacity: .85;
+            margin-bottom: 6px;
+        }
+        .grm-hero h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 8px;
+            line-height: 1.2;
+        }
+        .grm-hero p {
+            margin: 0;
+            max-width: 560px;
+            font-size: 14.5px;
+            opacity: .92;
+            line-height: 1.55;
+        }
+        .grm-hero .hero-badge {
+            position: absolute;
+            right: 34px; top: 30px;
+            width: 68px; height: 68px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 20px;
+            background: rgba(255,255,255,.16);
+            backdrop-filter: blur(2px);
+            font-size: 30px;
+        }
+
+        /* ---------- Stat tiles ---------- */
+        .grm-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 991px) { .grm-stats { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 575px) { .grm-stats { grid-template-columns: 1fr; } }
+
+        .stat-tile {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 18px 16px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
+            border: 1px solid var(--grm-line);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .stat-tile .stat-icon {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .stat-tile .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--grm-ink);
+            line-height: 1;
+        }
+        .stat-tile .stat-label {
+            font-size: 12.5px;
+            color: var(--grm-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        .stat-tile .stat-sub { font-size: 11.5px; color: var(--grm-muted); }
+        .stat-tile .stat-sub b { color: var(--grm-green-dark); }
+
+        .ic-total   { background: rgba(36,195,139,.12);  color: #1a9c6e; }
+        .ic-new     { background: rgba(79,133,255,.12);  color: #3f74e0; }
+        .ic-progress{ background: rgba(245,186,116,.18); color: #b9740f; }
+        .ic-resolved{ background: rgba(36,195,139,.14);  color: #1a9c6e; }
+
+        /* ---------- Action cards ---------- */
+        .grm-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+        @media (max-width: 767px) { .grm-actions { grid-template-columns: 1fr; } }
+
+        .action-card {
+            position: relative;
+            display: block;
+            border-radius: 18px;
+            padding: 26px 26px 24px;
+            text-decoration: none;
+            border: 1px solid var(--grm-line);
+            background: #fff;
+            transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+            overflow: hidden;
+        }
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 34px rgba(31, 45, 61, .12);
+            text-decoration: none;
+        }
+        .action-card .ac-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+        .action-card .ac-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 6px;
+        }
+        .action-card .ac-desc {
+            font-size: 13.5px;
+            line-height: 1.55;
+            margin: 0 0 16px;
+        }
+        .action-card .ac-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 13.5px;
+        }
+        .action-card .ac-cta i { transition: transform .16s ease; }
+        .action-card:hover .ac-cta i { transform: translateX(4px); }
+
+        /* Primary (filled) */
+        .action-card.is-primary {
+            background: linear-gradient(135deg, #24c38b, #16a475);
+            border-color: transparent;
+            color: #fff;
+        }
+        .action-card.is-primary .ac-icon { background: rgba(255,255,255,.18); color: #fff; }
+        .action-card.is-primary .ac-desc { color: rgba(255,255,255,.9); }
+        .action-card.is-primary .ac-cta { color: #fff; }
+
+        /* Secondary (outline) */
+        .action-card.is-secondary { color: var(--grm-ink); }
+        .action-card.is-secondary:hover { border-color: var(--grm-green); }
+        .action-card.is-secondary .ac-icon { background: rgba(36,195,139,.12); color: var(--grm-green-dark); }
+        .action-card.is-secondary .ac-desc { color: var(--grm-muted); }
+        .action-card.is-secondary .ac-cta { color: var(--grm-green-dark); }
+
+        .action-card form { margin: 0; }
+        .action-card button.ac-cta {
+            background: none; border: 0; padding: 0; cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <img src="{% static 'images/bg-right-waves.png' %}" class="bg-right-waves"/>
-                <div class="card-body mt-5 ml-5">
-                    <div class="row mb-4">
-                        <div class="col-6">
-                            <div class="fs44 lh46 text-primary text-bold-family">
-                                {% comment %} {% translate 'Resources & Announcements' %} {% endcomment %}
-                            </div>
-                        </div>
-                        <div class="col-6">
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-4">
-                            <a href="{% url 'dashboard:grm:review_issues' %}" class="btn">
-                                <div class="card text-outline-white btn-outline-primary mb-3" style="max-width: 18rem;">
-                                    <div class="card-header">{% translate 'List' %}</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title text-box">{% translate 'REVIEW ISSUES' %}</h5>
-                                        <br />
-                                        <i class="fa fa-chevron-right align-bottom"></i>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-4">
-                            <a href='#' id='enter-issue' class="btn">
-                                <div class="card text-outline-white btn-outline-primary mb-3" style="max-width: 18rem;">
-                                    <form id='enter-issue-form' action="{% url 'dashboard:grm:start_new_issue' %}"
-                                        method="post">{% csrf_token %}
-                                        <div class="card-header">{% translate 'Add' %}</div>
-                                        <div class="card-body">
-                                            <h5 class="card-title text-box">{% translate 'ENTER NEW ISSUES' %}</h5>
-                                            <br />
-                                            <i class="fa fa-chevron-right align-bottom"></i>
-                                        </div>
-                                    </form>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-4">
-                        </div>
-                        {% comment %} <div class="col-6">
-                            <p class="fs20 lh27">
-                                {% blocktranslate trimmed %}
-                                    - We have added new codes for classifying issues. Click here for more information.
-                                {% endblocktranslate %}
-                                <br><br>
-                                {% blocktranslate trimmed %}
-                                    - We’re getting great feedback! Click here to see some articles about how well our
-                                    work is being received.
-                                {% endblocktranslate %}
-                            </p>
-                        </div>
-                        <div class="col-6">
-                            <div class="white-shaded-style text-right">
-                                <form id='enter-issue-form' action="{% url 'dashboard:grm:start_new_issue' %}"
-                                      method="post">{% csrf_token %}
-                                    <div class="text-box">
-                                        {% translate 'ENTER NEW ISSUES' %}
-                                    </div>
-                                    <a href='#' id='enter-issue' class="btn btn-outline-primary">
-                                        <i class="fa fa-chevron-right align-bottom"></i>
-                                    </a>
-                                </form>
-                                <div>
-                                    <div class="text-box">
-                                        {% translate 'REVIEW ISSUES' %}
-                                    </div>
-                                    <a href="{% url 'dashboard:grm:review_issues' %}" class="btn btn-outline-primary">
-                                        <i class="fa fa-chevron-right align-bottom"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div> {% endcomment %}
-                    </div>
-{#                    <div class="row">#}
-{#                        <div class="col-6">#}
-{#                            <div class="text-bold-family fs20 mt-5">{% translate 'Problems?' %}</div>#}
-{#                            <button class="btn btn-primary btn-sm mt-3 rounded-xl">#}
-{#                                {% translate 'CLICK HERE FOR HELP!' %}#}
-{#                            </button>#}
-{#                        </div>#}
-{#                        <div class="col-6">#}
-{#                        </div>#}
-{#                    </div>#}
-                </div>
+    <div class="grm-home">
+
+        <div class="grm-hero">
+            <div class="hero-badge">🗂️</div>
+            <div class="hero-eyebrow">{% translate 'Complaint Management Mechanism' %}</div>
+            <h1>
+                {% blocktranslate trimmed with name=user.name|default:user.first_name|default:user.email %}
+                    Welcome back, {{ name }}
+                {% endblocktranslate %}
+            </h1>
+            <p>
+                {% translate "Record new complaints, track their progress and follow them through to resolution — all from one place." %}
+            </p>
+        </div>
+
+        <div class="grm-stats">
+            <div class="stat-tile">
+                <div class="stat-icon ic-total"><i class="fas fa-layer-group"></i></div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">{% translate 'Total complaints' %}</div>
+                <div class="stat-sub">+{{ stats.last_7_days }} {% translate 'in the last 7 days' %}</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-icon ic-new"><i class="fas fa-inbox"></i></div>
+                <div class="stat-value">{{ stats.registered }}</div>
+                <div class="stat-label">{% translate 'Registered' %}</div>
+                <div class="stat-sub">{% translate 'Awaiting review' %}</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-icon ic-progress"><i class="fas fa-spinner"></i></div>
+                <div class="stat-value">{{ stats.in_progress }}</div>
+                <div class="stat-label">{% translate 'In progress' %}</div>
+                <div class="stat-sub">{{ stats.rejected }} {% translate 'unresolved / rejected' %}</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-icon ic-resolved"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-value">{{ stats.resolved }}</div>
+                <div class="stat-label">{% translate 'Resolved' %}</div>
+                <div class="stat-sub"><b>{{ stats.resolution_rate }}%</b> {% translate 'resolution rate' %}</div>
             </div>
         </div>
+
+        <div class="grm-actions">
+            <a href="#" id="enter-issue" class="action-card is-primary">
+                <form id="enter-issue-form" action="{% url 'dashboard:grm:start_new_issue' %}" method="post">
+                    {% csrf_token %}
+                </form>
+                <div class="ac-icon"><i class="fas fa-plus"></i></div>
+                <h3 class="ac-title">{% translate 'Enter a new complaint' %}</h3>
+                <p class="ac-desc">
+                    {% translate "Open the guided form to record a citizen complaint or request step by step." %}
+                </p>
+                <span class="ac-cta">{% translate 'Start now' %} <i class="fas fa-arrow-right"></i></span>
+            </a>
+
+            <a href="{% url 'dashboard:grm:review_issues' %}" class="action-card is-secondary">
+                <div class="ac-icon"><i class="fas fa-list-ul"></i></div>
+                <h3 class="ac-title">{% translate 'Review complaints' %}</h3>
+                <p class="ac-desc">
+                    {% translate "Browse, filter and follow up on every complaint until it is resolved." %}
+                </p>
+                <span class="ac-cta">{% translate 'Open the list' %} <i class="fas fa-arrow-right"></i></span>
+            </a>
+        </div>
+
     </div>
 {% endblock %}
 
 {% block javascript %}
     {{ block.super }}
     <script type="text/javascript">
-        $('#enter-issue').on("click", function () {
+        $('#enter-issue').on("click", function (e) {
+            e.preventDefault();
             $("#enter-issue-form").submit();
         });
     </script>

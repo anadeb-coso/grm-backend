@@ -21,6 +21,7 @@ urlpatterns = [
     path('new-issue-step-6/<int:issue>/', views.NewIssueConfirmationFormView.as_view(), name='new_issue_step_6'),
     path('review-issues', views.ReviewIssuesFormView.as_view(), name='review_issues'),
     path('issue-list', views.IssueListView.as_view(), name='issue_list'),
+    path('issue-list/datatable', views.IssueListDatatableJsonView.as_view(), name='issue_list_datatable'),
     path('issue-detail/<int:issue>/', views.IssueDetailsFormView.as_view(), name='issue_detail'),
     path('get-sensitive-issue-data/<int:issue>/', views.GetSensitiveIssueDataView.as_view(), name='get_sensitive_issue_data'),
     path('get-original-description-issue-data/<int:issue>/', views.GetOriginalDescriptionIssueDataView.as_view(), name='get_original_description_issue_data'),

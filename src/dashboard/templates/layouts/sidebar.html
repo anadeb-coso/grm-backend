@@ -3,10 +3,10 @@
 <!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-light-primary soft-shadow sidebar-no-expand">
     <!-- Brand Logo -->
-{#    <a href="{% url 'dashboard:diagnostics:home' %}" class="brand-link">#}
-{#        <img src="{% static 'images/map.png' %}" class="brand-image-map"/>#}
-{#        <img src="{% static 'images/eADL_logo.png' %}" alt="eADL Logo" class="brand-image"/>#}
-{#    </a>#}
+{% comment %}     <a href="{% url 'dashboard:diagnostics:home' %}" class="brand-link">
+        <img src="{% static 'images/map.png' %}" class="brand-image-map"/>
+        <img src="{% static 'images/eADL_logo.png' %}" alt="eADL Logo" class="brand-image"/>
+    </a> {% endcomment %}
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -48,20 +48,20 @@
                     </a>
                 </li>
                 {% endif %}
-{#                <li class="nav-item">#}
-{#                    <a href="{% url 'dashboard:participatory_budget:dashboard' %}"#}
-{#                       class="nav-link {% if active_level1 == 'participatory_budget' %}active{% endif %}">#}
-{#                        <i class="nav-icon far fa-money-bill-alt"></i>#}
-{#                        <p>{% translate "Participatory Budget" %}</p>#}
-{#                    </a>#}
-{#                </li>#}
-{#                <li class="nav-item">#}
-{#                    <a href="{% url 'dashboard:subprojects:dashboard' %}"#}
-{#                       class="nav-link {% if active_level1 == 'subprojects' %}active{% endif %}">#}
-{#                        <i class="nav-icon fas fa-folder"></i>#}
-{#                        <p>{% translate "Subprojects" %}</p>#}
-{#                    </a>#}
-{#                </li>#}
+{% comment %}                 <li class="nav-item">
+                    <a href="{% url 'dashboard:participatory_budget:dashboard' %}"
+                       class="nav-link {% if active_level1 == 'participatory_budget' %}active{% endif %}">
+                        <i class="nav-icon far fa-money-bill-alt"></i>
+                        <p>{% translate "Participatory Budget" %}</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:subprojects:dashboard' %}"
+                       class="nav-link {% if active_level1 == 'subprojects' %}active{% endif %}">
+                        <i class="nav-icon fas fa-folder"></i>
+                        <p>{% translate "Subprojects" %}</p>
+                    </a>
+                </li> {% endcomment %}
                 <li class="nav-item">
                     <a href="{% url 'dashboard:grm:dashboard' %}"
                        class="nav-link {% if active_level1 == 'grm' %}active{% endif %}">
@@ -118,17 +118,17 @@
             </ul>
         </nav>
 
-{#        <nav class="logs border-top">#}
-{#            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">#}
-{#                <li class="nav-item">#}
-{#                    <a href="{% url 'dashboard:logs:dashboard' %}"#}
-{#                       class="nav-link {% if active_level1 == 'logs' %}active{% endif %}">#}
-{#                        <i class="nav-icon icon icon-color ic-logs-color"></i>#}
-{#                        <p>{% translate "Logs" %}</p>#}
-{#                    </a>#}
-{#                </li>#}
-{#            </ul>#}
-{#        </nav>#}
+{% comment %}         <nav class="logs border-top">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:logs:dashboard' %}"
+                       class="nav-link {% if active_level1 == 'logs' %}active{% endif %}">
+                        <i class="nav-icon icon icon-color ic-logs-color"></i>
+                        <p>{% translate "Logs" %}</p>
+                    </a>
+                </li>
+            </ul>
+        </nav> {% endcomment %}
 
         <nav class="toogle-sidebar-button">
             <ul class="nav nav-pills nav-sidebar flex-column">

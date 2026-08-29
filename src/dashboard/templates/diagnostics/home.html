@@ -12,11 +12,306 @@
     <link href="{% static 'AdminLTE/plugins/chart.js/Chart.css' %}" rel="stylesheet">
     <link href="{% static 'plugins/mapbox-gl-js/v2.6.1/mapbox-gl.css' %}" rel="stylesheet">
     <style>
-        #map {
-            height: 600px;
+        :root {
+            --grm-green: #24c38b;
+            --grm-green-dark: #1a9c6e;
+            --grm-ink: #2f3a45;
+            --grm-muted: #8a97a3;
+            --grm-line: #edf1f3;
+            --grm-bg-soft: #f6f8f9;
         }
 
+        #map { height: 600px; }
+
+        .diag-page { display: flex; flex-direction: column; gap: 20px; }
+
+        /* ---------- Filter card ---------- */
+        .diag-filter-card {
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
+        }
+        .diag-filter-card .card-header {
+            background: #fff;
+            border-bottom: 1px solid var(--grm-line);
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 22px;
+        }
+        .diag-filter-card .diag-filter-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--grm-ink);
+            margin: 0;
+        }
+        .diag-filter-card .diag-count-pill {
+            margin-left: auto;
+            background: rgba(36, 195, 139, .12);
+            color: var(--grm-green-dark);
+            font-weight: 700;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 999px;
+        }
+
+        .issues-filter label,
+        .regions-filter label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--grm-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .issues-filter .form-control,
+        .regions-filter .form-control,
+        .issues-filter .select2-container--default .select2-selection--single,
+        .regions-filter .select2-container--default .select2-selection--single {
+            height: 40px;
+            border-radius: 9px;
+            border: 1px solid var(--grm-line);
+            background-color: var(--grm-bg-soft);
+            font-size: 13px;
+        }
+        .issues-filter .select2-container--default .select2-selection--single .select2-selection__rendered,
+        .regions-filter .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px;
+            color: var(--grm-ink);
+        }
+        .issues-filter .form-control:focus,
+        .regions-filter .form-control:focus {
+            border-color: var(--grm-green);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(36, 195, 139, .12);
+        }
+        .issues-filter .input-group-text {
+            border-radius: 9px 0 0 9px;
+            border: 1px solid var(--grm-line);
+            background: var(--grm-bg-soft);
+        }
+        .diag-filter-card .border-left { border-left: 1px solid var(--grm-line) !important; }
+
+        .diag-filter-foot {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .diag-total-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--grm-bg-soft);
+            border: 1px solid var(--grm-line);
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--grm-muted);
+            font-weight: 600;
+        }
+        .diag-total-chip span#id_total_issues {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--grm-green-dark);
+        }
+        .btn-clear-diag {
+            margin-left: auto;
+            border: 1px solid var(--grm-line);
+            border-radius: 9px;
+            background: #fff;
+            color: var(--grm-muted);
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 14px;
+        }
+        .btn-clear-diag:hover { color: #d64550; border-color: #f1c6c9; background: #fff5f5; text-decoration: none; }
+
+        /* ---------- Analytics cards ---------- */
+        .diag-analytics.card.transparent { background: transparent; box-shadow: none; border: 0; }
+        .diag-analytics .card {
+            border: 1px solid var(--grm-line);
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .05);
+        }
+        .diag-analytics .card-header {
+            border-bottom: 1px solid var(--grm-line);
+            background: #fff;
+            border-radius: 16px 16px 0 0;
+            padding: 14px 20px;
+        }
+        .diag-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--grm-ink);
+            margin: 0;
+        }
+        .diag-section-title i {
+            width: 30px; height: 30px;
+            border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(36, 195, 139, .12);
+            color: var(--grm-green-dark);
+            font-size: 13px;
+        }
+
+        .diag-chart-wrap { position: relative; height: 260px; }
+        .pie-chart { max-height: 260px; }
+
+        /* ---------- Stat tables ---------- */
+        .diag-analytics table.table { width: 100% !important; border-collapse: separate; border-spacing: 0; }
+        .diag-analytics table.table thead th,
+        .diag-analytics table.table thead.primary th {
+            position: sticky; top: 0; z-index: 2;
+            background: #f4f6f7 !important;
+            color: var(--grm-muted) !important;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            font-size: 10.5px;
+            font-weight: 700;
+            border: 0 !important;
+            border-bottom: 2px solid var(--grm-line) !important;
+            padding: 11px 12px;
+        }
+        .diag-analytics table.table tbody td {
+            font-size: 12.5px !important;
+            color: var(--grm-ink);
+            border: 0 !important;
+            border-bottom: 1px solid var(--grm-line) !important;
+            padding: 9px 12px;
+            vertical-align: middle;
+        }
+        .diag-analytics table.table tbody tr:nth-child(even) td { background: #fbfcfc; }
+        .diag-analytics table.table tbody tr:hover td { background: #f0faf6; }
+        /* dernière colonne = pourcentage -> mise en avant */
+        .diag-analytics table.table tbody td:last-child {
+            font-weight: 700;
+            color: var(--grm-green-dark);
+        }
+
+        /* ---------- DataTables controls ---------- */
+        .diag-analytics .dataTables_wrapper .dt-buttons .btn {
+            background: #fff !important;
+            border: 1px solid var(--grm-line) !important;
+            color: var(--grm-ink) !important;
+            border-radius: 8px !important;
+            font-size: 12px;
+            margin-right: 6px;
+            box-shadow: none !important;
+        }
+        .diag-analytics .dataTables_wrapper .dt-buttons .btn:hover {
+            background: var(--grm-green) !important; color: #fff !important; border-color: var(--grm-green) !important;
+        }
+        .diag-analytics .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid var(--grm-line); border-radius: 8px; height: 34px; padding: 0 12px;
+        }
+        .diag-analytics .dataTables_wrapper .dataTables_length select {
+            border-radius: 6px; border: 1px solid var(--grm-line); height: 32px; padding: 0 8px;
+        }
+        .diag-analytics .dataTables_wrapper .dataTables_info { color: var(--grm-muted); font-size: 12px; }
+        .diag-analytics .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 4px 10px !important; margin-left: 2px !important;
+            border-radius: 6px !important; border: 1px solid transparent !important;
+            font-size: 12px; color: var(--grm-ink) !important;
+        }
+        .diag-analytics .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: rgba(36, 195, 139, .10) !important;
+            border-color: rgba(36, 195, 139, .35) !important;
+            color: var(--grm-green-dark) !important;
+        }
+        .diag-analytics .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .diag-analytics .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: var(--grm-green) !important; border-color: var(--grm-green) !important; color: #fff !important;
+        }
+
+        /* ---------- Spinner overlay ---------- */
+        #statistics-spin.overlay {
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .72);
+            backdrop-filter: blur(2px);
+        }
+        #statistics-spin .fa-sync-alt { font-size: 44px !important; color: var(--grm-green); }
+
+        /* ---------- Complaints map ---------- */
+        .diag-map-card {
+            border: 1px solid var(--grm-line);
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .05);
+            overflow: hidden;
+        }
+        .diag-map-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: #fff;
+            border-bottom: 1px solid var(--grm-line);
+            padding: 14px 20px;
+        }
+        .diag-map-modes {
+            display: inline-flex;
+            border: 1px solid var(--grm-line);
+            border-radius: 9px;
+            overflow: hidden;
+        }
+        .diag-map-modes button {
+            border: 0;
+            background: #fff;
+            color: var(--grm-muted);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        .diag-map-modes button.active { background: var(--grm-green); color: #fff; }
+        .diag-map-count { margin-left: auto; color: var(--grm-muted); font-size: 12px; }
+        #diag-map {
+            height: 480px;
+            width: 100%;
+            z-index: 0;
+        }
+        .diag-map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+            padding: 14px 20px;
+            border-top: 1px solid var(--grm-line);
+            border-radius: 0 0 16px 16px;
+        }
+        .diag-map-legend:empty { display: none; }
+        .diag-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: var(--grm-ink);
+        }
+        .diag-legend-swatch {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,.08);
+        }
+        .diag-legend-item b { color: var(--grm-muted); font-weight: 700; }
+        /* clusters markercluster -> palette GRM */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            background-color: rgba(36, 195, 139, .28);
+        }
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+            background-color: var(--grm-green);
+            color: #fff;
+            font-weight: 700;
+        }
     </style>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css" />
 {% endblock extracss %}
 
 {% block content %}
@@ -31,48 +326,49 @@
     {% translate 'Canton' as canton_label %}
     {% translate 'Village' as village_label %}
 
+    <div class="diag-page">
+
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header border-0">
-                    <div class="card-title">
-                        <div class="pt-1 fs20 lh25 text-primary text-bold-family">
-                            {% translate 'Filter by' %}
-                            <span style="font-size: 12px;">(T: {{ all_total_issues }})</span>
-                        </div>
-                    </div>
+            <div class="card diag-filter-card">
+                <div class="card-header">
+                    <i class="fas fa-sliders-h text-primary"></i>
+                    <h6 class="diag-filter-title">{% translate 'Filter by' %}</h6>
+                    <span class="diag-count-pill">{% translate 'Total' %} : {{ all_total_issues }}</span>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-4 issues-filter">
+                        <div class="col-lg-4 col-md-6 issues-filter">
                             {% bootstrap_field form.start_date layout='horizontal' show_label=False %}
                             {% bootstrap_field form.end_date layout='horizontal' show_label=False %}
                         </div>
-                        <div class="col-4 issues-filter border-left">
+                        <div class="col-lg-4 col-md-6 issues-filter border-left">
                             {% comment %} {% bootstrap_field form.type layout='horizontal' show_label=False %} {% endcomment %}
                             {% bootstrap_field form.category layout='horizontal' show_label=False %}
                             {% bootstrap_field form.wave layout='horizontal' show_label=False %}
                         </div>
-                        <div class="col-4 regions-filter border-left">
+                        <div class="col-lg-4 col-md-12 regions-filter border-left">
                             {% bootstrap_field form.administrative_region layout='horizontal' %}
                             {% bootstrap_field form.administrative_level_type layout='horizontal' %}
                         </div>
                     </div>
-                    <p class="pull-left p-0">
-                        <b>{% translate "Total complaints in your administrative level" %} : </b>
-                        <span id="id_total_issues">-<span>
-                    </p>
-                    <a class="btn fs12 text-bold-family text-primary pull-right p-0"
-                       id="clear_all_filters">
-                        {% translate "Clear all filters" %}
-                    </a>
+                    <div class="diag-filter-foot">
+                        <span class="diag-total-chip">
+                            <i class="fas fa-layer-group text-primary"></i>
+                            {% translate "Total complaints in your administrative level" %}
+                            <span id="id_total_issues">-</span>
+                        </span>
+                        <button class="btn-clear-diag" id="clear_all_filters">
+                            <i class="fas fa-times-circle"></i> {% translate "Clear all filters" %}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
 
-    <div class="card transparent">
+    <div class="card transparent diag-analytics">
         <div class="card-body">
             <div class="overlay-wrapper">
                 <div class="row">
@@ -85,6 +381,11 @@
                     </div> {% endcomment %}
                     <div class="col-md-6 display-flex flex-flow-column" id="region-stats-container">
                         <div class="card h-100">
+                            <div class="card-header border-0">
+                                <h6 class="diag-section-title">
+                                    <i class="fas fa-map-marked-alt"></i> {% translate 'Geographic breakdown' %}
+                                </h6>
+                            </div>
                             <div class="card-body table-responsive overflow-y-auto" style="max-height: 650px;">
                                 <table id="table-region-stats" class="table">
                                     <thead class="primary">
@@ -119,14 +420,12 @@
                     <div class="col-lg-4" style="margin-left: auto !important;margin-right: auto !important;">
                         <div class="card">
                             <div class="card-header border-0">
-                                <div class="card-title">
-                                    <div class="pt-1 fs20 lh25 text-primary text-bold-family">
-                                        {{ status }}
-                                    </div>
-                                </div>
+                                <h6 class="diag-section-title"><i class="fas fa-chart-pie"></i> {{ status }}</h6>
                             </div>
                             <div class="card-body">
-                                <canvas id="status_pie_chart" class="pie-chart"></canvas>
+                                <div class="diag-chart-wrap">
+                                    <canvas id="status_pie_chart" class="pie-chart"></canvas>
+                                </div>
                             </div>
                         </div>
                         <div class="card">
@@ -209,14 +508,12 @@
                     <div class="col-lg-3" style="margin: auto !important;">
                         <div class="card">
                             <div class="card-header border-0">
-                                <div class="card-title">
-                                    <div class="pt-1 fs20 lh25 text-primary text-bold-family">
-                                        {{ category }}
-                                    </div>
-                                </div>
+                                <h6 class="diag-section-title"><i class="fas fa-chart-pie"></i> {{ category }}</h6>
                             </div>
                             <div class="card-body">
-                                <canvas id="category_pie_chart" class="pie-chart"></canvas>
+                                <div class="diag-chart-wrap">
+                                    <canvas id="category_pie_chart" class="pie-chart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -240,11 +537,35 @@
                     
                 </div>
                 <div class="overlay z-index1000" id="statistics-spin">
-                    <i class="fas fa-10x fa-sync-alt fa-spin">
-                    </i>
+                    <i class="fas fa-sync-alt fa-spin"></i>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card diag-map-card">
+                <div class="card-header border-0">
+                    <h6 class="diag-section-title"><i class="fas fa-map-marked-alt"></i> {% translate 'Complaints map' %}</h6>
+                    <div class="diag-map-modes" role="group" id="diag-map-view-modes">
+                        <button type="button" class="active" data-view-mode="grouped">{% translate 'Grouped' %}</button>
+                        <button type="button" data-view-mode="detailed">{% translate 'Detailed' %}</button>
+                    </div>
+                    <div class="diag-map-modes" role="group" id="diag-map-color-modes">
+                        <button type="button" class="active" data-color-mode="category">{% translate 'By category' %}</button>
+                        <button type="button" data-color-mode="status">{% translate 'By status' %}</button>
+                    </div>
+                    <span class="diag-map-count" id="diag-map-count">&nbsp;</span>
+                </div>
+                <div class="card-body p-0">
+                    <div id="diag-map"></div>
+                    <div class="diag-map-legend" id="diag-map-legend"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     </div>
 {% endblock content %}
 
@@ -285,6 +606,8 @@
     {% include 'layouts/datatable-js.html' %}
     {% comment %} <script src="{% static 'plugins/mapbox-gl-js/v2.6.1/mapbox-gl.js' %}"></script> {% endcomment %}
     <script src="{% static 'AdminLTE/plugins/chart.js/Chart.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
     <script>
         let number_label = "{% translate 'Number' %}";
         let percentage_label = "{% translate 'Percentage' %}";
@@ -756,5 +1079,209 @@
             loadNextLevelRegions($("#id_administrative_region"), '', '');
         });
 
+    </script>
+
+    <!-- ================= Carte du Togo : plaintes ================= -->
+    <script>
+        (function () {
+            if (typeof L === 'undefined') return;
+
+            // Couleurs par STATUT (id legacy) : 1 Enregistrée · 2 En cours · 3 Résolue ·
+            // 4 Non résolue/Rejetée · 5 Ouverte.
+            var STATUS_COLORS = {
+                1: '#ef6a78', 2: '#8a4fbd', 3: '#24c38b', 4: '#f5ba74', 5: '#f5ba74'
+            };
+            var STATUS_DEFAULT = '#b8c1c9';
+            // Palette réutilisée pour les CATÉGORIES (assignée de façon déterministe par id).
+            var CAT_PALETTE = [
+                '#3f74e0', '#24c38b', '#f5ba74', '#ef6a78', '#8a4fbd', '#ff7043', '#00acc1',
+                '#7cb342', '#d81b60', '#5c6bc0', '#8d6e63', '#26a69a', '#ec407a', '#9ccc65'
+            ];
+            function categoryColor(id) {
+                if (id === null || id === undefined) return STATUS_DEFAULT;
+                return CAT_PALETTE[Math.abs(parseInt(id, 10)) % CAT_PALETTE.length];
+            }
+
+            var colorMode = 'category'; // 'category' | 'status'
+            var viewMode = 'grouped';   // 'grouped' (grappes) | 'detailed' (tous les points éclatés)
+            var lastPoints = [];
+
+            var map = L.map('diag-map', {
+                scrollWheelZoom: false,
+                minZoom: 6,
+                maxZoom: 16
+            }).setView([8.62, 0.83], 7); // centre approximatif du Togo
+
+            // Limites géographiques du Togo (SW / NE) : évite de se perdre hors du pays.
+            map.setMaxBounds([[5.6, -0.5], [11.3, 2.1]]);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap',
+                maxZoom: 18
+            }).addTo(map);
+
+            // (1) Vue GROUPÉE : grappes markercluster (nombre affiché, éclatement au clic).
+            var cluster = L.markerClusterGroup({
+                showCoverageOnHover: false,
+                spiderfyOnMaxZoom: true,
+                zoomToBoundsOnClick: true,
+                maxClusterRadius: 45
+            });
+            // (2) Vue DÉTAILLÉE : tous les points affichés en même temps, sans regroupement.
+            var plainLayer = L.layerGroup();
+
+            function activeLayer() { return viewMode === 'detailed' ? plainLayer : cluster; }
+            function syncActiveLayer() {
+                var keep = activeLayer();
+                var drop = keep === cluster ? plainLayer : cluster;
+                if (map.hasLayer(drop)) map.removeLayer(drop);
+                if (!map.hasLayer(keep)) map.addLayer(keep);
+            }
+            syncActiveLayer();
+
+            // En vue détaillée, les plaintes d'un même village partagent exactement les mêmes
+            // coordonnées : on les écarte légèrement sur un petit anneau pour les rendre toutes
+            // visibles individuellement (position approximative, purement visuelle).
+            function explodedLatLng(points) {
+                var groups = {};
+                points.forEach(function (p, idx) {
+                    var key = p.lat.toFixed(5) + ',' + p.lng.toFixed(5);
+                    (groups[key] = groups[key] || []).push(idx);
+                });
+                var out = points.map(function (p) { return [p.lat, p.lng]; });
+                Object.keys(groups).forEach(function (key) {
+                    var idxs = groups[key];
+                    if (idxs.length < 2) return;
+                    var perRing = 10;
+                    idxs.forEach(function (idx, i) {
+                        var ring = Math.floor(i / perRing);
+                        var angle = (i % perRing) * (2 * Math.PI / Math.min(idxs.length, perRing));
+                        var r = 0.0032 * (1 + ring * 0.9);
+                        out[idx] = [
+                            points[idx].lat + r * Math.cos(angle),
+                            points[idx].lng + r * Math.sin(angle)
+                        ];
+                    });
+                });
+                return out;
+            }
+
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+
+            function pointColor(p) {
+                return colorMode === 'status'
+                    ? (STATUS_COLORS[p.status_id] || STATUS_DEFAULT)
+                    : categoryColor(p.category_id);
+            }
+
+            function renderLegend(points) {
+                var byKey = {};
+                points.forEach(function (p) {
+                    var key = colorMode === 'status'
+                        ? (p.status || '—') + '||' + (STATUS_COLORS[p.status_id] || STATUS_DEFAULT)
+                        : (p.category || '—') + '||' + categoryColor(p.category_id);
+                    byKey[key] = (byKey[key] || 0) + 1;
+                });
+                var html = Object.keys(byKey).sort(function (a, b) { return byKey[b] - byKey[a]; })
+                    .map(function (key) {
+                        var parts = key.split('||');
+                        return '<span class="diag-legend-item">' +
+                            '<span class="diag-legend-swatch" style="background:' + parts[1] + '"></span>' +
+                            esc(parts[0]) + ' <b>' + byKey[key] + '</b></span>';
+                    }).join('');
+                document.getElementById('diag-map-legend').innerHTML = html;
+            }
+
+            function drawPoints(points) {
+                lastPoints = points || [];
+                cluster.clearLayers();
+                plainLayer.clearLayers();
+
+                var detailed = viewMode === 'detailed';
+                var coords = detailed ? explodedLatLng(lastPoints) : null;
+
+                var markers = lastPoints.map(function (p, i) {
+                    var color = pointColor(p);
+                    var latlng = detailed ? coords[i] : [p.lat, p.lng];
+                    var m = L.circleMarker(latlng, {
+                        radius: detailed ? 6 : 7, weight: 1.5, color: '#fff',
+                        fillColor: color, fillOpacity: 0.9
+                    });
+                    m.bindPopup(
+                        '<b>' + esc(p.code || '—') + '</b><br>' +
+                        esc(p.village || '') + '<br>' +
+                        '<span style="color:' + categoryColor(p.category_id) + '">&#9679;</span> ' + esc(p.category || '—') + '<br>' +
+                        '<span style="color:' + (STATUS_COLORS[p.status_id] || STATUS_DEFAULT) + '">&#9679;</span> ' + esc(p.status || '—')
+                    );
+                    return m;
+                });
+
+                if (detailed) {
+                    markers.forEach(function (m) { plainLayer.addLayer(m); });
+                } else {
+                    cluster.addLayers(markers);
+                }
+                syncActiveLayer();
+                renderLegend(lastPoints);
+            }
+
+            function loadMapPoints() {
+                $.ajax({
+                    type: 'GET',
+                    url: "{% url 'dashboard:diagnostics:issues_map_data' %}",
+                    data: {
+                        start_date: (typeof start_date !== 'undefined' && start_date.val) ? start_date.val() : '',
+                        end_date: (typeof end_date !== 'undefined' && end_date.val) ? end_date.val() : '',
+                        category: (typeof category !== 'undefined' && category.val) ? category.val() : '',
+                        wave: (typeof wave !== 'undefined' && wave.val) ? wave.val() : '',
+                        region: (typeof current_region_id !== 'undefined') ? current_region_id : undefined
+                    },
+                    success: function (data) {
+                        drawPoints(data.points || []);
+                        var el = document.getElementById('diag-map-count');
+                        if (el) {
+                            el.textContent = (data.located || 0) + ' / ' + (data.total || 0) +
+                                ' {% translate "complaints located on the map" %}';
+                        }
+                        setTimeout(function () { map.invalidateSize(); }, 60);
+                    },
+                    error: function () {
+                        var el = document.getElementById('diag-map-count');
+                        if (el) el.textContent = '';
+                    }
+                });
+            }
+
+            // Bascule (1) groupé / (2) détaillé.
+            $('#diag-map-view-modes button').on('click', function () {
+                $('#diag-map-view-modes button').removeClass('active');
+                $(this).addClass('active');
+                viewMode = $(this).attr('data-view-mode');
+                drawPoints(lastPoints);
+            });
+
+            // Bascule couleur par catégorie / par statut.
+            $('#diag-map-color-modes button').on('click', function () {
+                $('#diag-map-color-modes button').removeClass('active');
+                $(this).addClass('active');
+                colorMode = $(this).attr('data-color-mode');
+                drawPoints(lastPoints);
+            });
+
+            // Recharge la carte en même temps que les stats, sur les mêmes déclencheurs de filtre
+            // (handlers additionnels : n'altèrent pas ceux qui pilotent déjà loadStatistics()).
+            $('.issues-filter input, .issues-filter select').on('change', loadMapPoints);
+            $('#start_date, #end_date').on('change.datetimepicker', function (e) {
+                if (e.oldDate !== e.date) loadMapPoints();
+            });
+            $(document).on('change', '.region', loadMapPoints);
+            $('#clear_all_filters').on('click', function () { setTimeout(loadMapPoints, 0); });
+
+            setTimeout(function () { map.invalidateSize(); loadMapPoints(); }, 250);
+        })();
     </script>
 {% endblock javascript %}

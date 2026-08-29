@@ -8,7 +8,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.utils.html import escape, format_html
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -107,6 +108,32 @@ class DashboardTemplateView(PageMixin, LoginRequiredMixin, generic.TemplateView)
         send_a_new_issue_notification()
         send_issue_status_notifications()
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base = Issue.objects.filter(confirmed=True, is_deleted=False)
+        total = base.count()
+        resolved = base.filter(status__final_status=True).count()
+        registered = base.filter(status__initial_status=True).count()
+        in_progress = base.filter(
+            status__final_status=False, status__rejected_status=False,
+            status__unresolved_status=False, status__initial_status=False,
+        ).count()
+        rejected = base.filter(
+            Q(status__rejected_status=True) | Q(status__unresolved_status=True)
+        ).count()
+        last_7_days = base.filter(created_date__gte=timezone.now() - timedelta(days=7)).count()
+
+        context['stats'] = {
+            'total': total,
+            'registered': registered,
+            'in_progress': in_progress,
+            'resolved': resolved,
+            'rejected': rejected,
+            'last_7_days': last_7_days,
+            'resolution_rate': round(resolved * 100 / total) if total else 0,
+        }
+        return context
 
 
 class StartNewIssueView(LoginRequiredMixin, generic.View):
@@ -700,14 +727,16 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
     context_object_name = 'issues'
 
     def get_context_data(self, **kwargs):
+        from dashboard.grm.functions import build_issue_queryset
         context = super().get_context_data(**kwargs)
-        index = int(self.request.GET.get('index'))
-        offset = int(self.request.GET.get('offset'))
-        issues, wave_administrative_ids = self.get_results()
-        issues = list(issues)
-        context['total_issues'] = len(issues)
 
-        context['issues'] = issues if self.request.GET.get('see_all') in (True, 'true') else issues[index:index + offset]
+        # Le tableau lui-même est paginé côté serveur (DataTables serverSide ->
+        # IssueListDatatableJsonView) : cette vue ne renvoie plus que le "shell" (pastilles de
+        # synthèse + modale des localités pilotes). On ne matérialise donc plus la liste complète
+        # des documents ici.
+        queryset, wave_administrative_ids = build_issue_queryset(self.request)
+        context['total_issues'] = queryset.count()
+        context['issues'] = []
 
         context['wave_administrative_levels'] = mis_objects_call.filter_objects(
             CVD, headquarters_village__id__in=wave_administrative_ids
@@ -746,9 +775,9 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
                 stats[k]['issues'] = stats[k]['count']
 
         if wave_administrative_ids:
-            for doc in issues:
-                if doc.get('administrative_region') and doc['administrative_region'].get('administrative_id'):
-                    fill_count(doc['administrative_region']['administrative_id'], region_stats_wave)
+            for region_id in queryset.values_list('administrative_region_id', flat=True):
+                if region_id:
+                    fill_count(region_id, region_stats_wave)
 
         for _cvd in context['wave_administrative_levels']:
             cvd_villages_id = list(_cvd.get_villages().values_list('id', flat=True))
@@ -765,13 +794,133 @@ class IssueListView(AJAXRequestMixin, LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         return []
 
-    def get_results(self):
+
+class IssueListDatatableJsonView(AJAXRequestMixin, LoginRequiredMixin, generic.View):
+    """Pagination CÔTÉ SERVEUR du tableau de grm/review-issues (protocole DataTables
+    `serverSide`) : le navigateur demande une
+    page (`start`/`length`, 10 lignes par défaut) et cette vue slice le `QuerySet` en base
+    (`LIMIT/OFFSET`) — seules ces ~10 lignes sont chargées, sérialisées et renvoyées. Cliquer
+    sur la page suivante déclenche une nouvelle requête `start=10&length=10`, etc.
+
+    Réutilise `build_issue_queryset` (mêmes filtres et mêmes règles de visibilité par rôle que
+    l'ancien rendu HTML complet)."""
+
+    # index de colonne DataTables -> champ ORM pour le tri (None = colonne non triable).
+    ORDER_FIELDS = {
+        0: 'internal_code',
+        1: 'description',
+        2: 'category__name',
+        3: None,   # Reported by  (champ dénormalisé)
+        4: None,   # Assigned to  (champ dénormalisé)
+        5: 'created_date',   # Days Open = ancienneté -> inverse de created_date (géré plus bas)
+        6: 'issue_date',
+        7: 'created_date',
+        8: None,   # Locality  (relation cross-DB `mis`)
+        9: 'status__name',
+    }
+
+    def get(self, request, *args, **kwargs):
         from dashboard.grm.functions import build_issue_queryset
-        index = int(self.request.GET.get('index'))
-        offset = int(self.request.GET.get('offset'))
-        queryset, wave_administrative_ids = build_issue_queryset(self.request)
-        docs = [LegacyIssueDoc(issue) for issue in queryset]
-        return docs, wave_administrative_ids
+
+        def _int(name, default):
+            try:
+                return int(request.GET.get(name) or default)
+            except (TypeError, ValueError):
+                return default
+
+        draw = _int('draw', 1)
+        start = max(_int('start', 0), 0)
+        length = _int('length', 10)
+
+        queryset, _wave_ids = build_issue_queryset(request)
+        records_total = queryset.count()
+
+        search_value = (request.GET.get('search[value]') or '').strip()
+        if search_value:
+            queryset = queryset.filter(
+                Q(internal_code__icontains=search_value)
+                | Q(tracking_code__icontains=search_value)
+                | Q(description__icontains=search_value)
+                | Q(category__name__icontains=search_value)
+                | Q(administrative_region_name__icontains=search_value)
+            )
+        records_filtered = queryset.count()
+
+        order_col = request.GET.get('order[0][column]')
+        order_dir = request.GET.get('order[0][dir]') or 'asc'
+        order_field = self.ORDER_FIELDS.get(int(order_col)) if (order_col or '').isdigit() else None
+        if order_field:
+            desc = order_dir == 'desc'
+            if int(order_col) == 5:  # "Days Open" : plus de jours = created_date plus ancienne
+                desc = not desc
+            queryset = queryset.order_by(('-' if desc else '') + order_field, '-created_date')
+        # sinon : ordre par défaut de build_issue_queryset (-created_date)
+
+        page = queryset[start:] if length == -1 else queryset[start:start + length]
+        data = [self._serialize_row(issue) for issue in page]
+
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': records_total,
+            'recordsFiltered': records_filtered,
+            'data': data,
+        })
+
+    @staticmethod
+    def _days_open(created_date):
+        if not created_date:
+            return None
+        now = timezone.now()
+        if timezone.is_naive(created_date):
+            created_date = timezone.make_aware(created_date, now.tzinfo)
+        return max((now - created_date).days, 0)
+
+    def _serialize_row(self, issue):
+        detail_url = reverse('dashboard:grm:issue_detail', args=[issue.auto_increment_id])
+        status = issue.status if issue.status_id else None
+        status_id = status.legacy_id if status else 0
+        category_name = issue.category.name if issue.category_id else ''
+
+        description = issue.description or ''
+        if "b'" in description:
+            description = '***'
+
+        days = self._days_open(issue.created_date)
+        if days is None:
+            days_cell = '<span class="cell-muted">-</span>'
+        else:
+            klass = 'days-fresh' if days <= 7 else 'days-warn' if days <= 30 else 'days-late'
+            days_cell = format_html('<span class="days-open {}">{}</span>', klass, days)
+
+        def dstr(dt):
+            return dt.strftime('%d/%m/%Y') if dt else ''
+
+        return {
+            'DT_RowClass': 'row-status-{}'.format(status_id),
+            'DT_RowAttr': {'data-href': detail_url},
+            '0': format_html('<a href="{}">{}</a>', detail_url, issue.internal_code or ''),
+            '1': format_html('<div class="summary-cell">{}</div>', description),
+            '2': (
+                format_html('<span class="badge-pill-soft badge-cat">{}</span>', category_name)
+                if category_name else '<span class="cell-muted">-</span>'
+            ),
+            '3': escape(issue.reporter_name or '-'),
+            '4': (
+                escape(issue.assignee_name) if issue.assignee_name
+                else format_html('<span class="cell-muted">{}</span>', _('Unassigned'))
+            ),
+            '5': days_cell,
+            '6': format_html('<span class="cell-muted">{}</span>', dstr(issue.issue_date)),
+            '7': format_html('<span class="cell-muted">{}</span>', dstr(issue.created_date)),
+            '8': (
+                escape(issue.administrative_region_name)
+                if issue.administrative_region_name else '<span class="cell-muted">-</span>'
+            ),
+            '9': format_html(
+                '<span class="badge-pill-soft badge-status badge-status-{}">{}</span>',
+                status_id, status.name if status else '-',
+            ),
+        }
 
 
 class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, LoginRequiredMixin, generic.FormView):

@@ -1,13 +1,19 @@
+import csv
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponseRedirect
+from django.db.models import Q
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
-from django.utils.translation import gettext_lazy as _
+from django.utils.html import escape, format_html
+from django.utils.translation import gettext, gettext_lazy as _
 from django.views import generic
 from django.forms import Form
+
+from dashboard.templatetags.custom_tags import adl_names
 
 from authentication.models import User, GovernmentWorker
 from authentication.utils import get_validation_code
@@ -34,12 +40,123 @@ class AdlListView(SpecificPermissionRequiredMixin, PageMixin, LoginRequiredMixin
     ]
 
     def get_queryset(self):
-        return [adl_to_legacy_dict(a) for a in Adl.objects.select_related('representative').all()]
+        # Le tableau est paginé côté serveur (DataTables serverSide -> AdlListDatatableJsonView) :
+        # on ne matérialise plus toute la liste des `adl_to_legacy_dict` ici.
+        return Adl.objects.none()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['government_worker_form'] = CreateAdlProfileForm()
         return context
+
+
+class AdlListDatatableJsonView(SpecificPermissionRequiredMixin, LoginRequiredMixin, generic.View):
+    """Pagination CÔTÉ SERVEUR de la liste `/administrative-levels/` (protocole DataTables
+    `serverSide`), même logique que `dashboard.grm.views.IssueListDatatableJsonView` : le
+    navigateur demande une page (`start`/`length`, 10 lignes par défaut), la vue slice
+    `Adl.objects` en base et ne renvoie que ces ~10 lignes sérialisées. `?export=csv` renvoie
+    en revanche la liste complète (bouton « Exporter la liste complète »).
+
+    Pas de `AJAXRequestMixin` ici (contrairement à `IssueListDatatableJsonView`) : l'export CSV
+    se fait par navigation directe (`window.location`), donc sans en-tête `X-Requested-With`.
+    L'accès reste protégé par l'authentification + la permission de groupe."""
+
+    ORDER_FIELDS = {
+        0: 'name',
+        1: None,   # Location Name (résolu via la base `mis`, cross-DB)
+        2: None,   # Photo
+        3: 'representative_name',
+        4: None,   # Action
+    }
+
+    def _base_queryset(self):
+        return Adl.objects.select_related('representative').all()
+
+    def _apply_search(self, queryset, value):
+        value = (value or '').strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value)
+            | Q(representative_name__icontains=value)
+            | Q(representative__email__icontains=value)
+        )
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('export') == 'csv':
+            return self._export_csv(request)
+
+        def _int(name, default):
+            try:
+                return int(request.GET.get(name) or default)
+            except (TypeError, ValueError):
+                return default
+
+        draw = _int('draw', 1)
+        start = max(_int('start', 0), 0)
+        length = _int('length', 10)
+
+        queryset = self._base_queryset()
+        records_total = queryset.count()
+        queryset = self._apply_search(queryset, request.GET.get('search[value]'))
+        records_filtered = queryset.count()
+
+        order_col = request.GET.get('order[0][column]')
+        order_dir = request.GET.get('order[0][dir]') or 'asc'
+        order_field = self.ORDER_FIELDS.get(int(order_col)) if (order_col or '').isdigit() else None
+        if order_field:
+            queryset = queryset.order_by(('-' if order_dir == 'desc' else '') + order_field)
+        else:
+            queryset = queryset.order_by('-representative_name')
+
+        page = queryset[start:] if length == -1 else queryset[start:start + length]
+        data = [self._serialize_row(adl) for adl in page]
+
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': records_total,
+            'recordsFiltered': records_filtered,
+            'data': data,
+        })
+
+    @staticmethod
+    def _serialize_row(adl):
+        doc = adl_to_legacy_dict(adl)
+        rep = doc.get('representative') or {}
+        detail_url = reverse('dashboard:adls:detail', args=[doc['_id']])
+        photo = rep.get('photo') or static('images/default-avatar.jpg')
+        is_active = bool(rep.get('is_active'))
+        status_html = format_html(
+            '<span class="adl-dot {}" title="{}"></span>',
+            'is-on' if is_active else 'is-off',
+            gettext('Active') if is_active else gettext('Inactive'),
+        )
+        return {
+            'DT_RowAttr': {'data-href': detail_url},
+            '0': format_html('<span class="adl-level">{}</span>', doc.get('name') or '-'),
+            '1': format_html('<span class="adl-loc">{}</span>', adl_names(doc)),
+            '2': format_html('<img src="{}" class="adl-avatar" alt=""/>', photo),
+            '3': format_html('{}<span class="adl-name">{}</span>', status_html, rep.get('name') or '—'),
+            '4': format_html(
+                '<a href="{}" class="btn-see-profile"><i class="fas fa-arrow-right"></i> {}</a>',
+                detail_url, gettext('See profile'),
+            ),
+        }
+
+    def _export_csv(self, request):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="administrative_levels.csv"'
+        writer = csv.writer(response)
+        writer.writerow([
+            gettext('Administrative Level'), gettext('Location Name'),
+            gettext('Name'), gettext('Email'),
+        ])
+        queryset = self._apply_search(self._base_queryset(), request.GET.get('search[value]'))
+        for adl in queryset.order_by('-representative_name'):
+            doc = adl_to_legacy_dict(adl)
+            rep = doc.get('representative') or {}
+            writer.writerow([doc.get('name') or '', adl_names(doc), rep.get('name') or '', rep.get('email') or ''])
+        return response
 
 
 class ADLMixin(SpecificPermissionRequiredMixin, object):

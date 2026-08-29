@@ -25,40 +25,40 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
-{#        <li class="nav-item">#}
-{#            <a class="nav-link" href="#" role="button">#}
-{#                {% translate 'Resources' %}#}
-{#            </a>#}
-{#        </li>#}
-{#        <li class="nav-item">#}
-{#            <a class="nav-link" href="#" role="button">#}
-{#                {% translate 'Help / FAQ' %}#}
-{#            </a>#}
-{#        </li>#}
+{% comment %}         <li class="nav-item">
+            <a class="nav-link" href="#" role="button">
+                {% translate 'Resources' %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" role="button">
+                {% translate 'Help / FAQ' %}
+            </a>
+        </li> {% endcomment %}
         {% if OTHER_LANGUAGES %}
             {% include 'layouts/language_dropdown.html' %}
         {% endif %}
-{#        <li class="nav-item dropdown white-shaded-nav-item mr-3">#}
-{#            <a class="nav-link" data-toggle="dropdown" href="#">#}
-{#                <i class="far fa-bell align-bottom"></i>#}
-{#                <span class="badge badge-primary navbar-badge-point">&nbsp;</span>#}
-{#            </a>#}
-{#            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">#}
-{#                <span class="dropdown-item dropdown-header">5 Notifications</span>#}
-{#                <div class="dropdown-divider"></div>#}
-{#                <a href="#" class="dropdown-item">#}
-{#                    <i class="fas fa-envelope mr-2"></i> 2 new messages#}
-{#                    <span class="float-right text-muted text-sm">3 mins</span>#}
-{#                </a>#}
-{#                <div class="dropdown-divider"></div>#}
-{#                <a href="#" class="dropdown-item">#}
-{#                    <i class="fas fa-file mr-2"></i> 3 new reports#}
-{#                    <span class="float-right text-muted text-sm">2 days</span>#}
-{#                </a>#}
-{#                <div class="dropdown-divider"></div>#}
-{#                <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>#}
-{#            </div>#}
-{#        </li>#}
+{% comment %}         <li class="nav-item dropdown white-shaded-nav-item mr-3">
+            <a class="nav-link" data-toggle="dropdown" href="#">
+                <i class="far fa-bell align-bottom"></i>
+                <span class="badge badge-primary navbar-badge-point">&nbsp;</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <span class="dropdown-item dropdown-header">5 Notifications</span>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item">
+                    <i class="fas fa-envelope mr-2"></i> 2 new messages
+                    <span class="float-right text-muted text-sm">3 mins</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item">
+                    <i class="fas fa-file mr-2"></i> 3 new reports
+                    <span class="float-right text-muted text-sm">2 days</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
+            </div>
+        </li> {% endcomment %}
         <li class="nav-item white-shaded-nav-item">
             <a class="nav-link" href="{% url 'dashboard:authentication:logout' %}" title="{% translate 'Logout' %}"
                role="button">

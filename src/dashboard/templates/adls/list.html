@@ -1,74 +1,230 @@
 {% extends 'layouts/base.html' %}
 {% load bootstrap4 custom_tags static i18n %}
 
+{% block extracss %}
+    {{ block.super }}
+    <style>
+        :root {
+            --grm-green: #24c38b;
+            --grm-green-dark: #1a9c6e;
+            --grm-ink: #2f3a45;
+            --grm-muted: #8a97a3;
+            --grm-line: #edf1f3;
+            --grm-bg-soft: #f6f8f9;
+        }
+
+        /* ---------- Toolbar ---------- */
+        .adl-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .adl-search {
+            position: relative;
+            flex: 1 1 260px;
+            max-width: 420px;
+        }
+        .adl-search i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--grm-muted);
+            font-size: 13px;
+        }
+        .adl-search input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid var(--grm-line);
+            border-radius: 999px;
+            background: var(--grm-bg-soft);
+            padding: 0 16px 0 38px;
+            font-size: 14px;
+            color: var(--grm-ink);
+        }
+        .adl-search input:focus {
+            outline: none;
+            border-color: var(--grm-green);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(36, 195, 139, .12);
+        }
+        .adl-actions {
+            margin-left: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .adl-actions .btn,
+        .adl-actions .btn-xs {
+            border-radius: 9px !important;
+            font-size: 13px !important;
+            font-weight: 600;
+            padding: 8px 14px !important;
+            border: 1px solid var(--grm-green) !important;
+            background: #fff !important;
+            color: var(--grm-green-dark) !important;
+            box-shadow: none !important;
+        }
+        .adl-actions .btn:hover,
+        .adl-actions .btn-xs:hover {
+            background: var(--grm-green) !important;
+            color: #fff !important;
+        }
+
+        /* ---------- Card + table ---------- */
+        .adl-card {
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
+        }
+        #table { width: 100% !important; border-collapse: separate; border-spacing: 0; }
+        #table thead th {
+            position: sticky; top: 0; z-index: 2;
+            background: #f4f6f7 !important;
+            color: var(--grm-muted);
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            font-size: 10.5px;
+            font-weight: 700;
+            border: 0 !important;
+            border-bottom: 2px solid var(--grm-line) !important;
+            padding: 12px 14px;
+        }
+        #table tbody tr td {
+            font-size: 13px !important;
+            color: var(--grm-ink);
+            border: 0 !important;
+            border-bottom: 1px solid var(--grm-line) !important;
+            padding: 10px 14px;
+            vertical-align: middle;
+        }
+        #table tbody tr { cursor: pointer; transition: background .12s ease; }
+        #table tbody tr:nth-child(even) td { background: #fbfcfc; }
+        #table tbody tr:hover td { background: #f0faf6; }
+
+        .adl-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(31, 45, 61, .15);
+            background: #eef1f3;
+        }
+        .adl-level { font-weight: 600; }
+        .adl-loc { color: var(--grm-muted); }
+        .adl-name { font-weight: 600; }
+        .adl-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            margin-right: 7px;
+            vertical-align: middle;
+        }
+        .adl-dot.is-on  { background: var(--grm-green); }
+        .adl-dot.is-off { background: #d3dae0; }
+
+        .btn-see-profile {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--grm-line);
+            background: #fff;
+            color: var(--grm-green-dark);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        #table tbody tr:hover .btn-see-profile {
+            border-color: var(--grm-green);
+            background: var(--grm-green);
+            color: #fff;
+        }
+
+        /* ---------- DataTables controls ---------- */
+        .dataTables_wrapper .adl-dt-head { margin-bottom: 12px; }
+        .dataTables_wrapper .adl-dt-foot { margin-top: 12px; }
+        .dataTables_wrapper .dataTables_length label {
+            display: inline-flex; align-items: center; gap: 8px; margin: 0;
+            font-size: 13px; color: var(--grm-ink); font-weight: 500;
+        }
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid var(--grm-line);
+            border-radius: 6px;
+            padding: 4px 26px 4px 10px;
+            font-size: 13px; min-width: 72px; width: auto; height: auto; line-height: 1.4;
+            background-color: #fff; color: var(--grm-ink); cursor: pointer;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238a97a3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat; background-position: right 8px center;
+        }
+        .dataTables_wrapper .dataTables_length select:focus {
+            outline: none; border-color: var(--grm-green); box-shadow: 0 0 0 3px rgba(36, 195, 139, .15);
+        }
+        .dataTables_wrapper .dataTables_info { color: var(--grm-muted); font-size: 12px; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 4px 10px !important; margin-left: 2px !important;
+            border-radius: 6px !important; border: 1px solid transparent !important;
+            font-size: 12px; color: var(--grm-ink) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: rgba(36, 195, 139, .10) !important;
+            border-color: rgba(36, 195, 139, .35) !important;
+            color: var(--grm-green-dark) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: var(--grm-green) !important; border-color: var(--grm-green) !important; color: #fff !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+            background: transparent !important; border-color: transparent !important;
+            color: var(--grm-muted) !important; cursor: default;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <div class="row">
         <div class="col-12">
-            <div class="input-group mb-3 search-bar">
-                <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+
+            <div class="adl-toolbar">
+                <div class="adl-search">
+                    <i class="fas fa-search"></i>
+                    <input id="search" placeholder="{% translate 'Search' %}...">
                 </div>
-                <input class="form-control" id="search" placeholder="{% translate 'Search' %}...">
-            </div>
-
-            <div class="text-right mb-4">
-                {% if user|has_group:'Admin' or user.is_superuser %}
-                    <button class="btn btn-primary btn-xs" type="button" 
-                        data-toggle="modal"
-                        data-target="#create_user_modal"
-                    >
-                        <i class="fa fa-plus"></i> {% translate 'Create an account' %}
+                <div class="adl-actions">
+                    {% if user|has_group:'Admin' or user.is_superuser %}
+                        <button class="btn" type="button" data-toggle="modal" data-target="#create_user_modal">
+                            <i class="fa fa-plus"></i> {% translate 'Create an account' %}
+                        </button>
+                        {% include 'components/modal_upload_one_sheet.html' with type_object="grm" show_just_villages=False %}
+                    {% endif %}
+                    <button class="btn" type="button" id="export-information">
+                        <i class="fa fa-file-export"></i> {% translate 'Export complete list' %}
                     </button>
-                    &nbsp; &nbsp; &nbsp; &nbsp; 
-                    {% include 'components/modal_upload_one_sheet.html' with type_object="grm" show_just_villages=False %}
-                {% endif %}
-
-                
-                <button class="btn btn-primary btn-xs" type="button" id="export-information">
-                    <i class="fa fa-file-export"></i> {% translate 'Export complete list' %}
-                </button>
+                </div>
             </div>
-            <div class="card">
+
+            <div class="card adl-card">
                 <div class="card-body table-responsive">
-                    <table id="table" class="table">
+                    <table id="table" class="table table-sm">
                         <thead>
                         <tr>
                             <th>{% translate 'Administrative Level' %}</th>
                             <th>{% translate 'Location Name' %}</th>
                             <th>{% translate 'Photo' %}</th>
                             <th>{% translate 'Name' %}</th>
-                            {% comment %} <th>{% translate 'Last activity' %}</th> {% endcomment %}
-                            {% comment %} <th>Last active</th> {% endcomment %}
                             <th>{% translate 'Action' %}</th>
                         </tr>
                         </thead>
-                        <tbody>
-                        {% for doc in adls %}
-                            {% with doc.representative as adl %}
-                                <tr>
-                                    <td>{% if doc.name %}{{ doc.name }}{% else %}-{% endif %}</td>
-                                    <td>{{ doc|adlNames }}</td>
-                                    <td>
-                                        {% if adl.photo %}
-                                            <img src="{{ adl.photo }}" class="profile-user-img-list"/>
-                                        {% else %}
-                                            <img src="{% static 'images/default-avatar.jpg' %}"
-                                                 class="profile-user-img-list"/>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ adl.name }}</td>
-                                    {% comment %} <td>{{ adl.last_active }}</td> {% endcomment %}
-                                    {% comment %} <td>{% date_order_format adl.last_active %}</td> {% endcomment %}
-                                    <td>
-                                        <a href="{% url 'dashboard:adls:detail' doc|get:'_id' %}"
-                                           class="btn btn-primary btn-xs">
-                                            {% translate 'See profile' %}
-                                        </a>
-                                    </td>
-                                </tr>
-                            {% endwith %}
-                        {% endfor %}
-                        </tbody>
+                        {% comment %} Corps rempli par DataTables (serverSide) via dashboard:adls:list_datatable :
+                           10 lignes chargées de la base par page. {% endcomment %}
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -117,50 +273,50 @@
 {% block javascript %}
     {{ block.super }}
 
-    <!-- DataTables export files -->
-    <script src="{% static 'AdminLTE/plugins/datatables-buttons/js/dataTables.buttons.min.js' %}"></script>
-    <script src="{% static 'AdminLTE/plugins/datatables-buttons/js/buttons.html5.min.js' %}"></script>
-
     <script type="text/javascript">
         $(document).ready(function () {
             {% get_current_language as lang %}
+            // Pagination CÔTÉ SERVEUR (même logique que grm/review-issues) : 10 lignes chargées
+            // de la base par page via dashboard:adls:list_datatable ; page suivante -> nouvelle
+            // requête start=10&length=10, etc.
             let table = $('#table').DataTable({
                 language: {
                     url: '{% static 'AdminLTE/plugins/datatables/locale/lang.json' %}'.replace('lang', '{{ lang }}')
                 },
-                dom: "ltipr",
-                buttons: [
-                    {
-                        extend: 'csv',
-                        exportOptions: {
-                            columns: [0, 2, 3]
-                        }
-                    }
+                dom: "<'row align-items-center adl-dt-head'<'col-sm-6'l><'col-sm-6 text-right'i>>" +
+                     "<'row'<'col-sm-12't>>" +
+                     "<'row adl-dt-foot'<'col-sm-12'p>>" +
+                     "r",
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{% url 'dashboard:adls:list_datatable' %}"
+                },
+                columns: [
+                    { data: '0' }, { data: '1' }, { data: '2' }, { data: '3' }, { data: '4' }
                 ],
-                {% comment %} columnDefs: [
-                    {
-                        targets: 3,
-                        orderData: 4
-                    },
-                    {
-                        targets: 4,
-                        visible: false
-                    },
-                    {
-                        targets: [1, 5],
-                        orderable: false,
-                        searchable: false,
-                    }
-                ], {% endcomment %}
-                lengthMenu: [10, 50, 100],
+                columnDefs: [
+                    { orderable: false, searchable: false, targets: [1, 2, 4] },
+                    { className: 'text-center', targets: [2, 4], width: '110px' }
+                ],
+                pagingType: 'full_numbers',
+                lengthMenu: [[10, 50, 100, -1], [10, 50, 100, '{% translate "Show all" %}']],
                 pageLength: 10,
                 order: [[3, 'desc']]
             });
             $('#search').on('keyup', function () {
                 table.search($(this).val()).draw();
             });
+            // Ligne cliquable -> profil du facilitateur (sauf clic sur le lien lui-même).
+            $('#table tbody').on('click', 'tr', function (e) {
+                if ($(e.target).closest('a').length) return;
+                let href = $(this).attr('data-href');
+                if (href) window.location = href;
+            });
             $("#export-information").on("click", function () {
-                table.button('.buttons-csv').trigger();
+                // Export de la liste COMPLÈTE (pas seulement la page courante) : endpoint dédié.
+                let term = encodeURIComponent($('#search').val() || '');
+                window.location = "{% url 'dashboard:adls:list_datatable' %}?export=csv&search%5Bvalue%5D=" + term;
             });
 
             

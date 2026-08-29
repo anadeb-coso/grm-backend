@@ -109,23 +109,23 @@
             </div>
             <div class="col-12 nav-profile-buttons">
                 <ul class="nav nav-pills row mt-1">
-{#                    <li class="nav-item col-sm-3">#}
-{#                        <a class="btn btn-default nav-link active p-budget" href="#p-budget"#}
-{#                           data-toggle="tab">#}
-{#                            <div class="row height60">#}
-{#                                <div class="col-9 text-profile-button">#}
-{#                                    {% translate 'Participatory Budget' %}#}
-{#                                </div>#}
-{#                                <div class="col-3">#}
-{#                                    <div class="circle-icon chevron-circle">#}
-{#                                        <div class="center-27">#}
-{#                                            <i class="fas fa-chevron-down"></i>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                        </a>#}
-{#                    </li>#}
+{% comment %}                     <li class="nav-item col-sm-3">
+                        <a class="btn btn-default nav-link active p-budget" href="#p-budget"
+                           data-toggle="tab">
+                            <div class="row height60">
+                                <div class="col-9 text-profile-button">
+                                    {% translate 'Participatory Budget' %}
+                                </div>
+                                <div class="col-3">
+                                    <div class="circle-icon chevron-circle">
+                                        <div class="center-27">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </li> {% endcomment %}
                     <li class="nav-item col-sm-4">
                         <a class="btn btn-default nav-link active mgr" href="#mgr" data-toggle="tab">
                             <div class="row height60">
@@ -178,52 +178,52 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="tab-content">
-{#                            <div class="tab-pane active nav" id="p-budget">#}
-{#                                {% for phase in adl.phases %}#}
-{#                                    <div class="card-item" data-toggle="modal"#}
-{#                                         data-target="#detailModal{{ phase.ordinal }}">#}
-{#                                        <div class="row">#}
-{#                                            <div class="col-sm-8">#}
-{#                                                <div class="badge-ordinal">#}
-{#                                                    {{ phase.ordinal }}#}
-{#                                                </div>#}
-{#                                                <span class="phase-title">#}
-{#                                                    {{ phase.title }}#}
-{#                                                </span>#}
-{#                                            </div>#}
-{#                                            <div class="col-sm-4 text-right">#}
-{#                                                {% get_status_phase phase.tasks as status_phase %}#}
-{#                                                <div class="status-badge badge-{{ status_phase }}">#}
-{#                                                    {% if status_phase == 'completed' %}#}
-{#                                                        {% translate 'Completed' %}#}
-{#                                                    {% elif status_phase == 'in-progress' %}#}
-{#                                                        {% translate 'In progress' %}#}
-{#                                                    {% else %}#}
-{#                                                        {% translate 'Pending' %}#}
-{#                                                    {% endif %}#}
-{#                                                </div>#}
-{#                                                <div class="completed-tasks-badge badge-{{ status_phase }}">#}
-{#                                                    {% get_completed_tasks phase.tasks %}#}
-{#                                                </div>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                        <div class="row mt-4">#}
-{#                                            <div class="col-sm-10">#}
-{#                                                {% get_date phase.closed_at as closed_at %}#}
-{#                                                <div class="badge-closed-at">#}
-{#                                                    <i class="far fa-calendar-alt text-warning"></i>#}
-{#                                                    {% trans 'unfinished' as unfinished %}#}
-{#                                                    {% translate 'Completion date' %}:#}
-{#                                                    {{ closed_at|default:unfinished }}#}
-{#                                                </div>#}
-{#                                            </div>#}
-{#                                            <div class="col-sm-2">#}
-{#                                                <i class="fa fa-chevron-circle-right chevron-item fs18"></i>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                {% endfor %}#}
-{#                            </div>#}
+{% comment %}                             <div class="tab-pane active nav" id="p-budget">
+                                {% for phase in adl.phases %}
+                                    <div class="card-item" data-toggle="modal"
+                                         data-target="#detailModal{{ phase.ordinal }}">
+                                        <div class="row">
+                                            <div class="col-sm-8">
+                                                <div class="badge-ordinal">
+                                                    {{ phase.ordinal }}
+                                                </div>
+                                                <span class="phase-title">
+                                                    {{ phase.title }}
+                                                </span>
+                                            </div>
+                                            <div class="col-sm-4 text-right">
+                                                {% get_status_phase phase.tasks as status_phase %}
+                                                <div class="status-badge badge-{{ status_phase }}">
+                                                    {% if status_phase == 'completed' %}
+                                                        {% translate 'Completed' %}
+                                                    {% elif status_phase == 'in-progress' %}
+                                                        {% translate 'In progress' %}
+                                                    {% else %}
+                                                        {% translate 'Pending' %}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="completed-tasks-badge badge-{{ status_phase }}">
+                                                    {% get_completed_tasks phase.tasks %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-4">
+                                            <div class="col-sm-10">
+                                                {% get_date phase.closed_at as closed_at %}
+                                                <div class="badge-closed-at">
+                                                    <i class="far fa-calendar-alt text-warning"></i>
+                                                    {% trans 'unfinished' as unfinished %}
+                                                    {% translate 'Completion date' %}:
+                                                    {{ closed_at|default:unfinished }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-2">
+                                                <i class="fa fa-chevron-circle-right chevron-item fs18"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div> {% endcomment %}
                             <div class="tab-pane active" id="mgr">
                                 {% include 'common/under_construction_col.html' %}
                             </div>

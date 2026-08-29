@@ -4,233 +4,270 @@
 {% block extracss %}
     {{ block.super }}
     <style>
-        #table {
-            border-collapse: separate;
-            border-spacing: 0;
+        :root {
+            --grm-green: #24c38b;
+            --grm-green-dark: #1a9c6e;
+            --grm-ink: #2f3a45;
+            --grm-muted: #8a97a3;
+            --grm-line: #e8ecef;
+            --grm-bg-soft: #f6f8f9;
+        }
+
+        /* ---------- Filters panel ---------- */
+        .filters-card {
             border: 0;
-            border-radius: 10px 0 0 0 !important;
-
-            & thead th {
-                border: 1px solid #f2f2f2 !important;
-
-                font-weight: bolder !important;;
-                height: 36px;
-                padding: 0 25px 0 10px;
-
-                &:not([class^="bg-"]) {
-                    background-color: #f2f2f2 !important;
-                }
-
-                &:after, &:before {
-                    top: 30%;
-                }
-
-                &:last-of-type {
-
-                    border-radius: 0 10px 0 0 !important;
-                }
-
-                &:not(&:last-child) {
-                    border-right-color: #c1c1c1 !important;
-                }
-
-                &:last-child {
-                    border-right-color: transparent !important;
-                }
-
-                &:first-child {
-                    border-left-color: transparent !important;
-                }
-            }
-
-
-            & thead th:first-of-type {
-
-                border-radius: 10px 0 0 0 !important;
-            }
-
-            & tbody td {
-                border-bottom-width: 1px !important;
-                padding-top: 10px;
-                padding-bottom: 10px;
-            }
-
-
-            & tbody tr:last-of-type {
-                border-radius: 0 10px 0 0 !important;
-            }
-
-            & tbody tr:not(.even):not(.odd):last-of-type, & tbody tr:not(.even):not(.odd):last-of-type td[colspan="8"] {
-                border-radius: 0 0 10px 10px !important;
-            }
-
-            & tbody td:first-of-type {
-                border-left: 1px solid #e2e1e1 !important;
-            }
-
-            & tbody td:last-of-type td {
-                border-left: 1px solid #e2e1e1 !important;
-            }
-
-            & tbody td:not(:first-of-type) {
-                border-left: 0;
-
-            }
-
-            & tbody td:not(:last-of-type) {
-                padding: 0 25px 0 10px;
-                border-right: 0;
-            }
-
-            & tbody tr {
-                border-bottom: 1px solid #e2e1e1 !important;
-                border-right: 1px solid #e2e1e1 !important;
-                border-left: 1px solid #e2e1e1 !important;
-
-                &:last-of-type td:first-of-type {
-                    border-radius: 0 0 0 10px !important;
-
-                }
-
-                &:last-of-type td:last-of-type {
-                    border-radius: 0 0 10px 0 !important;
-
-                }
-            }
-
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
         }
-
-        .search-bar {
-            height: 40px;
+        .filters-card .card-header {
+            background: #fff;
+            border-bottom: 1px solid var(--grm-line);
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            cursor: pointer;
         }
-
-        .form-group {
-            margin-bottom: 0;
-            margin-top: 1px;
+        .filters-card .card-header .filters-title {
+            font-weight: 700;
+            color: var(--grm-ink);
+            font-size: 15px;
+            margin: 0;
         }
-
-        .dt-buttons, #table_length {
-            display: inline-flex;
-            max-width: 50%;
-            flex: 0 0 50%;
-            width: 50%;
-        }
-
-        .dt-buttons button {
-            color: #ffffff !important;
-            background-color: #24c38b;
-            border-color: #24c38b;
-            box-shadow: none;
-            border-style: none;
-            margin-right: 5px;
-            padding: 5px;
-            border-radius: 7px !important;
-        }
-
-        #table_length label {
+        .filters-card .card-header .toggle-icon {
             margin-left: auto;
+            color: var(--grm-muted);
+            transition: transform .2s ease;
+        }
+        .filters-card.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .filters-card.collapsed .card-body   { display: none; }
+
+        .count-pill {
+            background: rgba(36, 195, 139, .12);
+            color: var(--grm-green-dark);
+            font-weight: 700;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 999px;
         }
 
-        .no-sort:before, .no-sort:after {
-            display: none !important;
+        .issues-filter .form-group { margin-bottom: 14px; }
+        .issues-filter label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--grm-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
         }
+        .issues-filter .form-control,
+        .issues-filter .select2-container--default .select2-selection--single {
+            height: 40px;
+            border-radius: 9px;
+            border: 1px solid var(--grm-line);
+            background-color: var(--grm-bg-soft);
+            font-size: 13px;
+        }
+        .issues-filter .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px;
+            color: var(--grm-ink);
+        }
+        .issues-filter .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px; }
+        .issues-filter .form-control:focus {
+            border-color: var(--grm-green);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(36, 195, 139, .12);
+        }
+        .issues-filter .input-group-text {
+            border-radius: 9px 0 0 9px;
+            border: 1px solid var(--grm-line);
+            background: var(--grm-bg-soft);
+        }
+
+        .form-check-modern {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border: 1px dashed var(--grm-line);
+            border-radius: 9px;
+            background: var(--grm-bg-soft);
+        }
+        .form-check-modern label { margin: 0; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--grm-ink); }
+
+        .filters-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 4px;
+        }
+        .btn-clear-filters {
+            border: 1px solid var(--grm-line);
+            border-radius: 9px;
+            background: #fff;
+            color: var(--grm-muted);
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 14px;
+        }
+        .btn-clear-filters:hover { color: #d64550; border-color: #f1c6c9; background: #fff5f5; }
+
+        .btn-download-db {
+            border: 1px solid var(--grm-green);
+            border-radius: 9px;
+            background: #fff;
+            color: var(--grm-green-dark);
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 14px;
+        }
+        .btn-download-db:hover { background: var(--grm-green); color: #fff; }
+
+        /* ---------- Active filter chips ---------- */
+        #active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 2px 0 14px;
+        }
+        #active-filters:empty { display: none; }
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #fff;
+            border: 1px solid var(--grm-line);
+            border-radius: 999px;
+            padding: 5px 8px 5px 12px;
+            font-size: 12px;
+            color: var(--grm-ink);
+            box-shadow: 0 2px 6px rgba(31, 45, 61, .05);
+        }
+        .filter-chip .chip-key { color: var(--grm-muted); font-weight: 700; }
+        .filter-chip .chip-x {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--grm-bg-soft);
+            color: var(--grm-muted);
+            cursor: pointer;
+        }
+        .filter-chip .chip-x:hover { background: #ffe3e5; color: #d64550; }
+
+        /* ---------- Results card ---------- */
+        .results-card {
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
+        }
+        .results-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 14px 20px 0;
+        }
+        .results-toolbar .results-title { font-weight: 700; color: var(--grm-ink); font-size: 15px; margin: 0; }
+
+        .pager-modern { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 6px 4px; }
+        .pager-modern .btn { border-radius: 9px; }
+        #current-page { color: var(--grm-muted); font-weight: 600; }
+
+        .overlay { border-radius: 14px; }
     </style>
 {% endblock %}
 
 {% block content %}
     <div class="row">
         <div class="col-12">
-            <div class="card">
+
+            <div class="card filters-card mb-3" id="filters-card">
+                <div class="card-header" id="filters-toggle">
+                    <i class="fas fa-sliders-h text-primary"></i>
+                    <h6 class="filters-title">{% translate 'Search filters' %}</h6>
+                    <span class="count-pill">{% translate 'Total' %} : {{ all_total_issues }}</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+
                 <div class="card-body">
                     <div class="row">
-                        
-                        <div class="col-3 border-left">
-
-                            <div class="fs28 lh35 text-primary text-bold-family">
-                                {% translate 'Search Results' %} 
-                                <span style="font-size: 12px;">(T: {{ all_total_issues }})</span>
-                                <br>
-                            </div>
-
-                            <div class="issues-filter">
-                            {% bootstrap_field form.start_date layout='horizontal' %}
-                            {% bootstrap_field form.end_date layout='horizontal' %}
-                            </div>
-
-                            {% if user.is_superuser %}
-                            <div style="clear: both;"></div>
-                            <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard:grm:file:file_save_issues' %}">
-                                {% csrf_token %}
-                                
-                                <div class="row file-field big" style="margin-top: 22px">
-                                    <a class="btn-floating amber col-8 darken-2" style="display: inline;">
-                                        <i class="fas fa-cloud-upload-alt" aria-hidden="true" style="font-size: 15px;"></i>
-                                        <input type="file" name="file" required id="file"  style="font-size: 6px;"
-                                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
-                                    </a>
-                                    <button type="submit" class="btn btn-primary col-4" style="font-size: 9px; padding: -10px">{% translate 'Save' %}</button>
-                                </div>
-                                
-                            </form>
-                            <div style="clear: both;"></div>
-                            {% endif %}
-
+                        <div class="col-lg-3 col-md-6 issues-filter">
+                            {% bootstrap_field form.start_date %}
+                            {% bootstrap_field form.end_date %}
                         </div>
-                        <div class="col-3 text-left issues-filter">
-                                    
-                            {% bootstrap_field form.code show_label=False %}
-                            {% comment %} {% if not user.governmentworker %}
-                                {% bootstrap_field form.assigned_to show_label=False %}
-                            {% endif %} {% endcomment %}
-                            {% bootstrap_field form.other show_label=False %}
 
-                            {% if publish_option %}{% bootstrap_field form.publish show_label=False %}{% endif %}
-                            
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="" id="see_all" />
-                                <label class="form-check-label fa-bold" for="see_all">
-                                    {% translate "See All" %}
-                                </label>
-                            </div>
-                            <div style="clear: both;"></div>
+                        <div class="col-lg-3 col-md-6 issues-filter">
+                            {% bootstrap_field form.code %}
+                            {% bootstrap_field form.status %}
+                            {% if publish_option %}{% bootstrap_field form.publish %}{% endif %}
+                        </div>
 
+                        <div class="col-lg-3 col-md-6 issues-filter">
+                            {% bootstrap_field form.category %}
+                            {% bootstrap_field form.other %}
+                            {% bootstrap_field form.wave %}
                         </div>
-                        <div class="col-3 border-left issues-filter">
-                            {% bootstrap_field form.status show_label=False %}
-                            {% bootstrap_field form.assigned_to show_label=False %}
-                            {% bootstrap_field form.reported_by show_label=False %}
-                            {% bootstrap_field form.wave show_label=False %}
-                        </div>
-                        <div class="col-3 border-left issues-filter">
-                            {% comment %} {% bootstrap_field form.type show_label=False %} {% endcomment %}
-                            {% bootstrap_field form.category show_label=False %}
-                            {% bootstrap_field form.administrative_region layout='horizontal' %}
-                                    
-                            <div>
-                                <a class="btn fs12 text-bold-family text-primary pull-right"
-                                    id="clear_all_filters">
-                                    {% translate "Clear all filters" %}
-                                </a>
-                            </div>
+
+                        <div class="col-lg-3 col-md-6 issues-filter">
+                            {% bootstrap_field form.assigned_to %}
+                            {% bootstrap_field form.reported_by %}
                         </div>
                     </div>
 
-                    
-                    
+                    <div class="row">
+                        <div class="col-12 issues-filter regions-filter">
+                             {% comment %} layout='horizontal' requis : dynamicRegionSelector.js insère les
+                               niveaux enfants (préfecture -> commune -> canton -> village) en
+                               se basant sur la structure .form-group.row > .col-md-9 > select.  {% endcomment %}
+                            {% bootstrap_field form.administrative_region layout='horizontal' %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="filters-actions justify-content-end">
+                                {% if user.is_superuser %}
+                                <form method="POST" enctype="multipart/form-data"
+                                      action="{% url 'dashboard:grm:file:file_save_issues' %}"
+                                      class="d-inline-flex align-items-center" style="gap:8px;">
+                                    {% csrf_token %}
+                                    <label class="btn-download-db mb-0" style="cursor:pointer;">
+                                        <i class="fas fa-file-import"></i> {% translate 'Import' %}
+                                        <input type="file" name="file" required id="file" hidden
+                                               accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                    </label>
+                                    <button type="submit" class="btn-download-db">{% translate 'Save' %}</button>
+                                </form>
+                                {% endif %}
+
+                                <button class="btn-download-db" id="id_download_file_top">
+                                    <i class="fas fa-download"></i> {% translate "Download full database" %}
+                                </button>
+                                <button class="btn-clear-filters" id="clear_all_filters">
+                                    <i class="fas fa-times-circle"></i> {% translate "Clear all filters" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card">
+
+            <div id="active-filters"></div>
+
+            <div class="card results-card">
+                <div class="results-toolbar">
+                    <i class="fas fa-list-ul text-primary"></i>
+                    <h6 class="results-title">{% translate 'Issues' %}</h6>
+                </div>
                 <div class="card-body table-responsive">
+                    {% comment %}  Le tableau interne (grm/issue_list.html) est paginé côté serveur
+                       (DataTables serverSide -> IssueListDatatableJsonView) : 10 lignes chargées
+                       de la base par page, pagination "full_numbers" gérée par DataTables.  {% endcomment %}
                     <div id="issue-list"></div>
-                    <div class="text-right">
-                        <a id="previous" class="btn text-primary hidden">
-                            <i class="fa fa-chevron-left fs20 align-middle"></i>
-                        </a>
-                        <div id="current-page" class="d-inline-block fs14 text-regular-family ml-4 mr-4"></div>
-                        <a id="next" class="btn text-primary hidden">
-                            <i class="fa fa-chevron-right fs20 align-middle"></i>
-                        </a>
-                    </div>
                 </div>
                 <div class="overlay" id="spin">
                     <i class="fas fa-2x fa-sync-alt fa-spin"></i>
@@ -245,14 +282,7 @@
 
     <script type="text/javascript">
         let spin = $('#spin');
-        let index = 0;
-        const default_offset = 500;
-        let offset = default_offset;
-        let previous = $('#previous');
-        let next = $('#next');
         let issues = $('#issue-list');
-        var total_issues = 0;
-        let current_page = $('#current-page');
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
         let code = $('#id_code');
@@ -263,20 +293,91 @@
         let other = $('#id_other');
         let administrative_region = $('#id_administrative_region');
         let reported_by = $('#id_reported_by');
-        let see_all = $('#see_all');
         let wave = $('#id_wave');
         {% if publish_option %}let publish = $('#id_publish');{% endif %}
-        let current_region_id;
+        // `var` (pas `let`) : lu par le script injecté de grm/issue_list.html (jQuery.globalEval
+        // s'exécute en portée globale et ne voit pas les `let` de portée script) pour construire
+        // le paramètre `region` de l'ajax DataTables serverSide.
+        var current_region_id = null;
 
+        /* ---------- Collapsible filters panel ---------- */
+        $('#filters-toggle').on('click', function () {
+            $('#filters-card').toggleClass('collapsed');
+        });
+
+        /* ---------- Active filter chips ---------- */
+        function selectText($el) {
+            let $opt = $el.find('option:selected');
+            return $opt.length ? $.trim($opt.text()) : '';
+        }
+
+        function renderActiveFilters() {
+            let chips = [];
+            let addChip = function (key, label, clearFn) {
+                if (label === undefined || label === null || label === '') return;
+                chips.push(
+                    '<span class="filter-chip" data-key="' + key + '">' +
+                        '<span class="chip-key">' + key + ':</span> ' +
+                        '<span>' + $('<span>').text(label).html() + '</span>' +
+                        '<span class="chip-x" data-key="' + key + '">&times;</span>' +
+                    '</span>'
+                );
+            };
+
+            addChip('{% translate "From" %}', start_date.val());
+            addChip('{% translate "To" %}', end_date.val());
+            addChip('{% translate "Code" %}', code.val());
+            addChip('{% translate "Status" %}', selectText(status));
+            addChip('{% translate "Category" %}', selectText(category));
+            addChip('{% translate "Escalated" %}', selectText(other));
+            addChip('{% translate "Wave" %}', selectText(wave));
+            addChip('{% translate "Assigned to" %}', selectText(assigned_to));
+            addChip('{% translate "Reported by" %}', selectText(reported_by));
+            {% if publish_option %}addChip('{% translate "Publish" %}', selectText(publish));{% endif %}
+            if (current_region_id) {
+                let regionLabel = $('select.region').filter(function () { return $(this).val() == current_region_id; })
+                    .find('option:selected').text();
+                addChip('{% translate "Location" %}', $.trim(regionLabel) || current_region_id);
+            }
+            $('#active-filters').html(chips.join(''));
+        }
+
+        function clearChip(key) {
+            const map = {
+                '{% translate "From" %}': function () { start_date.val(''); try { $('#start_date').datetimepicker('clear'); } catch (e) {} },
+                '{% translate "To" %}': function () { end_date.val(''); try { $('#end_date').datetimepicker('clear'); } catch (e) {} },
+                '{% translate "Code" %}': function () { code.val(''); },
+                '{% translate "Status" %}': function () { status.val(null).trigger('change.select2'); },
+                '{% translate "Category" %}': function () { category.val(null).trigger('change.select2'); },
+                '{% translate "Escalated" %}': function () { other.val(null).trigger('change.select2'); },
+                '{% translate "Wave" %}': function () { wave.val(null).trigger('change.select2'); },
+                '{% translate "Assigned to" %}': function () { assigned_to.val(null).trigger('change.select2'); },
+                '{% translate "Reported by" %}': function () { reported_by.val(null).trigger('change.select2'); },
+                {% if publish_option %}'{% translate "Publish" %}': function () { publish.val(null).trigger('change.select2'); },{% endif %}
+                '{% translate "Location" %}': function () {
+                    $('.regions-filter select, select.region').val(null).trigger('change.select2');
+                    current_region_id = null;
+                    loadNextLevelRegions($("#id_administrative_region"), '', '');
+                }
+            };
+            if (map[key]) { map[key](); loadIssues(); }
+        }
+
+        $('#active-filters').on('click', '.chip-x', function () {
+            clearChip($(this).data('key'));
+        });
+
+        // Recharge le "shell" du tableau (grm/issue_list.html) : pastilles de synthèse, modale des
+        // localités pilotes, et le <table> vide + son init DataTables serverSide. DataTables
+        // déclenche ensuite sa propre requête ajax paginée (10 lignes) vers
+        // IssueListDatatableJsonView en récupérant les filtres courants directement dans le DOM.
         function loadIssues() {
-            
+            renderActiveFilters();
             spin.show();
             $.ajax({
                 type: "GET",
                 url: "{% url 'dashboard:grm:issue_list' %}",
                 data: {
-                    index: index,
-                    offset: offset,
                     start_date: start_date.val(),
                     end_date: end_date.val(),
                     code: code.val(),
@@ -288,78 +389,30 @@
                     region: current_region_id,
                     {% if publish_option %}publish: publish.val(),{% endif %}
                     reported_by: reported_by.val(),
-                    see_all: see_all.is(":checked"),
-                    total_issues: parseInt("{{ all_total_issues }}"),
                     wave: wave.val(),
                 },
                 success: function (response) {
-                    if(see_all.is(":checked")){
-                        index = 0;
-                        {% if all_total_issues %}
-                        offset = parseInt("{{ all_total_issues }}");
-                        {% endif %}
-                    }else{
-                        offset = default_offset;
-                    }
                     issues.html(response);
                     spin.hide();
-                    if (index - offset >= 0) {
-                        previous.show();
-                    } else {
-                        previous.hide();
-                    }
-                    if (index + offset < total_issues) {
-                        next.show();
-                    } else {
-                        next.hide();
-                    }
-                    if (response.trim()) {
-                        current_page.html(Math.floor(index / offset) + 1 + " / " + Math.ceil(total_issues / offset));
-                    } else {
-                        current_page.html("")
-                    }
                 },
                 error: function (data) {
                     spin.hide();
                     alert(error_server_message + "Error " + data.status);
-                    current_page.html("");
                 }
             });
         }
 
-        function setTotalIssues() {
-            $.ajax({
-                type: "GET",
-                url: "{% url 'dashboard:couchdb_proxy:issues_statistics' %}",
-                success: function (response) {
-                    total_issues = response['count'];
-                    loadIssues();
-                },
-                error: function (data) {
-                    alert(error_server_message + "Error " + data.status);
-                }
-            });
-        }
-
-        setTotalIssues();
-
-        previous.click(function () {
-            index -= offset;
-            loadIssues();
-        });
-
-        next.click(function () {
-            index += offset;
-            loadIssues();
-        });
+        loadIssues();
 
         let dp1 = '<div class="input-group-prepend" data-target="#{id}" data-toggle="datetimepicker">' +
             '<div class="input-group-text"><i class="fa fa-calendar text-primary"></i></div></div>';
         let dp2 = '<div class="input-group date" id="{id}" data-target-input="nearest"></div>';
-        $('#id_start_date').before(dp1.replace('{id}', 'start_date')).parent().wrapInner(
-            dp2.replace('{id}', 'start_date'));
-        $('#id_end_date').before(dp1.replace('{id}', 'end_date')).parent().wrapInner(
-            dp2.replace('{id}', 'end_date'));
+        // Enrobe uniquement l'input (indépendant du layout bootstrap_field) : wrap -> input-group,
+        // puis on insère le bouton calendrier juste avant l'input, à l'intérieur de l'input-group.
+        $('#id_start_date').wrap(dp2.replace('{id}', 'start_date'))
+            .before(dp1.replace('{id}', 'start_date'));
+        $('#id_end_date').wrap(dp2.replace('{id}', 'end_date'))
+            .before(dp1.replace('{id}', 'end_date'));
 
         //Datemask dd/mm/yyyy
         $('.datetimepicker-input').inputmask({alias: "datetime", inputFormat: "dd/mm/yyyy"});
@@ -397,13 +450,8 @@
             if($(this).attr('id') != 'id_administrative_region'){
                 loadIssues();
             }
-            
-        });
 
-        $('#see_all').on('change', function () {
-            loadIssues();
         });
-
 
 
 
@@ -440,10 +488,8 @@
         function download_issues_datas () {
                 $("#download-message").show();
                 $("#download-complete-message").hide();
-    
+
                 data = {
-                    index: index,
-                    offset: offset,
                     start_date: start_date.val(),
                     end_date: end_date.val(),
                     code: code.val(),
@@ -455,29 +501,24 @@
                     region: current_region_id,
                     {% if publish_option %}publish: publish.val(),{% endif %}
                     reported_by: reported_by.val(),
-                    see_all: see_all.is(":checked"),
-                    total_issues: parseInt("{{ all_total_issues }}"),
                     wave: wave.val(),
                 }
-          
+
                 var url = "{% url 'dashboard:grm:file:export_issues_excel' %}"; // L'URL de téléchargement
-                
+
                 $.ajax({
                   url: url,
                   type: 'GET',
                   data: data,
                   success: function(response) {
-                    console.log("response")
-                    console.log(response)
                     let path = response.replaceAll('/', '___').replaceAll('\\', '___');
                     let download_file_view_url = "{% url 'download_file_view' 'path' 'content_type' %}";
                     window.location.href = download_file_view_url.replace('path', path).replace('content_type', 'None');
-                    
-        
+
                     $("#download-message").hide();
                     $("#download-complete-message").show();
-    
-    
+
+
                     setTimeout(function() {
                         $("#download-message").hide();
                         $("#download-complete-message").hide();
@@ -488,6 +529,11 @@
                   }
                 });
         }
+
+        $("#id_download_file_top").on("click", function (event) {
+            event.preventDefault();
+            download_issues_datas();
+        });
 
     </script>
 {% endblock %}

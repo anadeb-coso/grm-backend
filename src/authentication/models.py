@@ -378,6 +378,35 @@ def get_adl_to_escalate(administrative_id):
 
     return None
 
+
+def get_cvgp_member_escalation_replacement_assignee(administrative_id):
+    """Détermine à qui réassigner une issue qui vient de quitter le niveau Village pour le niveau
+    supérieur (Canton) alors qu'elle était suivie par un membre du groupe `CVGPMembers` — ce
+    dernier perd la main dessus dès que l'issue est remontée (cf.
+    `grm-frontend/.../IssueActions/containers/Content.js::actionsDisabledForCvgp`, qui désactive
+    déjà les boutons d'action côté mobile pour ce même profil une fois le niveau Village quitté).
+    Ordre de repli demandé :
+      1. Un `CommunityFacilitator` actif couvrant le village de l'issue (même patron de requête
+         que le filtre gabarit `dashboard/templatetags/custom_tags.py::get_adl_by_adm_id`).
+      2. À défaut, un `Supervisor` actif couvrant ce même village.
+      3. À défaut, un `Safeguard` actif — rôle national, sans notion de village (même repli que
+         `get_assignee` ci-dessus pour les groupes `Privacy`/`Safeguard`).
+    Retourne l'instance `User` choisie, ou `None` si personne n'est disponible."""
+    administrative_id = str(administrative_id)
+
+    for group_name in ('CommunityFacilitator', 'Supervisor'):
+        adl = Adl.objects.select_related('representative').filter(
+            Q(administrative_region_ids__contains=[administrative_id])
+            | Q(smallest_administrative_level_ids__contains=[administrative_id]),
+            is_deleted=False, representative__isnull=False, representative__is_active=True,
+            representative__groups__name=group_name,
+        ).first()
+        if adl and adl.representative_id:
+            return adl.representative
+
+    return User.objects.filter(groups__name='Safeguard', is_active=True).order_by('id').first()
+
+
 def anonymize_issue_data(issue_doc):
     key = issue_doc['_id']
     citizen = issue_doc['citizen']

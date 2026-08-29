@@ -66,6 +66,21 @@ class AdministrativeLevelsView(APIView):
         if adl:
             base_ids.update(adl.smallest_administrative_level_ids or [])
             base_ids.update(adl.additional_smallest_administrative_level_ids or [])
+            # `administrative_region_ids`/`additional_administrative_region_ids` peuvent être un
+            # niveau plus large qu'un village (ex. un Canton entier confié à l'ADL) : sans leurs
+            # descendants, `_collect_ancestor_ids` ci-dessous ne renvoie que ce niveau et ses
+            # ancêtres, jamais les villages qu'il contient — la table locale `administrative_regions`
+            # (WatermelonDB) se retrouve alors sans aucun village rattaché à ce Canton, et le champ
+            # village ne peut jamais se peupler après sélection du canton côté mobile
+            # (CitizenReportLocationStep/containers/Content.js::setVillagesInfos).
+            region_ids = set(adl.administrative_region_ids or []) | set(
+                adl.additional_administrative_region_ids or []
+            )
+            for admin_id in region_ids:
+                if not admin_id:
+                    continue
+                base_ids.add(admin_id)
+                base_ids.update(get_administrative_level_descendants_using_mis(None, admin_id, [], user))
         elif government_worker:
             for admin_id in (government_worker.all_administrative_ids or []):
                 base_ids.add(admin_id)

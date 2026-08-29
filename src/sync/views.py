@@ -334,66 +334,41 @@ class PushView(APIView):
     def post(self, request):
         changes = request.data.get('changes', {})
 
+        # `issues` est traitée dans SA PROPRE transaction, committée avant celle des autres
+        # tables — et non plus dans un unique `transaction.atomic()` englobant tout le lot.
+        #
+        # Repro (sync/tests/test_sync.py::test_push_escalation_reason_with_not_yet_uploaded_
+        # attachment_returns_400) : `escalateIssue()` (mobile) pousse en un seul lot la mise à
+        # jour de `issues` (escalate_flag/status) ET une nouvelle ligne `reasons` référençant la
+        # pièce jointe (PV) tout juste créée localement. Si l'upload de cette pièce jointe
+        # (`/api/attachments/`, flux HTTP séparé, CLAUDE.md §3.7) n'a pas encore été confirmé côté
+        # serveur au moment de ce push JSON — l'ordre `enqueuePendingUploads()` avant
+        # `synchronize()` (grm-frontend/src/database/sync.js) le garantit d'habitude, mais pas
+        # quand l'upload lui-même échoue (ex. l'issue elle-même n'a encore jamais été synchronisée
+        # à ce moment-là : `AttachmentUploadView` répond alors 400 "No such issue", faute de FK à
+        # résoudre) — `reasons` échoue sa validation (`PrimaryKeyRelatedField` sur `attachment`).
+        # Avec une seule transaction globale, ce seul enregistrement annulait AUSSI la mise à jour
+        # de `issues` déjà validée : l'issue ne pouvait donc jamais atteindre le serveur, la pièce
+        # jointe ne pouvait jamais s'y rattacher (son upload dépend justement de l'existence de
+        # l'issue), et `reasons` ne pouvait donc jamais se pousser à son tour — un verrou mutuel
+        # permanent, reproduit à chaque cycle de sync (~30s) sans jamais se corriger de lui-même.
+        # En committant `issues` séparément, un échec sur une AUTRE table n'empêche plus l'issue
+        # d'exister côté serveur ; le cycle de sync suivant peut alors uploader la pièce jointe
+        # (l'issue existe désormais) puis pousser `reasons` avec succès.
+        try:
+            with transaction.atomic():
+                self._process_table('issues', *SYNC_WRITABLE_MODELS['issues'], changes.get('issues', {}), request)
+        except (ValidationError, DjangoValidationError, IntegrityError) as exc:
+            return self._error_response(exc)
+
         try:
             with transaction.atomic():
                 for table_name, (Model, Serializer) in SYNC_WRITABLE_MODELS.items():
-                    table_changes = changes.get(table_name, {})
-                    is_issues_table = table_name == 'issues'
-
-                    for record in table_changes.get('created', []):
-                        if is_issues_table and not _issue_owned_by(request.user, None, record):
-                            raise PermissionDenied(
-                                'You can only sync issues you registered or that are assigned to you.',
-                            )
-                        serializer = Serializer(data=record)
-                        serializer.is_valid(raise_exception=True)
-                        Model.objects.update_or_create(
-                            id=record['id'], defaults=serializer.validated_data,
-                        )
-
-                    for record in table_changes.get('updated', []):
-                        if is_issues_table:
-                            existing = Model.objects.filter(id=record['id']).first()
-                            if existing is not None and not _issue_owned_by(request.user, existing, record):
-                                raise PermissionDenied(
-                                    'You can only sync issues you registered or that are assigned to you.',
-                                )
-                        self._merge_update(Model, Serializer, record)
-
-                    for record_id in table_changes.get('deleted', []):
-                        if is_issues_table:
-                            existing = Model.objects.filter(id=record_id).first()
-                            if existing is not None and not _issue_owned_by(request.user, existing, {}):
-                                raise PermissionDenied(
-                                    'You can only sync issues you registered or that are assigned to you.',
-                                )
-                        # `updated_at` doit être forcé explicitement : `QuerySet.update()` ne
-                        # déclenche jamais `auto_now` (contrairement à `Model.save()`). Sans ça, le
-                        # tombstone (`is_deleted=True`) posé par CET appareil ne serait jamais vu
-                        # par les AUTRES appareils au pull (`PullView` filtre les suppressions sur
-                        # `updated_at > last_pulled_at`) : la suppression resterait silencieusement
-                        # locale au lieu de se propager.
-                        Model.objects.filter(id=record_id).update(
-                            is_deleted=True, updated_at=datetime.now(tz=dt_timezone.utc),
-                        )
-        except ValidationError as exc:
-            # `serializer.is_valid(raise_exception=True)` lève cette exception DRF (distincte de
-            # `django.core.exceptions.ValidationError` ci-dessous) — non rattrapée explicitement
-            # jusqu'ici, elle remontait au gestionnaire d'exception par défaut de DRF avec une
-            # forme de réponse différente des deux autres branches. `transaction.atomic()` a de
-            # toute façon déjà annulé tout le lot à ce stade (comportement inchangé) ; on
-            # uniformise seulement la forme de la réponse pour le client mobile.
-            return Response({'detail': 'Validation error', 'errors': exc.detail}, status=400)
-        except DjangoValidationError as exc:
-            return Response(
-                {'detail': 'Validation error', 'errors': exc.message_dict if hasattr(exc, 'message_dict') else str(exc)},
-                status=400,
-            )
-        except IntegrityError as exc:
-            return Response(
-                {'detail': 'Integrity error: a referenced record does not exist', 'errors': str(exc)},
-                status=400,
-            )
+                    if table_name == 'issues':
+                        continue
+                    self._process_table(table_name, Model, Serializer, changes.get(table_name, {}), request)
+        except (ValidationError, DjangoValidationError, IntegrityError) as exc:
+            return self._error_response(exc)
 
         _update_push_sync_log(request)
 
@@ -410,6 +385,80 @@ class PushView(APIView):
         return Response(status=204)
 
     @staticmethod
+    def _process_table(table_name, Model, Serializer, table_changes, request):
+        is_issues_table = table_name == 'issues'
+
+        for record in table_changes.get('created', []):
+            if is_issues_table and not _issue_owned_by(request.user, None, record):
+                raise PermissionDenied(
+                    'You can only sync issues you registered or that are assigned to you.',
+                )
+            # Repro (sync/tests/test_sync.py::test_push_retries_created_record_that_already_
+            # exists_server_side) : le mobile garde localement `_status: 'created'` tant qu'un
+            # push n'a pas été confirmé comme réussi de son point de vue (ex. cette table a
+            # réussi mais une AUTRE table du même lot a échoué, ou la réponse serveur n'a jamais
+            # été reçue) — il retente alors le MÊME enregistrement via `created`, potentiellement
+            # après qu'une tentative précédente a déjà fait exister la ligne côté serveur (même
+            # `id`). `Serializer(data=record)` SANS `instance=` déclenche le `UniqueValidator`
+            # automatique de DRF sur les champs `unique=True` (ex. `internal_code`) : il ne sait
+            # pas exclure CETTE MÊME ligne de la vérification et rejette le lot en boucle, alors
+            # qu'il s'agit du même enregistrement déjà présent avec le même id — retrouver
+            # l'instance existante avant de construire le serializer restaure le comportement
+            # upsert voulu (identique à `_merge_update` pour les mises à jour).
+            existing = Model.objects.filter(id=record['id']).first()
+            serializer = Serializer(existing, data=record)
+            serializer.is_valid(raise_exception=True)
+            Model.objects.update_or_create(
+                id=record['id'], defaults=serializer.validated_data,
+            )
+
+        for record in table_changes.get('updated', []):
+            if is_issues_table:
+                existing = Model.objects.filter(id=record['id']).first()
+                if existing is not None and not _issue_owned_by(request.user, existing, record):
+                    raise PermissionDenied(
+                        'You can only sync issues you registered or that are assigned to you.',
+                    )
+            PushView._merge_update(Model, Serializer, record)
+
+        for record_id in table_changes.get('deleted', []):
+            if is_issues_table:
+                existing = Model.objects.filter(id=record_id).first()
+                if existing is not None and not _issue_owned_by(request.user, existing, {}):
+                    raise PermissionDenied(
+                        'You can only sync issues you registered or that are assigned to you.',
+                    )
+            # `updated_at` doit être forcé explicitement : `QuerySet.update()` ne déclenche
+            # jamais `auto_now` (contrairement à `Model.save()`). Sans ça, le tombstone
+            # (`is_deleted=True`) posé par CET appareil ne serait jamais vu par les AUTRES
+            # appareils au pull (`PullView` filtre les suppressions sur `updated_at >
+            # last_pulled_at`) : la suppression resterait silencieusement locale au lieu de se
+            # propager.
+            Model.objects.filter(id=record_id).update(
+                is_deleted=True, updated_at=datetime.now(tz=dt_timezone.utc),
+            )
+
+    @staticmethod
+    def _error_response(exc):
+        if isinstance(exc, ValidationError):
+            # `serializer.is_valid(raise_exception=True)` lève cette exception DRF (distincte de
+            # `django.core.exceptions.ValidationError` ci-dessous) — non rattrapée explicitement
+            # jusqu'ici, elle remontait au gestionnaire d'exception par défaut de DRF avec une
+            # forme de réponse différente des deux autres branches. `transaction.atomic()` a de
+            # toute façon déjà annulé le lot de la table en cours à ce stade (comportement
+            # inchangé) ; on uniformise seulement la forme de la réponse pour le client mobile.
+            return Response({'detail': 'Validation error', 'errors': exc.detail}, status=400)
+        if isinstance(exc, DjangoValidationError):
+            return Response(
+                {'detail': 'Validation error', 'errors': exc.message_dict if hasattr(exc, 'message_dict') else str(exc)},
+                status=400,
+            )
+        return Response(
+            {'detail': 'Integrity error: a referenced record does not exist', 'errors': str(exc)},
+            status=400,
+        )
+
+    @staticmethod
     def _merge_update(Model, Serializer, record):
         """Merge champ à champ : n'écrase que les colonnes listées dans `_changed` (métadonnée
         WatermelonDB), pour ne pas piétiner une modification concurrente côté serveur sur
@@ -418,13 +467,39 @@ class PushView(APIView):
 
         instance = Model.objects.filter(id=record['id']).first()
         if instance is None:
+            # Repro (sync/tests/test_sync.py::test_push_real_device_created_as_updated_issue_
+            # record) : `Model.objects.create(**serializer.validated_data)` ignorait silencieusement
+            # l'`id` du client. La PK de `TimestampedSyncModel` est `UUIDField(..., editable=False)`
+            # (issue/models.py) : un champ `editable=False` est exclu de `validated_data` par le
+            # `ModelSerializer` de DRF, donc `create()` laissait Postgres générer un NOUVEL UUID
+            # aléatoire au lieu de reprendre celui déjà utilisé côté mobile (CLAUDE.md §3.4.1 —
+            # `createWithId` force un UUID v4 précisément pour que serveur et mobile partagent le
+            # même id). Avec `sendCreatedAsUpdated: true` (sync.js), TOUTE création passe par CETTE
+            # branche (jamais par la boucle `created` ci-dessus, qui utilisait déjà `update_or_
+            # create(id=record['id'], ...)` correctement) : chaque nouvel enregistrement — issue,
+            # comment, reason, escalation_level... — se retrouvait donc avec deux id différents de
+            # part et d'autre. Toute référence ultérieure à cet id (une mise à jour de la même
+            # issue, un `reasons`/`escalation_levels` la référençant par FK) ne trouvait plus rien
+            # côté serveur : nouvelle création avec ENCORE un id différent, ou 400 "n'existe pas"
+            # sur la FK — la sync ne convergeait donc jamais, quel que soit le nombre de cycles.
             serializer = Serializer(data=record)
             serializer.is_valid(raise_exception=True)
-            Model.objects.create(**serializer.validated_data)
+            Model.objects.update_or_create(id=record['id'], defaults=serializer.validated_data)
             return
 
         if not changed_fields:
-            serializer = Serializer(instance, data=record)
+            # Repro (sync/tests/test_sync.py::test_push_updates_issue_without_changed_metadata_
+            # and_partial_fields) : sans `_changed`, ce fallback validait `record` en mode NON
+            # partiel — exigeant la présence de TOUS les champs `required=True` du serializer
+            # (`status`, `category`, `issue_type`, `administrative_region`...), même ceux déjà
+            # valides sur `instance` et absents du lot poussé (ex. `escalateIssue()` ne pousse
+            # que les colonnes réellement modifiées, `escalate_flag`/`status`). Un enregistrement
+            # `updated` ne portant qu'un sous-ensemble de colonnes — `_changed` vide ou non —
+            # échouait donc systématiquement dès qu'un champ obligatoire non modifié manquait au
+            # lot. `partial=True` restaure le comportement "merge" voulu par cette méthode dans
+            # tous les cas : seuls les champs réellement présents dans `record` sont validés et
+            # appliqués, le reste de `instance` reste intact.
+            serializer = Serializer(instance, data=record, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return

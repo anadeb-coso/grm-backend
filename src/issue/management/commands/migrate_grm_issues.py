@@ -81,10 +81,7 @@ class Command(BaseCommand):
         if not admin_id or not str(admin_id).isdigit():
             return None
         level_id = int(admin_id)
-        adm = AdministrativeLevel.objects.using('mis').filter(id=level_id)
-        if not adm.exists():
-            return None
-        return adm
+        return AdministrativeLevel.objects.using('mis').filter(id=level_id).first()
 
     def _resolve_reference(self, Model, ref_doc):
         if not ref_doc or not ref_doc.get('id'):

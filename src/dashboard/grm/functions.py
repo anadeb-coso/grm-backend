@@ -184,7 +184,7 @@ def send_notification_by_mail(issue):
             {
                 "datas": {
                     _("Title"): _("COSO GRM - A new issue recorded"),
-                    _("Code"): issue['tracking_code'],
+                    _("Code"): issue['internal_code'],
                     _("Category"): issue['category']['name'],
                     _("Description"): "***" if "b'" in issue['description'] else issue['description'],
                     _("Date of incident/complaint"): issue.get('issue_date'),
@@ -214,7 +214,7 @@ def send_notification_on_escalation_by_mail(issue):
             {
                 "datas": {
                     _("Title"): _("COSO GRM - A new issue scaled"),
-                    _("Code"): issue['tracking_code'],
+                    _("Code"): issue['internal_code'],
                     _("Category"): issue['category']['name'],
                     _("Description"): "***" if "b'" in issue['description'] else issue['description'],
                     _("Up to level"): issue['escalation_administrativelevels'][0]['escalate_to']['administrative_level'],
@@ -245,7 +245,7 @@ def send_assignee_notification_by_mail(issue, user):
             {
                 "datas": {
                     _("Title"): _("COSO GRM - You have been assigned a issue"),
-                    _("Code"): issue['tracking_code'],
+                    _("Code"): issue['internal_code'],
                     _("Category"): issue['category']['name'],
                     _("Description"): "***" if "b'" in issue['description'] else issue['description'],
                     _("Level"): issue['escalation_administrativelevels'][0]['escalate_to']['administrative_level'] \
@@ -292,7 +292,7 @@ def send_issue_status_update_notification_by_mail(issue, kind, story_comment=Non
             {
                 "datas": {
                     _("Title"): title,
-                    _("Code"): issue['tracking_code'],
+                    _("Code"): issue['internal_code'],
                     _("Category"): issue['category']['name'],
                     _("Description"): "***" if "b'" in issue['description'] else issue['description'],
                     _("Status"): issue['status']['name'],

@@ -3,14 +3,16 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from twilio.base.exceptions import TwilioRestException
 
-from authentication.models import anonymize_issue_data, get_assignee, get_adl_to_escalate
+from authentication.models import (
+    anonymize_issue_data, get_assignee, get_adl_to_escalate, get_cvgp_member_escalation_replacement_assignee,
+)
 from dashboard.grm import CHOICE_CONTACT, CHOICE_PHONE
 from dashboard.grm.serializers import issue_to_legacy_dict
 from grm.celery import app
 from sms_client import send_sms
 from dashboard.grm.functions import (
     send_notification_by_mail, send_notification_on_escalation_by_mail,
-    send_issue_status_update_notification_by_mail,
+    send_issue_status_update_notification_by_mail, send_assignee_notification_by_mail,
 )
 from issue.models import Comment, EscalationLevel, Issue, IssueStatus, IssueStatusStory
 from administrativelevels.models import AdministrativeLevel
@@ -118,14 +120,14 @@ def escalate_issues():
                 if _adl:
                     current_level.administrative_id = _adl.id
                     current_level.save(update_fields=['administrative_id', 'updated_at'])
-                    print(current_level.name)
-                    print(current_level.administrative_id)
-                    print(current_level.administrative_level)
+                    # print(current_level.name)
+                    # print(current_level.administrative_id)
+                    # print(current_level.administrative_level)
 
 
     candidates = Issue.objects.filter(
         confirmed=True, is_deleted=False, assignee__isnull=False, escalate_flag=True
-    ).select_related('category', 'status')
+    ).select_related('category', 'status', 'assignee')
     open_status = IssueStatus.objects.filter(open_status=True).first()
     for issue in candidates:
         issue_id = str(issue.pk)
@@ -142,8 +144,39 @@ def escalate_issues():
                         due_at=timezone.now(),
                     )
                     current_level = issue.escalation_levels.order_by('-created_at').first()
-            
+
             if current_level:
+
+                # Une issue suivie par un membre CVGP (`CVGPMembers`) qui vient de quitter le
+                # niveau Village pour le niveau supérieur (Canton — c'est-à-dire qu'aucun autre
+                # `EscalationLevel` n'existait avant celui-ci) ne doit plus rester assignée à ce
+                # membre CVGP (il n'a plus la main dessus une fois remontée, cf. §CVGP côté mobile).
+                # On la réassigne au premier profil disponible dans l'ordre de repli
+                # CommunityFacilitator -> Supervisor (village) -> Safeguard (national), et on
+                # notifie ce nouvel assigné.
+                just_left_village_level = (
+                    current_level.administrative_level == 'Canton'
+                    and not issue.escalation_levels.exclude(pk=current_level.pk).exists()
+                )
+                if (
+                    just_left_village_level and issue.assignee_id
+                    and issue.assignee.groups.filter(name='CVGPMembers').exists()
+                ):
+                    replacement_assignee = get_cvgp_member_escalation_replacement_assignee(
+                        issue.administrative_region_id
+                    )
+                    if replacement_assignee:
+                        issue.assignee = replacement_assignee
+                        issue.assignee_name = replacement_assignee.name
+                        # cf. check_issues() ci-dessus : `updated_at` doit être explicitement
+                        # listé pour que le pull incrémental mobile détecte la réassignation.
+                        issue.save(update_fields=['assignee', 'assignee_name', 'updated_at'])
+                        try:
+                            send_assignee_notification_by_mail(
+                                issue_to_legacy_dict(issue), replacement_assignee,
+                            )
+                        except Exception:
+                            pass
 
                 issue.escalate_flag = False
                 update_fields = ['escalate_flag']

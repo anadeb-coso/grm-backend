@@ -22,32 +22,29 @@
             padding: 18px 20px;
             box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
         }
-        .um-filters form {
+        .um-filters .um-ranges {
             display: flex;
             flex-wrap: wrap;
+            gap: 14px 26px;
             align-items: flex-end;
-            gap: 16px;
-            margin: 0;
         }
-        .um-filters .form-group { margin: 0; }
-        .um-filters label {
-            display: block;
-            font-size: 11.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            color: var(--um-muted);
-            margin-bottom: 4px;
+        .um-range { display: flex; flex-direction: column; gap: 6px; }
+        .um-range > span {
+            font-size: 11.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .04em; color: var(--um-green-dark);
         }
+        .um-range .um-range-inputs { display: flex; gap: 8px; align-items: center; }
+        .um-range .um-range-inputs small { color: var(--um-muted); }
         .um-filters input[type="date"] {
             border: 1px solid #d8dfe3;
             border-radius: 10px;
-            padding: 7px 12px;
-            font-size: 14px;
-            min-width: 180px;
+            padding: 7px 10px;
+            font-size: 13.5px;
+            min-width: 150px;
         }
+        .um-filters .um-actions { display: flex; gap: 10px; margin-top: 14px; }
         .um-filters .btn { border-radius: 10px; font-weight: 700; }
-        .um-hint { font-size: 12px; color: var(--um-muted); margin-top: 10px; }
+        .um-hint { font-size: 12px; color: var(--um-muted); margin-top: 12px; line-height: 1.5; }
 
         /* ---------- Stat tiles ---------- */
         .um-stats {
@@ -93,30 +90,44 @@
             border: 1px solid var(--um-line);
             border-radius: 16px;
             box-shadow: 0 6px 20px rgba(31, 45, 61, .06);
-            overflow: hidden;
+            padding: 16px 20px 20px;
         }
         .um-section > header {
             display: flex; align-items: baseline; justify-content: space-between;
             gap: 12px;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--um-line);
+            margin-bottom: 12px;
         }
         .um-section > header h2 { font-size: 16px; font-weight: 800; color: var(--um-ink); margin: 0; }
         .um-section > header .um-count { font-size: 12.5px; color: var(--um-muted); font-weight: 600; }
-        .um-table-wrap { overflow-x: auto; }
-        table.um-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-        table.um-table th, table.um-table td { padding: 10px 20px; text-align: right; white-space: nowrap; }
+        table.um-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.um-table th, table.um-table td { padding: 9px 14px; text-align: right; white-space: nowrap; }
         table.um-table th:first-child, table.um-table td:first-child { text-align: left; white-space: normal; }
         table.um-table thead th {
-            font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
-            color: var(--um-muted); background: #fafcfc; border-bottom: 1px solid var(--um-line);
+            font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+            color: var(--um-muted); border-bottom: 2px solid var(--um-line);
         }
         table.um-table tbody tr + tr td { border-top: 1px solid var(--um-line); }
         table.um-table tbody tr:hover td { background: #f6faf8; }
-        table.um-table tfoot td { border-top: 2px solid var(--um-line); font-weight: 800; color: var(--um-ink); background: #fafcfc; }
+        table.um-table tfoot td { border-top: 2px solid var(--um-line); font-weight: 800; color: var(--um-ink); }
         table.um-table .um-strong { font-weight: 800; color: var(--um-ink); }
         table.um-table .um-zero { color: #c3ccd2; }
-        .um-empty { padding: 28px 20px; text-align: center; color: var(--um-muted); font-size: 13.5px; }
+        .um-badge {
+            display: inline-block; padding: 2px 9px; border-radius: 999px;
+            font-size: 11px; font-weight: 700;
+        }
+        .um-badge.on  { background: rgba(36,195,139,.14); color: var(--um-green-dark); }
+        .um-badge.off { background: rgba(233,84,84,.12);  color: #d0455a; }
+
+        /* DataTables toolbar */
+        .um-section .dt-buttons { margin-bottom: 10px; }
+        .um-section .dt-buttons .btn {
+            border: 1px solid var(--um-line); background: #fff; color: var(--um-green-dark);
+            font-size: 12px; font-weight: 700; border-radius: 8px; padding: 5px 12px; margin-right: 6px;
+        }
+        .um-section .dt-buttons .btn:hover { background: var(--um-green); color: #fff; border-color: var(--um-green); }
+        .um-section .dataTables_filter input { border: 1px solid var(--um-line); border-radius: 8px; padding: 4px 10px; }
+        .um-section .dataTables_info { color: var(--um-muted); font-size: 12px; }
+        .um-section .paginate_button.current { background: var(--um-green) !important; border-color: var(--um-green) !important; color: #fff !important; border-radius: 6px; }
     </style>
 {% endblock %}
 
@@ -125,19 +136,43 @@
 
         <div class="um-filters">
             <form method="get" action="">
-                <div class="form-group">
-                    <label for="um-start">{% translate "Start date" %}</label>
-                    <input type="date" id="um-start" name="start_date" value="{{ filters.start_date }}">
+                <div class="um-ranges">
+                    <div class="um-range">
+                        <span>{% translate "Last activity" %}</span>
+                        <div class="um-range-inputs">
+                            <input type="date" name="activity_start" value="{{ filters.activity_start }}"
+                                   aria-label="{% translate 'Activity from' %}">
+                            <small>→</small>
+                            <input type="date" name="activity_end" value="{{ filters.activity_end }}"
+                                   aria-label="{% translate 'Activity to' %}">
+                        </div>
+                    </div>
+                    <div class="um-range">
+                        <span>{% translate "Last login" %}</span>
+                        <div class="um-range-inputs">
+                            <input type="date" name="login_start" value="{{ filters.login_start }}"
+                                   aria-label="{% translate 'Login from' %}">
+                            <small>→</small>
+                            <input type="date" name="login_end" value="{{ filters.login_end }}"
+                                   aria-label="{% translate 'Login to' %}">
+                        </div>
+                    </div>
+                    <div class="um-range">
+                        <span>{% translate "Registration date" %}</span>
+                        <div class="um-range-inputs">
+                            <input type="date" name="joined_start" value="{{ filters.joined_start }}"
+                                   aria-label="{% translate 'Registered from' %}">
+                            <small>→</small>
+                            <input type="date" name="joined_end" value="{{ filters.joined_end }}"
+                                   aria-label="{% translate 'Registered to' %}">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="um-end">{% translate "End date" %}</label>
-                    <input type="date" id="um-end" name="end_date" value="{{ filters.end_date }}">
-                </div>
-                <div class="form-group">
+                <div class="um-actions">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-filter"></i> {% translate "Filter" %}
                     </button>
-                    {% if filters.start_date or filters.end_date %}
+                    {% if has_filter %}
                         <a href="{% url 'dashboard:user_tracking:home' %}" class="btn btn-outline-secondary">
                             {% translate "Reset" %}
                         </a>
@@ -146,13 +181,13 @@
             </form>
             <div class="um-hint">
                 <i class="fas fa-info-circle"></i>
-                {% translate "The date range filters accounts by their login request." %}
+                {% translate "The last-activity date is recorded on every use of the platform (web or mobile), at most once every 10 minutes per account. The three date ranges are combined: an account must match them all." %}
                 {% if anchor_is_end %}
                     {% blocktranslate trimmed with d=anchor_date|date:"d/m/Y" %}
-                        The 30- and 90-day connection windows are counted up to {{ d }}.
+                        The 30- and 90-day activity windows are counted up to {{ d }}.
                     {% endblocktranslate %}
                 {% else %}
-                    {% translate "The 30- and 90-day connection windows are counted from today." %}
+                    {% translate "The 30- and 90-day activity windows are counted from today." %}
                 {% endif %}
             </div>
         </div>
@@ -162,7 +197,7 @@
                 <div class="um-tile-icon ic-total"><i class="fas fa-users"></i></div>
                 <div class="um-tile-value">{{ overall.total }}</div>
                 <div class="um-tile-label">{% translate "User accounts" %}</div>
-                <div class="um-tile-sub">{% translate "opened on the platform" %}</div>
+                <div class="um-tile-sub">{% translate "matching the filters" %}</div>
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-active"><i class="fas fa-user-check"></i></div>
@@ -172,28 +207,28 @@
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-c30"><i class="fas fa-bolt"></i></div>
-                <div class="um-tile-value">{{ overall.connected_30 }}</div>
-                <div class="um-tile-label">{% translate "Signed in (30 days)" %}</div>
-                <div class="um-tile-sub">{% translate "at least once" %}</div>
+                <div class="um-tile-value">{{ overall.active_30 }}</div>
+                <div class="um-tile-label">{% translate "Active (30 days)" %}</div>
+                <div class="um-tile-sub">{% translate "at least one activity" %}</div>
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-c90"><i class="fas fa-history"></i></div>
-                <div class="um-tile-value">{{ overall.connected_90 }}</div>
-                <div class="um-tile-label">{% translate "Signed in (90 days)" %}</div>
-                <div class="um-tile-sub">{% translate "at least once" %}</div>
+                <div class="um-tile-value">{{ overall.active_90 }}</div>
+                <div class="um-tile-label">{% translate "Active (90 days)" %}</div>
+                <div class="um-tile-sub">{% translate "at least one activity" %}</div>
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-never"><i class="fas fa-user-slash"></i></div>
                 <div class="um-tile-value">{{ overall.never }}</div>
-                <div class="um-tile-label">{% translate "Never signed in" %}</div>
-                <div class="um-tile-sub">{% translate "no login recorded" %}</div>
+                <div class="um-tile-label">{% translate "Never active" %}</div>
+                <div class="um-tile-sub">{% translate "no activity recorded" %}</div>
             </div>
         </div>
 
         {% translate "Accounts" as th_accounts %}
         {% translate "Active" as th_active %}
-        {% translate "Signed in 30d" as th_c30 %}
-        {% translate "Signed in 90d" as th_c90 %}
+        {% translate "Active 30d" as th_a30 %}
+        {% translate "Active 90d" as th_a90 %}
         {% translate "Never" as th_never %}
 
         <div class="um-section">
@@ -201,44 +236,40 @@
                 <h2>{% translate "User accounts by profile" %}</h2>
                 <span class="um-count">{{ by_profile|length }} {% translate "profile(s)" %}</span>
             </header>
-            <div class="um-table-wrap">
-                <table class="um-table">
-                    <thead>
+            <table id="um-table-profile" class="um-table">
+                <thead>
+                    <tr>
+                        <th>{% translate "Profile" %}</th>
+                        <th>{{ th_accounts }}</th>
+                        <th>{{ th_active }}</th>
+                        <th>{{ th_a30 }}</th>
+                        <th>{{ th_a90 }}</th>
+                        <th>{{ th_never }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in by_profile %}
                         <tr>
-                            <th>{% translate "Profile" %}</th>
-                            <th>{{ th_accounts }}</th>
-                            <th>{{ th_active }}</th>
-                            <th>{{ th_c30 }}</th>
-                            <th>{{ th_c90 }}</th>
-                            <th>{{ th_never }}</th>
+                            <td>{{ row.label }}</td>
+                            <td class="um-strong">{{ row.total }}</td>
+                            <td>{{ row.active }}</td>
+                            <td>{{ row.active_30 }}</td>
+                            <td>{{ row.active_90 }}</td>
+                            <td class="{% if not row.never %}um-zero{% endif %}">{{ row.never }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in by_profile %}
-                            <tr>
-                                <td>{{ row.label }}</td>
-                                <td class="um-strong">{{ row.total }}</td>
-                                <td>{{ row.active }}</td>
-                                <td>{{ row.connected_30 }}</td>
-                                <td>{{ row.connected_90 }}</td>
-                                <td class="{% if not row.never %}um-zero{% endif %}">{{ row.never }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="6" class="um-empty">{% translate "No account for this selection." %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td>{% translate "Total" %}</td>
-                            <td>{{ overall.total }}</td>
-                            <td>{{ overall.active }}</td>
-                            <td>{{ overall.connected_30 }}</td>
-                            <td>{{ overall.connected_90 }}</td>
-                            <td>{{ overall.never }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>{% translate "Total" %}</td>
+                        <td>{{ overall.total }}</td>
+                        <td>{{ overall.active }}</td>
+                        <td>{{ overall.active_30 }}</td>
+                        <td>{{ overall.active_90 }}</td>
+                        <td>{{ overall.never }}</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
 
         <div class="um-section">
@@ -246,44 +277,40 @@
                 <h2>{% translate "User accounts by administrative level" %}</h2>
                 <span class="um-count">{{ by_level|length }} {% translate "level(s)" %}</span>
             </header>
-            <div class="um-table-wrap">
-                <table class="um-table">
-                    <thead>
+            <table id="um-table-level" class="um-table">
+                <thead>
+                    <tr>
+                        <th>{% translate "Administrative level" %}</th>
+                        <th>{{ th_accounts }}</th>
+                        <th>{{ th_active }}</th>
+                        <th>{{ th_a30 }}</th>
+                        <th>{{ th_a90 }}</th>
+                        <th>{{ th_never }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in by_level %}
                         <tr>
-                            <th>{% translate "Administrative level" %}</th>
-                            <th>{{ th_accounts }}</th>
-                            <th>{{ th_active }}</th>
-                            <th>{{ th_c30 }}</th>
-                            <th>{{ th_c90 }}</th>
-                            <th>{{ th_never }}</th>
+                            <td>{{ row.label }}</td>
+                            <td class="um-strong">{{ row.total }}</td>
+                            <td>{{ row.active }}</td>
+                            <td>{{ row.active_30 }}</td>
+                            <td>{{ row.active_90 }}</td>
+                            <td class="{% if not row.never %}um-zero{% endif %}">{{ row.never }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in by_level %}
-                            <tr>
-                                <td>{{ row.label }}</td>
-                                <td class="um-strong">{{ row.total }}</td>
-                                <td>{{ row.active }}</td>
-                                <td>{{ row.connected_30 }}</td>
-                                <td>{{ row.connected_90 }}</td>
-                                <td class="{% if not row.never %}um-zero{% endif %}">{{ row.never }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="6" class="um-empty">{% translate "No account for this selection." %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td>{% translate "Total" %}</td>
-                            <td>{{ overall.total }}</td>
-                            <td>{{ overall.active }}</td>
-                            <td>{{ overall.connected_30 }}</td>
-                            <td>{{ overall.connected_90 }}</td>
-                            <td>{{ overall.never }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>{% translate "Total" %}</td>
+                        <td>{{ overall.total }}</td>
+                        <td>{{ overall.active }}</td>
+                        <td>{{ overall.active_30 }}</td>
+                        <td>{{ overall.active_90 }}</td>
+                        <td>{{ overall.never }}</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
 
         <div class="um-section">
@@ -291,39 +318,125 @@
                 <h2>{% translate "Users by group" %}</h2>
                 <span class="um-count">{{ groups_count }} {% translate "group(s)" %}</span>
             </header>
-            <div class="um-table-wrap">
-                <table class="um-table">
-                    <thead>
+            <table id="um-table-group" class="um-table">
+                <thead>
+                    <tr>
+                        <th>{% translate "Group" %}</th>
+                        <th>{% translate "Users" %}</th>
+                        <th>{{ th_active }}</th>
+                        <th>{{ th_a30 }}</th>
+                        <th>{{ th_a90 }}</th>
+                        <th>{{ th_never }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in by_group %}
                         <tr>
-                            <th>{% translate "Group" %}</th>
-                            <th>{% translate "Users" %}</th>
-                            <th>{{ th_active }}</th>
-                            <th>{{ th_c30 }}</th>
-                            <th>{{ th_c90 }}</th>
-                            <th>{{ th_never }}</th>
+                            <td>{{ row.label }}</td>
+                            <td class="um-strong {% if not row.total %}um-zero{% endif %}">{{ row.total }}</td>
+                            <td>{{ row.active }}</td>
+                            <td>{{ row.active_30 }}</td>
+                            <td>{{ row.active_90 }}</td>
+                            <td class="{% if not row.never %}um-zero{% endif %}">{{ row.never }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in by_group %}
-                            <tr>
-                                <td>{{ row.label }}</td>
-                                <td class="um-strong {% if not row.total %}um-zero{% endif %}">{{ row.total }}</td>
-                                <td>{{ row.active }}</td>
-                                <td>{{ row.connected_30 }}</td>
-                                <td>{{ row.connected_90 }}</td>
-                                <td class="{% if not row.never %}um-zero{% endif %}">{{ row.never }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="6" class="um-empty">{% translate "No group defined." %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="um-hint" style="padding: 0 20px 16px;">
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="um-hint">
                 <i class="fas fa-info-circle"></i>
                 {% translate "A user belonging to several groups is counted once per group, so this total may exceed the number of accounts." %}
             </div>
         </div>
 
+        <div class="um-section">
+            <header>
+                <h2>{% translate "Accounts detail" %}</h2>
+                <span class="um-count">{{ detail_rows|length }} {% translate "account(s)" %}</span>
+            </header>
+            <div class="table-responsive">
+                <table id="um-table-detail" class="um-table">
+                    <thead>
+                        <tr>
+                            <th>{% translate "Email" %}</th>
+                            <th>{% translate "Name" %}</th>
+                            <th>{% translate "Profile" %}</th>
+                            <th>{% translate "Administrative level" %}</th>
+                            <th>{% translate "Group(s)" %}</th>
+                            <th>{% translate "Status" %}</th>
+                            <th>{% translate "Registered" %}</th>
+                            <th>{% translate "Last login" %}</th>
+                            <th>{% translate "Last activity" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in detail_rows %}
+                            <tr>
+                                <td>{{ row.email }}</td>
+                                <td>{{ row.name|default:"—" }}</td>
+                                <td>{{ row.profile }}</td>
+                                <td>{{ row.level }}</td>
+                                <td>{{ row.groups|default:"—" }}</td>
+                                <td data-order="{% if row.is_active %}1{% else %}0{% endif %}">
+                                    {% if row.is_active %}
+                                        <span class="um-badge on">{% translate "Active" %}</span>
+                                    {% else %}
+                                        <span class="um-badge off">{% translate "Inactive" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td data-order="{{ row.date_joined|date:'U'|default:'0' }}">
+                                    {{ row.date_joined|date:"d/m/Y H:i"|default:"—" }}
+                                </td>
+                                <td data-order="{{ row.last_login|date:'U'|default:'0' }}">
+                                    {{ row.last_login|date:"d/m/Y H:i"|default:"—" }}
+                                </td>
+                                <td data-order="{{ row.last_activity|date:'U'|default:'0' }}">
+                                    {{ row.last_activity|date:"d/m/Y H:i"|default:"—" }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 {% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    {% include 'layouts/datatable-js.html' %}
+    <script type="text/javascript">
+        $(function () {
+            {% get_current_language as lang %}
+            var langUrl = '{% static "AdminLTE/plugins/datatables/locale/lang.json" %}'.replace('lang', '{{ lang }}');
+            var exportButtons = [
+                { extend: 'copy', className: 'btn' },
+                { extend: 'csv', className: 'btn' },
+                { extend: 'excel', className: 'btn' },
+                { extend: 'pdf', className: 'btn', orientation: 'landscape', pageSize: 'A4' },
+                { extend: 'print', className: 'btn' }
+            ];
+
+            function initTable(selector, opts) {
+                $(selector).DataTable($.extend({
+                    language: { url: langUrl },
+                    dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+                         "<'row'<'col-sm-12't>>" +
+                         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+                    buttons: exportButtons,
+                    lengthChange: true,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, '{% translate "All" %}']],
+                    pageLength: 25,
+                    autoWidth: false
+                }, opts || {}));
+            }
+
+            // Tables d'agrégats : triées par nombre de comptes décroissant.
+            initTable('#um-table-profile', { order: [[1, 'desc']] });
+            initTable('#um-table-level', { order: [[1, 'desc']] });
+            initTable('#um-table-group', { order: [[1, 'desc']] });
+            // Détail : trié par dernière activité décroissante (colonne 8, tri via data-order).
+            initTable('#um-table-detail', { order: [[8, 'desc']] });
+        });
+    </script>
+{% endblock javascript %}

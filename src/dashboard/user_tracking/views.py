@@ -1,8 +1,13 @@
 """Menu "Suivi utilisateur" du dashboard web.
 
 Répond à : combien de comptes utilisateurs sont ouverts sur la plateforme (par profil et
-par niveau administratif), et combien se sont connectés au moins une fois au cours des 30
-et des 90 derniers jours — plus le nombre d'utilisateurs par Groupe Django.
+par niveau administratif), et combien ont eu une activité (web ou mobile) au cours des 30
+et des 90 derniers jours — plus le nombre d'utilisateurs par Groupe Django et le détail par
+compte (``date_joined`` / ``last_login`` / ``last_activity``).
+
+La "dernière activité" (``User.last_activity``) est alimentée par
+``authentication.middleware.LastActivityMiddleware`` (web + mobile JWT), au plus une fois
+toutes les 10 minutes par compte.
 
 Accès réservé au superuser et au groupe ``Admin`` (``AdminPermissionRequiredMixin``).
 """
@@ -49,25 +54,32 @@ PROFILE_ORDER = (
     ('Validator', _('Validator')),
 )
 
+# (clé GET début, clé GET fin, champ modèle) — chaque plage est indépendante et optionnelle.
+DATE_FILTERS = (
+    ('activity_start', 'activity_end', 'last_activity'),
+    ('login_start', 'login_end', 'last_login'),
+    ('joined_start', 'joined_end', 'date_joined'),
+)
+
 
 def _new_bucket():
     return {
         'total': 0,
         'active': 0,
         'inactive': 0,
-        'connected_30': 0,
-        'connected_90': 0,
+        'active_30': 0,
+        'active_90': 0,
         'never': 0,
     }
 
 
-def _bump(bucket, is_active, is_c30, is_c90, never):
+def _bump(bucket, is_active, is_a30, is_a90, never):
     bucket['total'] += 1
     bucket['active' if is_active else 'inactive'] += 1
-    if is_c30:
-        bucket['connected_30'] += 1
-    if is_c90:
-        bucket['connected_90'] += 1
+    if is_a30:
+        bucket['active_30'] += 1
+    if is_a90:
+        bucket['active_90'] += 1
     if never:
         bucket['never'] += 1
 
@@ -136,34 +148,38 @@ class UserMonitoringView(AdminPermissionRequiredMixin, PageMixin, LoginRequiredM
         context = super().get_context_data(**kwargs)
         request = self.request
 
-        start_raw = (request.GET.get('start_date') or '').strip()
-        end_raw = (request.GET.get('end_date') or '').strip()
-        start_date = self._parse_date(start_raw, end_of_day=False)
-        end_date = self._parse_date(end_raw, end_of_day=True)
+        # --- Filtres de dates (3 plages indépendantes) -------------------------------
+        raw = {}
+        parsed = {}
+        for start_key, end_key, field in DATE_FILTERS:
+            raw[start_key] = (request.GET.get(start_key) or '').strip()
+            raw[end_key] = (request.GET.get(end_key) or '').strip()
+            parsed[start_key] = self._parse_date(raw[start_key], end_of_day=False)
+            parsed[end_key] = self._parse_date(raw[end_key], end_of_day=True)
 
-        # Ensemble des comptes "ouverts" pris en compte : filtré sur la date de création du
-        # compte (``last_login``) via les filtres début / fin de la page.
         users_qs = User.objects.all()
-        if start_date:
-            users_qs = users_qs.filter(last_login__gte=start_date)
-        if end_date:
-            users_qs = users_qs.filter(last_login__lte=end_date)
+        for start_key, end_key, field in DATE_FILTERS:
+            if parsed[start_key]:
+                users_qs = users_qs.filter(**{f'{field}__gte': parsed[start_key]})
+            if parsed[end_key]:
+                users_qs = users_qs.filter(**{f'{field}__lte': parsed[end_key]})
 
         users = list(
             users_qs.prefetch_related('groups').only(
-                'id', 'is_active', 'is_superuser', 'last_login', 'date_joined',
+                'id', 'email', 'first_name', 'last_name',
+                'is_active', 'is_superuser', 'last_login', 'last_activity', 'date_joined',
             )
         )
         user_ids = [u.id for u in users]
 
-        # Fenêtres 30 / 90 jours : ancrées sur la borne de fin si elle est fournie, sinon
-        # sur l'instant présent.
-        anchor = end_date or timezone.now()
+        # Fenêtres 30 / 90 jours (sur ``last_activity``) : ancrées sur la fin de la plage
+        # d'activité si elle est fournie, sinon sur l'instant présent.
+        anchor = parsed['activity_end'] or timezone.now()
         threshold_30 = anchor - timedelta(days=30)
         threshold_90 = anchor - timedelta(days=90)
 
-        def connected_within(user, threshold):
-            return user.last_login is not None and threshold <= user.last_login <= anchor
+        def active_within(user, threshold):
+            return user.last_activity is not None and threshold <= user.last_activity <= anchor
 
         # --- Niveau administratif de chaque compte -------------------------------------
         # 1) agents "gouvernementaux" : GovernmentWorker.administrative_id
@@ -196,36 +212,50 @@ class UserMonitoringView(AdminPermissionRequiredMixin, PageMixin, LoginRequiredM
             ).values('id', 'name', 'type'):
                 level_info[str(lvl['id'])] = (lvl['name'], lvl['type'])
 
-        # --- Agrégations --------------------------------------------------------------
+        # --- Agrégations + détail par compte ---------------------------------------
         overall = _new_bucket()
         by_profile = {}
         by_level = {}
         by_group = {name: _new_bucket() for name in Group.objects.values_list('name', flat=True)}
         no_group = _new_bucket()
+        detail_rows = []
 
         for user in users:
             group_names = {g.name for g in user.groups.all()}
             is_active = user.is_active
-            is_c30 = connected_within(user, threshold_30)
-            is_c90 = connected_within(user, threshold_90)
-            never = user.last_login is None
+            is_a30 = active_within(user, threshold_30)
+            is_a90 = active_within(user, threshold_90)
+            never = user.last_activity is None
 
-            _bump(overall, is_active, is_c30, is_c90, never)
+            _bump(overall, is_active, is_a30, is_a90, never)
 
-            profile_bucket = by_profile.setdefault(self._profile_label(user, group_names), _new_bucket())
-            _bump(profile_bucket, is_active, is_c30, is_c90, never)
+            profile_label = self._profile_label(user, group_names)
+            _bump(by_profile.setdefault(profile_label, _new_bucket()), is_active, is_a30, is_a90, never)
 
             administrative_id = gw_map.get(user.id) or adl_map.get(user.id)
-            level_bucket = by_level.setdefault(
-                self._resolve_level_label(administrative_id, level_info), _new_bucket(),
-            )
-            _bump(level_bucket, is_active, is_c30, is_c90, never)
+            level_label = self._resolve_level_label(administrative_id, level_info)
+            _bump(by_level.setdefault(level_label, _new_bucket()), is_active, is_a30, is_a90, never)
 
             if group_names:
                 for name in group_names:
-                    _bump(by_group.setdefault(name, _new_bucket()), is_active, is_c30, is_c90, never)
+                    _bump(by_group.setdefault(name, _new_bucket()), is_active, is_a30, is_a90, never)
             else:
-                _bump(no_group, is_active, is_c30, is_c90, never)
+                _bump(no_group, is_active, is_a30, is_a90, never)
+
+            detail_rows.append({
+                'email': user.email,
+                'name': ('{} {}'.format(user.first_name or '', user.last_name or '')).strip(),
+                'profile': profile_label,
+                'level': level_label,
+                'groups': ', '.join(sorted(group_names)) if group_names else '',
+                'is_active': is_active,
+                'date_joined': user.date_joined,
+                'last_login': user.last_login,
+                'last_activity': user.last_activity,
+            })
+
+        epoch = timezone.make_aware(datetime(1970, 1, 1), timezone.get_current_timezone())
+        detail_rows.sort(key=lambda r: (r['last_activity'] or epoch), reverse=True)
 
         by_group_rows = self._as_rows(by_group)
         if no_group['total']:
@@ -233,12 +263,14 @@ class UserMonitoringView(AdminPermissionRequiredMixin, PageMixin, LoginRequiredM
             no_group_row['label'] = _('No group').__str__()
             by_group_rows.append(no_group_row)
 
-        context['filters'] = {'start_date': start_raw, 'end_date': end_raw}
-        context['anchor_is_end'] = bool(end_date)
+        context['filters'] = raw
+        context['has_filter'] = any(raw.values())
+        context['anchor_is_end'] = bool(parsed['activity_end'])
         context['anchor_date'] = anchor
         context['overall'] = overall
         context['by_profile'] = self._as_rows(by_profile)
         context['by_level'] = self._as_rows(by_level)
         context['by_group'] = by_group_rows
         context['groups_count'] = len(by_group)
+        context['detail_rows'] = detail_rows
         return context

@@ -30,6 +30,11 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, verbose_name=_('email address'))
     phone_number = models.CharField(max_length=45, verbose_name=_('phone number'))
     photo = models.ImageField(upload_to=photo_path, blank=True, null=True, verbose_name=_('photo'))
+    # Dernière activité (web ou mobile) — alimentée par
+    # ``authentication.middleware.LastActivityMiddleware`` au plus une fois toutes les 10 min.
+    # Distinct de ``last_login`` (qui n'est écrit qu'à l'authentification) : reflète le fait que
+    # le compte est réellement utilisé, y compris via les appels API/sync du mobile (JWT).
+    last_activity = models.DateTimeField(null=True, blank=True, verbose_name=_('last activity'))
 
     def __str__(self):
         return self.email

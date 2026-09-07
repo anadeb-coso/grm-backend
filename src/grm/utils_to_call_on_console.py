@@ -758,3 +758,38 @@ def encrypt_uncrypted_issues(category_ids=(4, 7), passwords=None, dry_run=False,
               f"{stats['skipped_no_password_files']} fichier(s)")
     print("End" + (" (DRY-RUN, rien écrit)" if dry_run else ""))
     return stats
+
+
+def backfill_last_activity_from_last_login(dry_run=False):
+    """Renseigne `User.last_activity` avec la valeur de `last_login` pour tous les comptes dont
+    `last_activity` est encore `None` (et qui ont un `last_login`).
+
+    Sert d'amorce après l'ajout du champ `last_activity` (alimenté en continu par
+    `authentication.middleware.LastActivityMiddleware`) : sans cela, tous les comptes
+    existants apparaissent "jamais actifs" tant qu'ils ne se sont pas reconnectés.
+
+    Écriture groupée via `QuerySet.update()` (pas de `save()`, pas de signaux). Ne touche
+    jamais un `last_activity` déjà renseigné.
+
+    Ex :
+        backfill_last_activity_from_last_login(dry_run=True)
+        backfill_last_activity_from_last_login()
+    """
+    from django.db.models import F
+
+    qs = User.objects.filter(last_activity__isnull=True, last_login__isnull=False)
+    total = qs.count()
+    print(f"{total} compte(s) avec last_activity=None et last_login renseigné")
+
+    if dry_run:
+        for user in qs.only("email", "last_login")[:20]:
+            print(f"  {user.email} <- {user.last_login}")
+        if total > 20:
+            print(f"  ... (+{total - 20})")
+        print("End (DRY-RUN, rien écrit)")
+        return total
+
+    updated = qs.update(last_activity=F("last_login"))
+    print(f"{updated} compte(s) mis à jour")
+    print("End")
+    return updated

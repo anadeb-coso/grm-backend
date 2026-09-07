@@ -9,6 +9,7 @@ urlpatterns = [
     path('participatory-budget/', include('dashboard.participatory_budget.urls')),
     # path('subprojects/', include('dashboard.subprojects.urls')),
     path('grm/', include('dashboard.grm.urls')),
+    path('user-monitoring/', include('dashboard.user_tracking.urls')),
     path('logs/', include('dashboard.logs.urls')),
     path('couchdb-proxy/', include('dashboard.couchdb_proxy.urls')),
     path('general/', include('dashboard.general.urls')),

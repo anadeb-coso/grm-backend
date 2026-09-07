@@ -1,0 +1,17 @@
+{
+  "source_db": "grm",
+  "source_host": "localhost",
+  "exported_at": "2026-08-30T02:12:16.969703",
+  "counts": {
+    "auth_group": 31,
+    "authentication_user": 285,
+    "authentication_governmentworker": 228,
+    "authentication_cdata": 463,
+    "authentication_pdata": 150,
+    "privacy_issuecategorypassword": 10,
+    "issue_wave": 1,
+    "authentication_user_groups": 335,
+    "auth_group_permissions": 0,
+    "authentication_user_user_permissions": 0
+  }
+}

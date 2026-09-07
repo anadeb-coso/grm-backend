@@ -69,6 +69,15 @@
                         <p>{% translate "GRM" %}</p>
                     </a>
                 </li>
+                {% if user.is_superuser or user|has_group:"Admin" %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:user_tracking:home' %}"
+                       class="nav-link {% if active_level1 == 'user_tracking' %}active{% endif %}">
+                        <i class="nav-icon fas fa-user-check"></i>
+                        <p>{% translate "User monitoring" %}</p>
+                    </a>
+                </li>
+                {% endif %}
                 {% if user.is_superuser %}
                 <li class="nav-item">
                     <a href="{% url 'admin:index' %}"

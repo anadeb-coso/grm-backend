@@ -110,12 +110,27 @@ class Command(BaseCommand):
         intake_date = _dt(doc.get('intake_date')) or created_date
         issue_date = _dt(doc.get('issue_date')) or created_date
 
+        # Manage duplicate key value violates unique constraint "issue_issue_internal_code_key"
+        _internal_code = doc['internal_code']
+        _issues = Issue.objects.filter(internal_code=_internal_code)
+        if _issues.exists():
+            _issue = _issues.first()
+            if _issue.legacy_couch_id != doc.get('_id'):
+                print(f"internal_code (exists : {doc['internal_code']}) ; legacy_couch_id (exists : {_issue.legacy_couch_id} ; current : {doc.get('_id')})")
+
+                if _internal_code:
+                    # Add simple "1" at the end
+                    _internal_code = f"{_internal_code}1"
+                else:
+                    print("Is null value. Not action")
+
+
         issue, _created = Issue.objects.update_or_create(
             # internal_code=doc['internal_code'],
             legacy_couch_id=doc.get('_id'),
             defaults=dict(
                 # legacy_couch_id=doc.get('_id'),
-                internal_code=doc['internal_code'],
+                internal_code=_internal_code,
                 tracking_code=doc.get('tracking_code'),
                 auto_increment_id=doc.get('auto_increment_id') or 0,
                 description=doc.get('description', ''),

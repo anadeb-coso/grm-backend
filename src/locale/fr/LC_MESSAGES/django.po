@@ -2118,3 +2118,129 @@ msgstr "Groupé"
 #: .\dashboard\templates\diagnostics\home.html
 msgid "Detailed"
 msgstr "Détaillé"
+
+
+#: .\dashboard\user_tracking\views.py
+msgid "User monitoring"
+msgstr "Suivi des utilisateurs"
+
+#: .\dashboard\user_tracking\views.py
+msgid "Not defined"
+msgstr "Non défini"
+
+#: .\dashboard\user_tracking\views.py
+msgid "No group"
+msgstr "Aucun groupe"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Start date"
+msgstr "Date de début"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "End date"
+msgstr "Date de fin"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "The date range filters accounts by their creation date (date the account was opened)."
+msgstr "Les filtres de dates portent sur la date de création du compte (date d'ouverture du compte)."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "The 30- and 90-day connection windows are counted up to %(d)s."
+msgstr "Les fenêtres de connexion de 30 et 90 jours sont comptées jusqu'au %(d)s."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "The 30- and 90-day connection windows are counted from today."
+msgstr "Les fenêtres de connexion de 30 et 90 jours sont comptées à partir d'aujourd'hui."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "User accounts"
+msgstr "Comptes utilisateurs"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "opened on the platform"
+msgstr "ouverts sur la plateforme"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Active accounts"
+msgstr "Comptes actifs"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "deactivated"
+msgstr "désactivés"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Signed in (30 days)"
+msgstr "Connectés (30 jours)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Signed in (90 days)"
+msgstr "Connectés (90 jours)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "at least once"
+msgstr "au moins une fois"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Never signed in"
+msgstr "Jamais connectés"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "no login recorded"
+msgstr "aucune connexion enregistrée"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Accounts"
+msgstr "Comptes"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Signed in 30d"
+msgstr "Connectés 30 j"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Signed in 90d"
+msgstr "Connectés 90 j"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Never"
+msgstr "Jamais"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "User accounts by profile"
+msgstr "Comptes utilisateurs par profil"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "profile(s)"
+msgstr "profil(s)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "No account for this selection."
+msgstr "Aucun compte pour cette sélection."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "User accounts by administrative level"
+msgstr "Comptes utilisateurs par niveau administratif"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "level(s)"
+msgstr "niveau(x)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Users by group"
+msgstr "Utilisateurs par groupe"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "group(s)"
+msgstr "groupe(s)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Users"
+msgstr "Utilisateurs"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "No group defined."
+msgstr "Aucun groupe défini."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "A user belonging to several groups is counted once per group, so this total may exceed the number of accounts."
+msgstr "Un utilisateur appartenant à plusieurs groupes est compté une fois par groupe ; ce total peut donc dépasser le nombre de comptes."
+

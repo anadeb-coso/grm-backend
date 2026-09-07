@@ -1,0 +1,3167 @@
+[
+  {
+    "id": 2,
+    "department": 1,
+    "user_id": 1,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 67,
+    "department": 1,
+    "user_id": 154,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 68,
+    "department": 1,
+    "user_id": 2,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 69,
+    "department": 1,
+    "user_id": 155,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 70,
+    "department": 1,
+    "user_id": 156,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 71,
+    "department": 1,
+    "user_id": 157,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 72,
+    "department": 1,
+    "user_id": 158,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 73,
+    "department": 1,
+    "user_id": 159,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 74,
+    "department": 1,
+    "user_id": 160,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 75,
+    "department": 1,
+    "user_id": 161,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 76,
+    "department": 1,
+    "user_id": 162,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 77,
+    "department": 1,
+    "user_id": 163,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 78,
+    "department": 1,
+    "user_id": 164,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 79,
+    "department": 1,
+    "user_id": 165,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 80,
+    "department": 1,
+    "user_id": 166,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 81,
+    "department": 1,
+    "user_id": 167,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 82,
+    "department": 1,
+    "user_id": 168,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 83,
+    "department": 1,
+    "user_id": 169,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 84,
+    "department": 1,
+    "user_id": 170,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 85,
+    "department": 1,
+    "user_id": 171,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 86,
+    "department": 1,
+    "user_id": 172,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 87,
+    "department": 1,
+    "user_id": 173,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 88,
+    "department": 1,
+    "user_id": 174,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 89,
+    "department": 1,
+    "user_id": 175,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 90,
+    "department": 1,
+    "user_id": 176,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 91,
+    "department": 1,
+    "user_id": 177,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 92,
+    "department": 1,
+    "user_id": 178,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 93,
+    "department": 1,
+    "user_id": 179,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 94,
+    "department": 1,
+    "user_id": 180,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 95,
+    "department": 1,
+    "user_id": 181,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 96,
+    "department": 1,
+    "user_id": 182,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 97,
+    "department": 1,
+    "user_id": 188,
+    "administrative_id": "1",
+    "administrative_ids": [
+      "1"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 99,
+    "department": 1,
+    "user_id": 190,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 100,
+    "department": 1,
+    "user_id": 191,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 101,
+    "department": 1,
+    "user_id": 192,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 103,
+    "department": 1,
+    "user_id": 194,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 104,
+    "department": 1,
+    "user_id": 88,
+    "administrative_id": "4475",
+    "administrative_ids": [
+      "4484",
+      "4490",
+      "4480",
+      "4478",
+      "4481",
+      "4482",
+      "4492",
+      "4475",
+      "4486",
+      "4476"
+    ],
+    "additional_administrative_ids": [
+      "4474"
+    ]
+  },
+  {
+    "id": 105,
+    "department": 1,
+    "user_id": 128,
+    "administrative_id": "4716",
+    "administrative_ids": [
+      "4711",
+      "4708",
+      "4710",
+      "4709",
+      "4716",
+      "4715"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 106,
+    "department": 1,
+    "user_id": 93,
+    "administrative_id": "4672",
+    "administrative_ids": [
+      "4695",
+      "4698",
+      "4683",
+      "4700",
+      "4701",
+      "4673",
+      "4674",
+      "4699",
+      "4703",
+      "4697",
+      "4685",
+      "4672",
+      "4702"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 107,
+    "department": 1,
+    "user_id": 140,
+    "administrative_id": "3982",
+    "administrative_ids": [
+      "2400",
+      "4007",
+      "4012",
+      "2379",
+      "3982"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 108,
+    "department": 1,
+    "user_id": 121,
+    "administrative_id": "2434",
+    "administrative_ids": [
+      "2459",
+      "2460",
+      "2432",
+      "2456",
+      "4075",
+      "2454",
+      "2457",
+      "2434",
+      "2452",
+      "2458",
+      "2453",
+      "2437",
+      "4074"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 109,
+    "department": 1,
+    "user_id": 103,
+    "administrative_id": "6657",
+    "administrative_ids": [
+      "6662",
+      "6663",
+      "6664",
+      "6670",
+      "6678",
+      "6665",
+      "6671",
+      "6667",
+      "6668",
+      "6672",
+      "6669",
+      "6657",
+      "6661"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 110,
+    "department": 1,
+    "user_id": 97,
+    "administrative_id": "3905",
+    "administrative_ids": [
+      "3907",
+      "2077",
+      "2080",
+      "3903",
+      "3910",
+      "3905",
+      "3901",
+      "3902",
+      "3914",
+      "3904",
+      "3906"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 111,
+    "department": 1,
+    "user_id": 132,
+    "administrative_id": "4517",
+    "administrative_ids": [
+      "4519",
+      "4510",
+      "4515",
+      "4517",
+      "4507",
+      "4518",
+      "4524",
+      "4511",
+      "4503",
+      "4526",
+      "4512"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 112,
+    "department": 1,
+    "user_id": 134,
+    "administrative_id": "4445",
+    "administrative_ids": [
+      "4468",
+      "4447",
+      "4470",
+      "4449",
+      "4451",
+      "4448",
+      "4452",
+      "4446",
+      "4466",
+      "4469",
+      "4450",
+      "4467",
+      "4445"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 113,
+    "department": 1,
+    "user_id": 104,
+    "administrative_id": "4070",
+    "administrative_ids": [
+      "2754",
+      "2758",
+      "2752",
+      "2762",
+      "4071",
+      "4069",
+      "2761",
+      "4070",
+      "4067",
+      "2747"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 114,
+    "department": 1,
+    "user_id": 135,
+    "administrative_id": "4392",
+    "administrative_ids": [
+      "4386",
+      "4391",
+      "4395",
+      "4383",
+      "4385",
+      "4392",
+      "4377",
+      "4382",
+      "4387"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 115,
+    "department": 1,
+    "user_id": 77,
+    "administrative_id": "4532",
+    "administrative_ids": [
+      "4533",
+      "4542",
+      "4544",
+      "4564",
+      "4573",
+      "4574",
+      "4558",
+      "4557",
+      "4543",
+      "4583",
+      "4541",
+      "4575",
+      "4582",
+      "4532",
+      "4540",
+      "4563",
+      "4556"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 116,
+    "department": 1,
+    "user_id": 73,
+    "administrative_id": "4526",
+    "administrative_ids": [
+      "4526",
+      "4499"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 117,
+    "department": 1,
+    "user_id": 85,
+    "administrative_id": "4032",
+    "administrative_ids": [
+      "3862",
+      "3836",
+      "4032",
+      "3835",
+      "3962",
+      "3837",
+      "3838"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 118,
+    "department": 1,
+    "user_id": 82,
+    "administrative_id": "3956",
+    "administrative_ids": [
+      "3160",
+      "3175",
+      "3958",
+      "3959",
+      "3179",
+      "3235",
+      "3941",
+      "3942",
+      "3955",
+      "3956",
+      "3957"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 119,
+    "department": 1,
+    "user_id": 144,
+    "administrative_id": "4592",
+    "administrative_ids": [
+      "4593",
+      "4594",
+      "4608",
+      "4592"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 120,
+    "department": 1,
+    "user_id": 143,
+    "administrative_id": "2395",
+    "administrative_ids": [
+      "2399",
+      "2396",
+      "3997",
+      "2375",
+      "3998",
+      "2374",
+      "2395"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 121,
+    "department": 1,
+    "user_id": 92,
+    "administrative_id": "4455",
+    "administrative_ids": [
+      "4459",
+      "4455",
+      "4462",
+      "4456",
+      "4457",
+      "4461",
+      "4471",
+      "4458",
+      "4460",
+      "4463",
+      "4473",
+      "4464",
+      "4465",
+      "4472"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 122,
+    "department": 1,
+    "user_id": 70,
+    "administrative_id": "4597",
+    "administrative_ids": [
+      "4597",
+      "4598",
+      "4599",
+      "4600",
+      "4601",
+      "4602"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 123,
+    "department": 1,
+    "user_id": 183,
+    "administrative_id": "2088",
+    "administrative_ids": [
+      "3860",
+      "2110",
+      "2107",
+      "2088",
+      "2108",
+      "2113",
+      "3861",
+      "2085"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 124,
+    "department": 1,
+    "user_id": 69,
+    "administrative_id": "1997",
+    "administrative_ids": [
+      "1989",
+      "1995",
+      "1992",
+      "1990",
+      "1991",
+      "1997",
+      "1994",
+      "1996"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 125,
+    "department": 1,
+    "user_id": 83,
+    "administrative_id": "4031",
+    "administrative_ids": [
+      "1986",
+      "1977",
+      "3834",
+      "1987",
+      "4031",
+      "3833"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 126,
+    "department": 1,
+    "user_id": 152,
+    "administrative_id": "4495",
+    "administrative_ids": [
+      "2652",
+      "4496",
+      "4495",
+      "2764",
+      "2742"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 127,
+    "department": 1,
+    "user_id": 151,
+    "administrative_id": "1929",
+    "administrative_ids": [
+      "4021",
+      "1929",
+      "1925",
+      "1931",
+      "4024",
+      "4022"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 128,
+    "department": 1,
+    "user_id": 150,
+    "administrative_id": "4592",
+    "administrative_ids": [
+      "4608",
+      "4592",
+      "4593",
+      "4601",
+      "4594",
+      "4599"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 129,
+    "department": 1,
+    "user_id": 147,
+    "administrative_id": "1953",
+    "administrative_ids": [
+      "1941",
+      "1953",
+      "1940",
+      "1956",
+      "1943",
+      "1946",
+      "1949",
+      "3890"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 130,
+    "department": 1,
+    "user_id": 149,
+    "administrative_id": "6474",
+    "administrative_ids": [
+      "6515",
+      "6488",
+      "6485",
+      "6474",
+      "6518",
+      "6506"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 131,
+    "department": 1,
+    "user_id": 148,
+    "administrative_id": "1942",
+    "administrative_ids": [
+      "1950",
+      "1955",
+      "1954",
+      "1945",
+      "1948",
+      "1947",
+      "1944",
+      "1942"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 132,
+    "department": 1,
+    "user_id": 153,
+    "administrative_id": "2105",
+    "administrative_ids": [
+      "2105",
+      "3853",
+      "3851",
+      "3849",
+      "3858",
+      "3854",
+      "2091",
+      "2106",
+      "3850",
+      "3859"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 133,
+    "department": 1,
+    "user_id": 76,
+    "administrative_id": "4397",
+    "administrative_ids": [
+      "3370",
+      "4444",
+      "3144",
+      "4474",
+      "4500",
+      "3216",
+      "4397"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 134,
+    "department": 1,
+    "user_id": 68,
+    "administrative_id": "4153",
+    "administrative_ids": [
+      "4130",
+      "4126",
+      "4135",
+      "4128",
+      "4131",
+      "4134",
+      "4145",
+      "2033",
+      "4153",
+      "4137",
+      "4149",
+      "4136",
+      "4146",
+      "4141",
+      "4129",
+      "4127"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 135,
+    "department": 1,
+    "user_id": 87,
+    "administrative_id": "2430",
+    "administrative_ids": [
+      "2430",
+      "6473"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 136,
+    "department": 1,
+    "user_id": 84,
+    "administrative_id": "4607",
+    "administrative_ids": [
+      "4589",
+      "4588",
+      "4612",
+      "4602",
+      "4605",
+      "4609",
+      "4606",
+      "4611",
+      "4719",
+      "4607"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 137,
+    "department": 1,
+    "user_id": 78,
+    "administrative_id": "1958",
+    "administrative_ids": [
+      "1958"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 138,
+    "department": 1,
+    "user_id": 80,
+    "administrative_id": "6579",
+    "administrative_ids": [
+      "6583",
+      "6584",
+      "6582",
+      "6579"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 139,
+    "department": 1,
+    "user_id": 75,
+    "administrative_id": "2373",
+    "administrative_ids": [
+      "4501",
+      "2347",
+      "3690",
+      "3779",
+      "6651",
+      "2373"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 140,
+    "department": 1,
+    "user_id": 113,
+    "administrative_id": "4365",
+    "administrative_ids": [
+      "4365",
+      "4370",
+      "4373",
+      "4366",
+      "4371",
+      "4374",
+      "4369"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 141,
+    "department": 1,
+    "user_id": 146,
+    "administrative_id": "2350",
+    "administrative_ids": [
+      "2354",
+      "3992",
+      "2366",
+      "2352",
+      "2371",
+      "4015",
+      "4018",
+      "2350",
+      "3977",
+      "2362",
+      "3978",
+      "2359"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 142,
+    "department": 1,
+    "user_id": 118,
+    "administrative_id": "2360",
+    "administrative_ids": [
+      "2360",
+      "2370",
+      "2355",
+      "3985",
+      "2365",
+      "2363",
+      "2356",
+      "2349",
+      "2353",
+      "3993",
+      "3984"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 143,
+    "department": 1,
+    "user_id": 123,
+    "administrative_id": "4707",
+    "administrative_ids": [
+      "4717",
+      "4712",
+      "4706",
+      "4707",
+      "4713"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 144,
+    "department": 1,
+    "user_id": 124,
+    "administrative_id": "4088",
+    "administrative_ids": [
+      "2443",
+      "4080",
+      "2442",
+      "2449",
+      "2446",
+      "2439",
+      "4088"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 145,
+    "department": 1,
+    "user_id": 139,
+    "administrative_id": "3700",
+    "administrative_ids": [
+      "3693",
+      "3701",
+      "3870",
+      "3748",
+      "4006",
+      "3880",
+      "3711",
+      "3716",
+      "3700",
+      "3881",
+      "3692",
+      "3996",
+      "3707",
+      "3721"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 146,
+    "department": 1,
+    "user_id": 133,
+    "administrative_id": "3852",
+    "administrative_ids": [
+      "2092",
+      "2116",
+      "4720",
+      "3848",
+      "2115",
+      "2122",
+      "3852",
+      "3855"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 147,
+    "department": 1,
+    "user_id": 115,
+    "administrative_id": "4707",
+    "administrative_ids": [
+      "4707",
+      "4712",
+      "4717",
+      "4706",
+      "4713"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 148,
+    "department": 1,
+    "user_id": 126,
+    "administrative_id": "4357",
+    "administrative_ids": [
+      "4348",
+      "4342",
+      "4344",
+      "4359",
+      "4354",
+      "4355",
+      "4358",
+      "4357",
+      "4350",
+      "4343"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 149,
+    "department": 1,
+    "user_id": 127,
+    "administrative_id": "1978",
+    "administrative_ids": [
+      "3828",
+      "1978",
+      "1977",
+      "3832",
+      "1983",
+      "3827"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 150,
+    "department": 1,
+    "user_id": 136,
+    "administrative_id": "4043",
+    "administrative_ids": [
+      "4043",
+      "2667",
+      "4039",
+      "4042",
+      "2654",
+      "4038"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 151,
+    "department": 1,
+    "user_id": 130,
+    "administrative_id": "4010",
+    "administrative_ids": [
+      "3882",
+      "2138",
+      "4010",
+      "4011",
+      "2132",
+      "2144",
+      "2139",
+      "2126"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 152,
+    "department": 1,
+    "user_id": 116,
+    "administrative_id": "4671",
+    "administrative_ids": [
+      "4691",
+      "4696",
+      "4682",
+      "4684",
+      "4679",
+      "4676",
+      "4671",
+      "4678",
+      "4677"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 153,
+    "department": 1,
+    "user_id": 186,
+    "administrative_id": "2377",
+    "administrative_ids": [
+      "2384",
+      "2377",
+      "2378",
+      "2398",
+      "3981",
+      "3980"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 154,
+    "department": 1,
+    "user_id": 122,
+    "administrative_id": "4051",
+    "administrative_ids": [
+      "2778",
+      "2768",
+      "4054",
+      "4055",
+      "4059",
+      "4060",
+      "4065",
+      "4064",
+      "4051",
+      "2776",
+      "4050",
+      "2779",
+      "4063",
+      "4048"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 155,
+    "department": 1,
+    "user_id": 107,
+    "administrative_id": "4082",
+    "administrative_ids": [
+      "2444",
+      "4080",
+      "4091",
+      "4082",
+      "2443"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 156,
+    "department": 1,
+    "user_id": 145,
+    "administrative_id": "2153",
+    "administrative_ids": [
+      "2153",
+      "3973",
+      "4003",
+      "4017"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 157,
+    "department": 1,
+    "user_id": 101,
+    "administrative_id": "2156",
+    "administrative_ids": [
+      "2150",
+      "2157",
+      "2162",
+      "2171",
+      "4003",
+      "2152",
+      "2176",
+      "3972",
+      "2151",
+      "2156",
+      "2153"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 158,
+    "department": 1,
+    "user_id": 131,
+    "administrative_id": "3820",
+    "administrative_ids": [
+      "3976",
+      "3879",
+      "3800",
+      "3820",
+      "3885",
+      "3794",
+      "3812",
+      "3886",
+      "3819",
+      "3969",
+      "3799",
+      "3811",
+      "3795"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 159,
+    "department": 1,
+    "user_id": 112,
+    "administrative_id": "6548",
+    "administrative_ids": [
+      "6558",
+      "6559",
+      "6567",
+      "6548"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 160,
+    "department": 1,
+    "user_id": 129,
+    "administrative_id": "2456",
+    "administrative_ids": [
+      "2458",
+      "2460",
+      "2456",
+      "2453",
+      "4087",
+      "4083",
+      "2452"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 161,
+    "department": 1,
+    "user_id": 106,
+    "administrative_id": "2438",
+    "administrative_ids": [
+      "2440",
+      "2444",
+      "4077",
+      "6482",
+      "4081",
+      "6479",
+      "4083",
+      "4087",
+      "6497",
+      "2438"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 162,
+    "department": 1,
+    "user_id": 108,
+    "administrative_id": "2381",
+    "administrative_ids": [
+      "3999",
+      "2385",
+      "2381",
+      "4000",
+      "2397",
+      "4001"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 163,
+    "department": 1,
+    "user_id": 111,
+    "administrative_id": "4407",
+    "administrative_ids": [
+      "4408",
+      "4398",
+      "4416",
+      "4417",
+      "4400",
+      "4407",
+      "4404",
+      "4399",
+      "4403",
+      "4422",
+      "4421"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 164,
+    "department": 1,
+    "user_id": 89,
+    "administrative_id": "4670",
+    "administrative_ids": [
+      "4667",
+      "4625",
+      "4618",
+      "4624",
+      "4627",
+      "4629",
+      "4623",
+      "4630",
+      "4633",
+      "4634",
+      "4622",
+      "4626",
+      "4670",
+      "4616",
+      "4617",
+      "4628"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 165,
+    "department": 1,
+    "user_id": 110,
+    "administrative_id": "3929",
+    "administrative_ids": [
+      "3926",
+      "3169",
+      "3896",
+      "3149",
+      "3183",
+      "3967",
+      "3895",
+      "3968",
+      "3952",
+      "3929",
+      "3166",
+      "3953",
+      "3894",
+      "3951",
+      "3182"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 166,
+    "department": 1,
+    "user_id": 90,
+    "administrative_id": "3399",
+    "administrative_ids": [
+      "3401",
+      "4106",
+      "4120",
+      "4103",
+      "4124",
+      "4115",
+      "4116",
+      "4104",
+      "4125",
+      "4123",
+      "3374",
+      "4105",
+      "3404",
+      "3399",
+      "4102"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 167,
+    "department": 1,
+    "user_id": 94,
+    "administrative_id": "6609",
+    "administrative_ids": [
+      "6609",
+      "6627",
+      "6610",
+      "6646",
+      "6647"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 168,
+    "department": 1,
+    "user_id": 91,
+    "administrative_id": "3805",
+    "administrative_ids": [
+      "3869",
+      "3804",
+      "3871",
+      "3810",
+      "3875",
+      "3802",
+      "3805",
+      "3814",
+      "3888",
+      "3780",
+      "3874"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 169,
+    "department": 1,
+    "user_id": 141,
+    "administrative_id": "4490",
+    "administrative_ids": [
+      "4480",
+      "4490",
+      "4482",
+      "4481"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 170,
+    "department": 1,
+    "user_id": 95,
+    "administrative_id": "4427",
+    "administrative_ids": [
+      "4423",
+      "4411",
+      "4426",
+      "4413",
+      "4424",
+      "4425",
+      "4441",
+      "4442",
+      "4414",
+      "4412",
+      "4427"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 171,
+    "department": 1,
+    "user_id": 114,
+    "administrative_id": "3731",
+    "administrative_ids": [
+      "3739",
+      "3983",
+      "3731",
+      "3987",
+      "4002",
+      "3736",
+      "3975",
+      "3698",
+      "3872"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 172,
+    "department": 1,
+    "user_id": 96,
+    "administrative_id": "4157",
+    "administrative_ids": [
+      "4157"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 173,
+    "department": 1,
+    "user_id": 137,
+    "administrative_id": "4430",
+    "administrative_ids": [
+      "4419",
+      "4429",
+      "4415",
+      "4428",
+      "4438",
+      "4430",
+      "4437",
+      "4436",
+      "4418",
+      "4435"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 174,
+    "department": 1,
+    "user_id": 125,
+    "administrative_id": "4598",
+    "administrative_ids": [
+      "4597",
+      "4600",
+      "4598",
+      "4591",
+      "4603",
+      "4604"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 175,
+    "department": 1,
+    "user_id": 109,
+    "administrative_id": "4206",
+    "administrative_ids": [
+      "4210",
+      "4229",
+      "4206",
+      "4224",
+      "4196",
+      "4201",
+      "4221",
+      "4223",
+      "4226",
+      "4228",
+      "4198",
+      "4218",
+      "4204",
+      "4200",
+      "4225",
+      "4195",
+      "4231",
+      "4211",
+      "4192",
+      "4197"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 176,
+    "department": 1,
+    "user_id": 119,
+    "administrative_id": "2665",
+    "administrative_ids": [
+      "2664",
+      "2665",
+      "2658",
+      "2668"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 177,
+    "department": 1,
+    "user_id": 117,
+    "administrative_id": "4646",
+    "administrative_ids": [
+      "4663",
+      "4635",
+      "4645",
+      "4646",
+      "4651",
+      "4650",
+      "4644",
+      "4643",
+      "4649",
+      "4636",
+      "4662",
+      "4664"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 178,
+    "department": 1,
+    "user_id": 120,
+    "administrative_id": "4111",
+    "administrative_ids": [
+      "4093",
+      "4113",
+      "4101",
+      "4110",
+      "3393",
+      "4094",
+      "4095",
+      "3371",
+      "4112",
+      "3389",
+      "4107",
+      "3411",
+      "4099",
+      "4096",
+      "4108",
+      "4092",
+      "4111"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 179,
+    "department": 1,
+    "user_id": 86,
+    "administrative_id": "3829",
+    "administrative_ids": [
+      "3841",
+      "3843",
+      "3839",
+      "3840",
+      "3829",
+      "3842"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 180,
+    "department": 1,
+    "user_id": 197,
+    "administrative_id": "6538",
+    "administrative_ids": [
+      "6536",
+      "6535",
+      "6526",
+      "6538",
+      "6529",
+      "6539",
+      "6525"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 181,
+    "department": 1,
+    "user_id": 102,
+    "administrative_id": "3845",
+    "administrative_ids": [
+      "2002",
+      "1999",
+      "3845",
+      "4721",
+      "2006",
+      "2005",
+      "2004",
+      "2003",
+      "2001",
+      "3844"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 182,
+    "department": 1,
+    "user_id": 196,
+    "administrative_id": "4364",
+    "administrative_ids": [
+      "4364"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 183,
+    "department": 1,
+    "user_id": 195,
+    "administrative_id": "1974",
+    "administrative_ids": [
+      "3828",
+      "1976",
+      "1985",
+      "3830",
+      "3831",
+      "1974",
+      "1984",
+      "1982"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 184,
+    "department": 1,
+    "user_id": 74,
+    "administrative_id": "2123",
+    "administrative_ids": [
+      "6543",
+      "2123",
+      "6523"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 185,
+    "department": 1,
+    "user_id": 71,
+    "administrative_id": "1968",
+    "administrative_ids": [
+      "1961",
+      "1963",
+      "1968",
+      "1970",
+      "1972",
+      "1962",
+      "1964"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 186,
+    "department": 1,
+    "user_id": 98,
+    "administrative_id": "3216",
+    "administrative_ids": [
+      "3915",
+      "3219",
+      "3243",
+      "3893",
+      "3916",
+      "3917",
+      "3220",
+      "3216",
+      "3218",
+      "3900"
+    ],
+    "additional_administrative_ids": [
+      "3243",
+      "3923",
+      "3949",
+      "3921",
+      "3925",
+      "3948",
+      "3244",
+      "3922"
+    ]
+  },
+  {
+    "id": 187,
+    "department": 1,
+    "user_id": 138,
+    "administrative_id": "2063",
+    "administrative_ids": [
+      "2045",
+      "2065",
+      "3934",
+      "2061",
+      "3935",
+      "3939",
+      "2047",
+      "3919",
+      "3931",
+      "2063",
+      "2055",
+      "3945",
+      "2050",
+      "2044",
+      "3930",
+      "3936",
+      "3920",
+      "3946",
+      "2056",
+      "3947",
+      "2046",
+      "3938",
+      "3940",
+      "2060",
+      "3933",
+      "3937",
+      "2059",
+      "3932",
+      "2058"
+    ],
+    "additional_administrative_ids": [
+      "4149",
+      "4131",
+      "2033",
+      "4136",
+      "4146",
+      "4130",
+      "4135",
+      "4129",
+      "4145",
+      "4137"
+    ]
+  },
+  {
+    "id": 188,
+    "department": 1,
+    "user_id": 67,
+    "administrative_id": "4411",
+    "administrative_ids": [
+      "4427",
+      "4411",
+      "4413",
+      "4441",
+      "4442",
+      "4412",
+      "4426",
+      "4414",
+      "4425"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 189,
+    "department": 1,
+    "user_id": 72,
+    "administrative_id": "2072",
+    "administrative_ids": [
+      "2078",
+      "3884",
+      "3905",
+      "3906",
+      "3907",
+      "3909",
+      "3911",
+      "3912",
+      "3913",
+      "2072"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 190,
+    "department": 1,
+    "user_id": 198,
+    "administrative_id": "6641",
+    "administrative_ids": [
+      "6645",
+      "6641",
+      "6637",
+      "6621",
+      "6634",
+      "6620"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 191,
+    "department": 1,
+    "user_id": 199,
+    "administrative_id": "6593",
+    "administrative_ids": [
+      "6617",
+      "6593",
+      "4502",
+      "6585"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 193,
+    "department": 1,
+    "user_id": 205,
+    "administrative_id": "3841",
+    "administrative_ids": [
+      "3843",
+      "3842",
+      "3827",
+      "1983",
+      "3841",
+      "3840",
+      "3832",
+      "3839",
+      "3829"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 194,
+    "department": 1,
+    "user_id": 207,
+    "administrative_id": "6623",
+    "administrative_ids": [
+      "6623",
+      "6622",
+      "6604",
+      "6602",
+      "6635"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 196,
+    "department": 1,
+    "user_id": 201,
+    "administrative_id": "3216",
+    "administrative_ids": [
+      "3899",
+      "3908",
+      "3234",
+      "3224",
+      "3245",
+      "3233",
+      "3228",
+      "3226",
+      "3941",
+      "3918",
+      "3942",
+      "6680",
+      "3222",
+      "3225",
+      "6679",
+      "3230",
+      "3216",
+      "3223"
+    ],
+    "additional_administrative_ids": [
+      "3229"
+    ]
+  },
+  {
+    "id": 197,
+    "department": 1,
+    "user_id": 200,
+    "administrative_id": "4584",
+    "administrative_ids": [
+      "4578",
+      "4565",
+      "4530",
+      "4561",
+      "4559",
+      "4531",
+      "4572",
+      "4564",
+      "4585",
+      "4571",
+      "4569",
+      "4567",
+      "4584",
+      "4560",
+      "4563",
+      "4566",
+      "4586",
+      "4570",
+      "4579",
+      "4568"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 198,
+    "department": 1,
+    "user_id": 204,
+    "administrative_id": "4002",
+    "administrative_ids": [
+      "3746",
+      "3729",
+      "3735",
+      "3706",
+      "3865",
+      "3726",
+      "3738",
+      "3699",
+      "3719",
+      "3734",
+      "3864",
+      "3868",
+      "3720",
+      "3733",
+      "3745",
+      "3730",
+      "3863",
+      "4002",
+      "3727"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 199,
+    "department": 1,
+    "user_id": 209,
+    "administrative_id": "3909",
+    "administrative_ids": [
+      "3912",
+      "3909",
+      "2069",
+      "3884",
+      "3913",
+      "2078",
+      "3911",
+      "2081",
+      "2072"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 200,
+    "department": 1,
+    "user_id": 210,
+    "administrative_id": "2660",
+    "administrative_ids": [
+      "4038",
+      "2667",
+      "4043",
+      "2654",
+      "2664",
+      "4040",
+      "4044",
+      "2668",
+      "2656",
+      "2660",
+      "2658",
+      "2665",
+      "4042"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 201,
+    "department": 1,
+    "user_id": 206,
+    "administrative_id": "1928",
+    "administrative_ids": [
+      "1928"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 202,
+    "department": 1,
+    "user_id": 211,
+    "administrative_id": "6543",
+    "administrative_ids": [
+      "6572",
+      "6574",
+      "6570",
+      "6543",
+      "6557"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 203,
+    "department": 1,
+    "user_id": 212,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 204,
+    "department": 1,
+    "user_id": 213,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 205,
+    "department": 1,
+    "user_id": 214,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 206,
+    "department": 1,
+    "user_id": 215,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 207,
+    "department": 1,
+    "user_id": 216,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 208,
+    "department": 1,
+    "user_id": 217,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 209,
+    "department": 1,
+    "user_id": 218,
+    "administrative_id": "4704",
+    "administrative_ids": [
+      "4704",
+      "4595",
+      "4596",
+      "4587",
+      "4610",
+      "4590",
+      "4705",
+      "4609"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 210,
+    "department": 1,
+    "user_id": 219,
+    "administrative_id": "4613",
+    "administrative_ids": [
+      "4647",
+      "4639",
+      "4655",
+      "4642",
+      "4619",
+      "4648",
+      "4640",
+      "4641",
+      "4654",
+      "4614",
+      "4615",
+      "4660",
+      "4613",
+      "4661"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 211,
+    "department": 1,
+    "user_id": 220,
+    "administrative_id": "1965",
+    "administrative_ids": [
+      "1967",
+      "3826",
+      "1971",
+      "1965",
+      "1966",
+      "3824",
+      "1969"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 212,
+    "department": 1,
+    "user_id": 221,
+    "administrative_id": "6598",
+    "administrative_ids": [
+      "6638",
+      "6598",
+      "6629",
+      "6600",
+      "6601"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 213,
+    "department": 1,
+    "user_id": 222,
+    "administrative_id": "2101",
+    "administrative_ids": [
+      "2086",
+      "2102",
+      "2111",
+      "2099",
+      "2121",
+      "2103",
+      "2101",
+      "2120"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 214,
+    "department": 1,
+    "user_id": 223,
+    "administrative_id": "4076",
+    "administrative_ids": [
+      "4082",
+      "4090",
+      "2448",
+      "4091",
+      "2445",
+      "4089",
+      "4076"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 216,
+    "department": 1,
+    "user_id": 225,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 217,
+    "department": 1,
+    "user_id": 226,
+    "administrative_id": "3857",
+    "administrative_ids": [
+      "2089",
+      "3847",
+      "2095",
+      "3857",
+      "2119"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 218,
+    "department": 1,
+    "user_id": 227,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 219,
+    "department": 1,
+    "user_id": 228,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 220,
+    "department": 1,
+    "user_id": 229,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 221,
+    "department": 1,
+    "user_id": 230,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 222,
+    "department": 1,
+    "user_id": 231,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 223,
+    "department": 1,
+    "user_id": 232,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 224,
+    "department": 1,
+    "user_id": 274,
+    "administrative_id": "1921",
+    "administrative_ids": [
+      "1921",
+      "1934",
+      "4020"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 225,
+    "department": 1,
+    "user_id": 282,
+    "administrative_id": "4707",
+    "administrative_ids": [
+      "4713",
+      "4707",
+      "4706",
+      "4717",
+      "4712"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 226,
+    "department": 1,
+    "user_id": 294,
+    "administrative_id": "3779",
+    "administrative_ids": [
+      "3779",
+      "6651"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 227,
+    "department": 1,
+    "user_id": 288,
+    "administrative_id": "4494",
+    "administrative_ids": [
+      "2438",
+      "2432",
+      "4494"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 228,
+    "department": 1,
+    "user_id": 292,
+    "administrative_id": "4500",
+    "administrative_ids": [
+      "4397",
+      "3370",
+      "4500",
+      "4501"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 229,
+    "department": 1,
+    "user_id": 299,
+    "administrative_id": "2084",
+    "administrative_ids": [
+      "2042",
+      "2068",
+      "2084"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 230,
+    "department": 1,
+    "user_id": 291,
+    "administrative_id": "4397",
+    "administrative_ids": [
+      "4444",
+      "4397"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 231,
+    "department": 1,
+    "user_id": 285,
+    "administrative_id": "3144",
+    "administrative_ids": [
+      "3144",
+      "3216"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 232,
+    "department": 1,
+    "user_id": 287,
+    "administrative_id": "4498",
+    "administrative_ids": [
+      "4376",
+      "4498",
+      "4364"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 233,
+    "department": 1,
+    "user_id": 286,
+    "administrative_id": "4376",
+    "administrative_ids": [
+      "4391",
+      "4386",
+      "4392",
+      "4359",
+      "4369",
+      "4385",
+      "4366",
+      "4354",
+      "4376",
+      "4355",
+      "4357",
+      "4344",
+      "4348",
+      "4371",
+      "4343",
+      "4370",
+      "4395",
+      "4358",
+      "4382",
+      "4387",
+      "4365",
+      "4374",
+      "4373",
+      "4350",
+      "4377"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 234,
+    "department": 1,
+    "user_id": 300,
+    "administrative_id": "4498",
+    "administrative_ids": [
+      "4494",
+      "4498"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 235,
+    "department": 1,
+    "user_id": 284,
+    "administrative_id": "2190",
+    "administrative_ids": [
+      "2189",
+      "2185",
+      "2181",
+      "2187",
+      "2192",
+      "2190",
+      "2183"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 236,
+    "department": 1,
+    "user_id": 293,
+    "administrative_id": "3370",
+    "administrative_ids": [
+      "4474",
+      "3370"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 237,
+    "department": 1,
+    "user_id": 297,
+    "administrative_id": "6523",
+    "administrative_ids": [
+      "2125",
+      "2149",
+      "2124",
+      "6523",
+      "2179"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 238,
+    "department": 1,
+    "user_id": 302,
+    "administrative_id": "1988",
+    "administrative_ids": [
+      "1988",
+      "1973",
+      "1960",
+      "1998"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 239,
+    "department": 1,
+    "user_id": 290,
+    "administrative_id": "2373",
+    "administrative_ids": [
+      "2347",
+      "2373"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 240,
+    "department": 1,
+    "user_id": 278,
+    "administrative_id": "3144",
+    "administrative_ids": [
+      "3167",
+      "3168",
+      "3958",
+      "3179",
+      "3176",
+      "3144",
+      "3956",
+      "3160",
+      "3959",
+      "3175",
+      "3955",
+      "3957",
+      "3170"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 241,
+    "department": 1,
+    "user_id": 280,
+    "administrative_id": "3835",
+    "administrative_ids": [
+      "4032",
+      "3835",
+      "3838",
+      "3836",
+      "3862",
+      "3837",
+      "1978",
+      "3962"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 242,
+    "department": 1,
+    "user_id": 279,
+    "administrative_id": "6589",
+    "administrative_ids": [
+      "6590",
+      "6587",
+      "6613",
+      "6607",
+      "6589"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 243,
+    "department": 1,
+    "user_id": 277,
+    "administrative_id": "4415",
+    "administrative_ids": [
+      "4435",
+      "4418",
+      "4429",
+      "4436",
+      "4430",
+      "4438",
+      "4428",
+      "4415",
+      "4419",
+      "4437"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 244,
+    "department": 1,
+    "user_id": 281,
+    "administrative_id": "4445",
+    "administrative_ids": [
+      "4452",
+      "4445",
+      "4469",
+      "4468",
+      "4447",
+      "4467",
+      "4449",
+      "4466",
+      "4451",
+      "4446",
+      "4470",
+      "4448",
+      "4450"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 245,
+    "department": 1,
+    "user_id": 283,
+    "administrative_id": "6473",
+    "administrative_ids": [
+      "6473",
+      "4496"
+    ],
+    "additional_administrative_ids": [
+      "4495"
+    ]
+  },
+  {
+    "id": 246,
+    "department": 1,
+    "user_id": 301,
+    "administrative_id": "2652",
+    "administrative_ids": [
+      "4495",
+      "2652"
+    ],
+    "additional_administrative_ids": [
+      "2764",
+      "4496",
+      "2742"
+    ]
+  },
+  {
+    "id": 247,
+    "department": 1,
+    "user_id": 298,
+    "administrative_id": "4444",
+    "administrative_ids": [
+      "2008",
+      "4444",
+      "4474"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 248,
+    "department": 1,
+    "user_id": 295,
+    "administrative_id": "3690",
+    "administrative_ids": [
+      "6543",
+      "3690"
+    ],
+    "additional_administrative_ids": [
+      "2652"
+    ]
+  },
+  {
+    "id": 249,
+    "department": 1,
+    "user_id": 289,
+    "administrative_id": "2742",
+    "administrative_ids": [
+      "2764",
+      "2450",
+      "2742"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 250,
+    "department": 1,
+    "user_id": 296,
+    "administrative_id": "4341",
+    "administrative_ids": [
+      "4341",
+      "4499",
+      "4191"
+    ],
+    "additional_administrative_ids": [
+      "2764",
+      "2742"
+    ]
+  },
+  {
+    "id": 252,
+    "department": 1,
+    "user_id": 304,
+    "administrative_id": "4587",
+    "administrative_ids": [
+      "4589",
+      "4588",
+      "4590",
+      "4587",
+      "4602"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 253,
+    "department": 1,
+    "user_id": 306,
+    "administrative_id": "6581",
+    "administrative_ids": [
+      "6577",
+      "6581",
+      "6578",
+      "6575"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 254,
+    "department": 1,
+    "user_id": 305,
+    "administrative_id": "4709",
+    "administrative_ids": [
+      "4711",
+      "4715",
+      "4708",
+      "4710",
+      "4716",
+      "4709"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 255,
+    "department": 1,
+    "user_id": 307,
+    "administrative_id": "3787",
+    "administrative_ids": [
+      "3970",
+      "3786",
+      "3789",
+      "3818",
+      "3971",
+      "4009",
+      "3787",
+      "4008",
+      "3788",
+      "3813"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 256,
+    "department": 1,
+    "user_id": 308,
+    "administrative_id": "3982",
+    "administrative_ids": [
+      "2379",
+      "2391",
+      "4012",
+      "2400",
+      "3982",
+      "4007"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 257,
+    "department": 1,
+    "user_id": 309,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 258,
+    "department": 1,
+    "user_id": 310,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 259,
+    "department": 1,
+    "user_id": 311,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 260,
+    "department": 1,
+    "user_id": 312,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 262,
+    "department": 1,
+    "user_id": 314,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 264,
+    "department": 1,
+    "user_id": 316,
+    "administrative_id": "1928",
+    "administrative_ids": [
+      "1921",
+      "1928"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 265,
+    "department": 1,
+    "user_id": 317,
+    "administrative_id": "1939",
+    "administrative_ids": [
+      "1952",
+      "1939"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 266,
+    "department": 1,
+    "user_id": 318,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 267,
+    "department": 1,
+    "user_id": 319,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 268,
+    "department": 1,
+    "user_id": 320,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 269,
+    "department": 1,
+    "user_id": 321,
+    "administrative_id": "1",
+    "administrative_ids": null,
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 270,
+    "department": 1,
+    "user_id": 322,
+    "administrative_id": "4501",
+    "administrative_ids": [
+      "4501"
+    ],
+    "additional_administrative_ids": null
+  },
+  {
+    "id": 271,
+    "department": 1,
+    "user_id": 323,
+    "administrative_id": "2448",
+    "administrative_ids": [
+      "2448"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 272,
+    "department": 1,
+    "user_id": 324,
+    "administrative_id": "4710",
+    "administrative_ids": [
+      "4710"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 273,
+    "department": 1,
+    "user_id": 325,
+    "administrative_id": "2460",
+    "administrative_ids": [
+      "2460"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 274,
+    "department": 1,
+    "user_id": 326,
+    "administrative_id": "4597",
+    "administrative_ids": [
+      "4597"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 275,
+    "department": 1,
+    "user_id": 327,
+    "administrative_id": "4069",
+    "administrative_ids": [
+      "4069"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 276,
+    "department": 1,
+    "user_id": 328,
+    "administrative_id": "6506",
+    "administrative_ids": [
+      "6506"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 277,
+    "department": 1,
+    "user_id": 329,
+    "administrative_id": "4556",
+    "administrative_ids": [
+      "4557",
+      "4556",
+      "4558"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 278,
+    "department": 1,
+    "user_id": 330,
+    "administrative_id": "4510",
+    "administrative_ids": [
+      "4510"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 279,
+    "department": 1,
+    "user_id": 331,
+    "administrative_id": "3915",
+    "administrative_ids": [
+      "3915",
+      "3917",
+      "3916"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 280,
+    "department": 1,
+    "user_id": 332,
+    "administrative_id": "6609",
+    "administrative_ids": [
+      "6609"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 281,
+    "department": 1,
+    "user_id": 333,
+    "administrative_id": "3968",
+    "administrative_ids": [
+      "3968"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 282,
+    "department": 1,
+    "user_id": 334,
+    "administrative_id": "6667",
+    "administrative_ids": [
+      "6667"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 283,
+    "department": 1,
+    "user_id": 335,
+    "administrative_id": "1986",
+    "administrative_ids": [
+      "1986"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 284,
+    "department": 1,
+    "user_id": 336,
+    "administrative_id": "3861",
+    "administrative_ids": [
+      "3861"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 285,
+    "department": 1,
+    "user_id": 337,
+    "administrative_id": "2080",
+    "administrative_ids": [
+      "2080",
+      "3914"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 286,
+    "department": 1,
+    "user_id": 338,
+    "administrative_id": "2151",
+    "administrative_ids": [
+      "2151"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 287,
+    "department": 1,
+    "user_id": 339,
+    "administrative_id": "2126",
+    "administrative_ids": [
+      "2126"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 288,
+    "department": 1,
+    "user_id": 340,
+    "administrative_id": "2181",
+    "administrative_ids": [
+      "2181"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 289,
+    "department": 1,
+    "user_id": 341,
+    "administrative_id": "3984",
+    "administrative_ids": [
+      "3984",
+      "2365"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 290,
+    "department": 1,
+    "user_id": 342,
+    "administrative_id": "2395",
+    "administrative_ids": [
+      "2395"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 291,
+    "department": 1,
+    "user_id": 343,
+    "administrative_id": "6538",
+    "administrative_ids": [
+      "6538"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 292,
+    "department": 1,
+    "user_id": 344,
+    "administrative_id": "1949",
+    "administrative_ids": [
+      "1949"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 293,
+    "department": 1,
+    "user_id": 345,
+    "administrative_id": "1935",
+    "administrative_ids": [
+      "1935"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 294,
+    "department": 1,
+    "user_id": 346,
+    "administrative_id": "4221",
+    "administrative_ids": [
+      "4221"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 295,
+    "department": 1,
+    "user_id": 347,
+    "administrative_id": "3736",
+    "administrative_ids": [
+      "3872",
+      "3736"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 296,
+    "department": 1,
+    "user_id": 348,
+    "administrative_id": "4135",
+    "administrative_ids": [
+      "4137",
+      "4136",
+      "4135"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 297,
+    "department": 1,
+    "user_id": 349,
+    "administrative_id": "2063",
+    "administrative_ids": [
+      "3936",
+      "3933",
+      "2047",
+      "2063",
+      "3935",
+      "3934"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 298,
+    "department": 1,
+    "user_id": 350,
+    "administrative_id": "6557",
+    "administrative_ids": [
+      "6557"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 299,
+    "department": 1,
+    "user_id": 351,
+    "administrative_id": "1955",
+    "administrative_ids": [
+      "1955"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 300,
+    "department": 1,
+    "user_id": 352,
+    "administrative_id": "1925",
+    "administrative_ids": [
+      "1925"
+    ],
+    "additional_administrative_ids": []
+  },
+  {
+    "id": 301,
+    "department": 1,
+    "user_id": 367,
+    "administrative_id": "1",
+    "administrative_ids": [],
+    "additional_administrative_ids": []
+  }
+]

@@ -1,7 +1,22 @@
 """Importe dans PostgreSQL les tables Django historiques de `grm-backend` exportées par
 `export_mysql_legacy_data` (CLAUDE.md §5) : auth_group, authentication_user,
 authentication_governmentworker, authentication_cdata, authentication_pdata,
-privacy_issuecategorypassword, issue_wave.
+privacy_issuecategorypassword, issue_wave, plus les liaisons many-to-many de
+`django.contrib.auth` : authentication_user_groups (User <-> Group),
+auth_group_permissions (Group <-> Permission) et authentication_user_user_permissions
+(User <-> Permission). Sans ces trois dernières, les comptes réimportés perdraient tous leurs
+rôles (le code de `authentication/models.py` filtre partout sur `groups__name=...` :
+`Safeguard`, `Privacy`, `CommunityFacilitator`, `Supervisor`, ...).
+
+Ces trois liaisons M2M sont reconstruites par **clé naturelle**, jamais par id brut :
+groupe par nom (`auth_group.json`), utilisateur par email (`authentication_user.json`),
+permission par `(app_label, model, codename)` (colonnes produites par la jointure d'export —
+`permission_id` dépend de l'ordre de création des content types à `migrate`, donc non
+transférable). Motif : l'id `User`/`Group` n'est identique entre MySQL et Postgres que si
+cette commande a tourné en premier sur une base vide ; dès que `migrate_eadls`/`loaddata` ont
+déjà recréé des comptes par email sous un autre id (cas courant, cf. ci-dessous), lier par
+`user_id` brut rattacherait le groupe au MAUVAIS utilisateur. Une extrémité introuvable côté
+Postgres (email/nom/codename absent) est loggée puis ignorée, sans faire échouer l'import.
 
 Rejouable sans doublon, comme `migrate_grm_*.py`/`migrate_eadls.py` (CLAUDE.md §6) — mais avec
 une règle unique et volontairement stricte : **l'id de chaque objet est préservé tel quel entre
@@ -49,7 +64,7 @@ import os
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError, connection, transaction
 from django.db.models.signals import post_delete, post_save
@@ -123,7 +138,9 @@ class Command(BaseCommand):
         "Importe dans PostgreSQL les tables Django historiques exportées par "
         "`export_mysql_legacy_data` (auth_group, authentication_user, "
         "authentication_governmentworker, authentication_cdata, authentication_pdata, "
-        "privacy_issuecategorypassword, issue_wave), en préservant tels quels les id MySQL."
+        "privacy_issuecategorypassword, issue_wave, plus les liaisons M2M "
+        "authentication_user_groups, auth_group_permissions, "
+        "authentication_user_user_permissions), en préservant tels quels les id MySQL."
     )
 
     def add_arguments(self, parser):
@@ -151,6 +168,9 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     self._import_groups(input_dir)
                     self._import_users(input_dir)
+                    self._import_user_groups(input_dir)
+                    self._import_group_permissions(input_dir)
+                    self._import_user_permissions(input_dir)
                     self._import_government_workers(input_dir)
                     self._import_key_data(input_dir, 'authentication_cdata', auth_models.Cdata)
                     self._import_key_data(input_dir, 'authentication_pdata', auth_models.Pdata)
@@ -260,6 +280,118 @@ class Command(BaseCommand):
                 "le conflit (cf. docstring du module)."
             ))
             return None
+
+    def _import_user_groups(self, input_dir):
+        """Liaison M2M User <-> Group (`authentication_user_groups`).
+
+        Les DEUX extrémités sont re-résolues par clé naturelle, jamais par id brut :
+        - le groupe par **nom** (`auth_group.json`) — c'est le nom qui porte le sens métier
+          (tout `authentication/models.py` filtre sur `groups__name=...`) ;
+        - l'utilisateur par **email** (`authentication_user.json`).
+
+        L'id `User`/`Group` n'est identique entre MySQL et Postgres que si cette commande a
+        réellement tourné en premier sur une base vide. En pratique c'est souvent faux
+        (`migrate_eadls`/`loaddata` ont déjà recréé les comptes par email sous un autre id, cf.
+        docstring du module ; `_force_pk_update_or_create` bascule alors en conflit pour presque
+        toutes les lignes). Résoudre par `user_id`/`group_id` brut lierait dans ce cas le groupe
+        au MAUVAIS utilisateur (celui qui occupe cet id côté Postgres).
+
+        Extrémité non résolue (email/nom absent côté Postgres) => paire ignorée avec
+        avertissement. `get_or_create` sur la table de liaison => rejouable sans doublon (aucun
+        id forcé, donc pas de reset de séquence)."""
+        rows = _load(input_dir, 'authentication_user_groups') or []
+        group_names = {g['id']: g['name'] for g in (_load(input_dir, 'auth_group') or [])}
+        user_emails = {u['id']: u.get('email') for u in (_load(input_dir, 'authentication_user') or [])}
+        through = User.groups.through
+        created_count = 0
+        skipped = 0
+        for row in rows:
+            user_id, group_id = row.get('user_id'), row.get('group_id')
+            group_name = group_names.get(group_id)
+            email = user_emails.get(user_id)
+            local_group = Group.objects.filter(name=group_name).first() if group_name else None
+            local_user = User.objects.filter(email__iexact=email).first() if email else None
+            if local_group is None or local_user is None:
+                missing = f'email {email!r}' if local_user is None else f'group {group_name!r}'
+                skipped += 1
+                self.stdout.write(self.style.WARNING(
+                    f"authentication_user_groups: user_id={user_id}/group_id={group_id} "
+                    f"(email={email!r}, group={group_name!r}) — {missing} absent côté Postgres, "
+                    "liaison ignorée."
+                ))
+                continue
+            _, created = through.objects.get_or_create(
+                user_id=local_user.pk, group_id=local_group.pk,
+            )
+            if created:
+                created_count += 1
+        self.stdout.write(
+            f'authentication_user_groups: {created_count} liaison(s) créée(s)'
+            + (f', {len(rows) - created_count - skipped} déjà présente(s)' if rows else '')
+            + (f', {skipped} ignorée(s)' if skipped else '')
+        )
+
+    def _resolve_permission(self, row):
+        """Re-résout une permission par sa clé naturelle `(app_label, model, codename)` — les
+        colonnes produites par la jointure d'export, à la place d'un `permission_id` non
+        transférable (dépend de l'ordre de `migrate`). `None` (loggé) si l'app/le codename
+        n'existe pas côté Postgres."""
+        try:
+            return Permission.objects.get(
+                content_type__app_label=row['app_label'],
+                content_type__model=row['model'],
+                codename=row['codename'],
+            )
+        except Permission.DoesNotExist:
+            self.stdout.write(self.style.WARNING(
+                f"Permission introuvable côté Postgres : "
+                f"{row.get('app_label')}.{row.get('model')}.{row.get('codename')} — liaison ignorée."
+            ))
+            return None
+
+    def _import_group_permissions(self, input_dir):
+        """Liaison M2M Group <-> Permission. Groupe re-résolu par nom (même raison que
+        `_import_user_groups`), permission par clé naturelle (`_resolve_permission`)."""
+        rows = _load(input_dir, 'auth_group_permissions') or []
+        through = Group.permissions.through
+        created_count = 0
+        skipped = 0
+        for row in rows:
+            local_group = Group.objects.filter(name=row.get('group_name')).first()
+            perm = self._resolve_permission(row)
+            if perm is None or local_group is None:
+                skipped += 1
+                continue
+            _, created = through.objects.get_or_create(group_id=local_group.pk, permission_id=perm.pk)
+            if created:
+                created_count += 1
+        self.stdout.write(
+            f'auth_group_permissions: {created_count} liaison(s) créée(s)'
+            + (f', {skipped} ignorée(s)' if skipped else '')
+        )
+
+    def _import_user_permissions(self, input_dir):
+        """Liaison M2M User <-> Permission (permissions accordées directement, hors groupe).
+        Utilisateur re-résolu par email (`user_email`, colonne ajoutée par la jointure d'export),
+        permission par clé naturelle — même raison que `_import_user_groups`."""
+        rows = _load(input_dir, 'authentication_user_user_permissions') or []
+        through = User.user_permissions.through
+        created_count = 0
+        skipped = 0
+        for row in rows:
+            email = row.get('user_email')
+            local_user = User.objects.filter(email__iexact=email).first() if email else None
+            perm = self._resolve_permission(row)
+            if perm is None or local_user is None:
+                skipped += 1
+                continue
+            _, created = through.objects.get_or_create(user_id=local_user.pk, permission_id=perm.pk)
+            if created:
+                created_count += 1
+        self.stdout.write(
+            f'authentication_user_user_permissions: {created_count} liaison(s) créée(s)'
+            + (f', {skipped} ignorée(s)' if skipped else '')
+        )
 
     def _import_government_workers(self, input_dir):
         rows = _load(input_dir, 'authentication_governmentworker') or []

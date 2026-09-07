@@ -18,6 +18,11 @@ TABLES = [
     'authentication_pdata',
     'privacy_issuecategorypassword',
     'issue_wave',
+    # Liaisons M2M de django.contrib.auth (importées par import_mysql_legacy_data) : le nom de
+    # table est identique des deux côtés, un simple COUNT(*) suffit à contrôler la reprise.
+    'authentication_user_groups',
+    'auth_group_permissions',
+    'authentication_user_user_permissions',
 ]
 
 

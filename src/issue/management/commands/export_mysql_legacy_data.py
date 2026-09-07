@@ -4,10 +4,16 @@ propres scripts (`migrate_grm_*.py`/`migrate_eadls.py`, CLAUDE.md §6) — les t
 "natives" vers un dossier de fichiers JSON, un par table, directement réimportables par
 `import_mysql_legacy_data` (voir ce fichier pour la logique d'import).
 
-Périmètre : les 7 tables déjà recensées et vérifiées par `scripts/verify_migration.py` lors du
-premier transfert (dumpdata/loaddata, CLAUDE.md §5.3) : auth_group, authentication_user,
+Périmètre : les 7 tables de base déjà recensées et vérifiées par `scripts/verify_migration.py`
+lors du premier transfert (dumpdata/loaddata, CLAUDE.md §5.3) : auth_group, authentication_user,
 authentication_governmentworker, authentication_cdata, authentication_pdata,
-privacy_issuecategorypassword, issue_wave. Config MySQL par défaut identique à ce script :
+privacy_issuecategorypassword, issue_wave — plus les 3 tables de liaison many-to-many de
+`django.contrib.auth` sans lesquelles les comptes réimportés perdraient leurs rôles/permissions :
+authentication_user_groups (User <-> Group), auth_group_permissions (Group <-> Permission) et
+authentication_user_user_permissions (User <-> Permission). Les deux dernières sont exportées via
+une jointure qui remplace `permission_id` (dont la valeur dépend de l'ordre des migrations, donc
+non préservable) par la clé naturelle `(app_label, model, codename)`, réutilisée à l'import.
+Config MySQL par défaut identique à ce script :
 host=localhost, user=root, sans mot de passe, base `grm` (le nom de la base MySQL historique,
 homonyme mais sans rapport avec la base CouchDB `grm` — deux systèmes distincts, cf. CLAUDE.md
 §2.0).
@@ -42,7 +48,38 @@ TABLES = [
     'authentication_pdata',
     'privacy_issuecategorypassword',
     'issue_wave',
+    # Tables de liaison M2M de django.contrib.auth : à importer APRÈS auth_group /
+    # authentication_user (cf. ordre dans import_mysql_legacy_data).
+    'authentication_user_groups',
+    'auth_group_permissions',
+    'authentication_user_user_permissions',
 ]
+
+# Requêtes sur mesure : pour les deux tables de liaison vers `auth_permission`, on n'exporte pas
+# `permission_id` (id volatile, dépend de l'ordre de création des content types / permissions à
+# `migrate`) mais la clé naturelle `(app_label, model, codename)`, que `import_mysql_legacy_data`
+# re-résout en `Permission` locale. On joint aussi le nom du groupe / l'email de l'utilisateur :
+# côté import, les extrémités sont re-résolues par nom/email et non par id brut, car l'id n'est
+# préservé que si `import_mysql_legacy_data` a tourné en premier (souvent faux en pratique :
+# `migrate_eadls`/`loaddata` recréent les comptes par email avec un autre id). `SELECT *` sur
+# `authentication_user_groups` suffit (les colonnes user_id/group_id y sont, l'import va chercher
+# les emails/noms dans `authentication_user.json` / `auth_group.json`).
+CUSTOM_QUERIES = {
+    'auth_group_permissions': (
+        'SELECT gp.group_id, g.name AS group_name, ct.app_label, ct.model, p.codename '
+        'FROM auth_group_permissions gp '
+        'JOIN auth_group g ON g.id = gp.group_id '
+        'JOIN auth_permission p ON p.id = gp.permission_id '
+        'JOIN django_content_type ct ON ct.id = p.content_type_id'
+    ),
+    'authentication_user_user_permissions': (
+        'SELECT up.user_id, u.email AS user_email, ct.app_label, ct.model, p.codename '
+        'FROM authentication_user_user_permissions up '
+        'JOIN authentication_user u ON u.id = up.user_id '
+        'JOIN auth_permission p ON p.id = up.permission_id '
+        'JOIN django_content_type ct ON ct.id = p.content_type_id'
+    ),
+}
 
 # Colonnes JSON stockées en texte brut par MySQL (MySQLdb ne les décode pas automatiquement,
 # contrairement à un connecteur JSON-aware) : décodées explicitement à l'export pour ne pas
@@ -70,8 +107,9 @@ class Command(BaseCommand):
     help = (
         "Exporte les tables Django historiques de la base MySQL de grm-backend (auth_group, "
         "authentication_user, authentication_governmentworker, authentication_cdata, "
-        "authentication_pdata, privacy_issuecategorypassword, issue_wave) vers des fichiers "
-        "JSON, un par table, réimportables via `import_mysql_legacy_data`."
+        "authentication_pdata, privacy_issuecategorypassword, issue_wave, plus les liaisons M2M "
+        "authentication_user_groups, auth_group_permissions, authentication_user_user_permissions) "
+        "vers des fichiers JSON, un par table, réimportables via `import_mysql_legacy_data`."
     )
 
     def add_arguments(self, parser):
@@ -89,7 +127,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--tables', nargs='+', default=None,
-            help="Sous-ensemble de tables à exporter (défaut : les 7 tables du périmètre §5).",
+            help="Sous-ensemble de tables à exporter (défaut : les 7 tables du périmètre §5 "
+                 "+ les 3 tables de liaison M2M de django.contrib.auth).",
         )
 
     def handle(self, *args, **options):
@@ -109,7 +148,7 @@ class Command(BaseCommand):
         try:
             for table in tables:
                 with conn.cursor() as cursor:
-                    cursor.execute(f'SELECT * FROM {table}')
+                    cursor.execute(CUSTOM_QUERIES.get(table, f'SELECT * FROM {table}'))
                     columns = [col[0] for col in cursor.description]
                     json_columns = JSON_COLUMNS.get(table, set())
                     rows = []

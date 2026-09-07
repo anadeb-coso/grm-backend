@@ -1,0 +1,126 @@
+[
+  {
+    "id": 4,
+    "name": "Accountant"
+  },
+  {
+    "id": 19,
+    "name": "ADLAssigner"
+  },
+  {
+    "id": 2,
+    "name": "Admin"
+  },
+  {
+    "id": 9,
+    "name": "Advisor"
+  },
+  {
+    "id": 11,
+    "name": "Assignee"
+  },
+  {
+    "id": 1,
+    "name": "CDDSpecialist"
+  },
+  {
+    "id": 25,
+    "name": "CommunicationSpecialist"
+  },
+  {
+    "id": 26,
+    "name": "CommunityFacilitator"
+  },
+  {
+    "id": 8,
+    "name": "Director"
+  },
+  {
+    "id": 31,
+    "name": "EnableToUpdate"
+  },
+  {
+    "id": 3,
+    "name": "Evaluator"
+  },
+  {
+    "id": 20,
+    "name": "Facilitator"
+  },
+  {
+    "id": 24,
+    "name": "Financial"
+  },
+  {
+    "id": 21,
+    "name": "FullStack"
+  },
+  {
+    "id": 7,
+    "name": "GeneralManager"
+  },
+  {
+    "id": 15,
+    "name": "Infra"
+  },
+  {
+    "id": 22,
+    "name": "KnowledgeManager"
+  },
+  {
+    "id": 27,
+    "name": "LocalEconomicDevelopmentSpecialist"
+  },
+  {
+    "id": 10,
+    "name": "Minister"
+  },
+  {
+    "id": 6,
+    "name": "NationalCoordinator"
+  },
+  {
+    "id": 14,
+    "name": "Privacy"
+  },
+  {
+    "id": 23,
+    "name": "ProcurementSpecialist"
+  },
+  {
+    "id": 5,
+    "name": "RegionalCoordinator"
+  },
+  {
+    "id": 13,
+    "name": "Safeguard"
+  },
+  {
+    "id": 30,
+    "name": "SecuritySpecialist"
+  },
+  {
+    "id": 18,
+    "name": "Supervisor"
+  },
+  {
+    "id": 28,
+    "name": "TechnicalFacilitator"
+  },
+  {
+    "id": 16,
+    "name": "Validator"
+  },
+  {
+    "id": 12,
+    "name": "Viewer"
+  },
+  {
+    "id": 17,
+    "name": "ViewerOfAllIssues"
+  },
+  {
+    "id": 29,
+    "name": "YouthProgramSpecialist"
+  }
+]

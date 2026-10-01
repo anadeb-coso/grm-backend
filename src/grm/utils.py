@@ -61,9 +61,11 @@ def get_administrative_regions_by_level_using_mis(level=None):
     """Équivalent Postgres (base `mis`) de l'ancienne `get_administrative_regions_by_level`
     (CouchDB) : enfants directs du premier niveau de type `level` (ou du pays racine si `level`
     est omis) — même comportement de repli que l'original."""
+    adls = []
+    parent = None
     if level:
         adls = mis_objects_call.filter_objects(
-            administrativelevels_models.AdministrativeLevel, type=level,
+            administrativelevels_models.AdministrativeLevel, type=level
         )
     else:
         parent = mis_objects_call.filter_objects(
@@ -73,19 +75,30 @@ def get_administrative_regions_by_level_using_mis(level=None):
         adls = mis_objects_call.filter_objects(
             administrativelevels_models.AdministrativeLevel, parent_id=parent.id,
         )
-    else:
+    if not adls:
         adls = mis_objects_call.filter_objects(
             administrativelevels_models.AdministrativeLevel, parent__isnull=True
         )
+    if adls:
+        return [
+            {
+                "administrative_id": str(c.id),
+                "name": c.name,
+                "administrative_level": c.type,
+                "type": "administrative_level",
+                "parent_id": str(c.parent_id) if c.parent_id else None,
+            }
+            for c in adls
+        ]
+
     return [
         {
-            "administrative_id": str(c.id),
-            "name": c.name,
-            "administrative_level": c.type,
+            "administrative_id": '',
+            "name": '',
+            "administrative_level": '',
             "type": "administrative_level",
-            "parent_id": str(c.parent_id) if c.parent_id else None,
+            "parent_id": None,
         }
-        for c in adls
     ]
 
 

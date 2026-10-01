@@ -1879,3 +1879,15 @@ msgstr ""
 #: .\privacy\models.py:19
 msgid "Categories password"
 msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Safeguard"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "CVGP Member"
+msgstr ""
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Security Specialist"
+msgstr ""

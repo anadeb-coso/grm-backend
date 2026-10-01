@@ -39,28 +39,27 @@ msgstr "Les 'niveaux administratifs' ne sont pas validés"
 
 #: .\authentication\api\auth\login.py:22
 msgid "Username or token is required"
-msgstr ""
+msgstr "Un nom d'utilisateur ou un jeton est requis"
 
 #: .\authentication\api\auth\login.py:24
 #, fuzzy
-#| msgid "Password invalidate"
 msgid "Password is required"
-msgstr "Mot de passe invalide"
+msgstr "Mot de passe est obligatoire"
 
 #: .\authentication\api\auth\login.py:28
 msgid "Invalid token"
-msgstr ""
+msgstr "Jeton invalide"
 
 #: .\authentication\api\auth\login.py:36
 msgid "Your account is inactive"
-msgstr ""
+msgstr "Votre compte est inactif"
 
 #: .\authentication\api\auth\login.py:39
 msgid ""
 "Incorrect credentials. If you have recently changed your password on one of "
 "our platforms, we recommend that you log out and log back in to that "
 "application. Thanks!"
-msgstr ""
+msgstr "Identifiants incorrects. Si vous avez récemment modifié votre mot de passe sur l'une de nos plateformes, nous vous recommandons de vous déconnecter puis de vous reconnecter à cette application. Merci !"
 
 #: .\authentication\functions.py:11 .\authentication\functions.py:15
 msgid "Validation code for your GRM account"
@@ -144,9 +143,8 @@ msgstr "niveaux administratifs"
 
 #: .\authentication\models.py:83
 #, fuzzy
-#| msgid "administrative levels"
 msgid "Additional administrative levels"
-msgstr "niveaux administratifs"
+msgstr "Niveaux administratifs supplémentaires"
 
 #: .\authentication\models.py:86
 msgid "Government Worker"
@@ -167,7 +165,7 @@ msgstr "Pays"
 #: .\authentication\permissions.py:222 .\authentication\permissions.py:243
 #: .\authentication\permissions.py:265 .\authentication\permissions.py:287
 msgid "Page not found"
-msgstr ""
+msgstr "Page introuvable"
 
 #: .\authentication\serializers.py:60 .\dashboard\adls\forms.py:13
 #: .\dashboard\authentication\forms.py:40 .\dashboard\forms\forms.py:10
@@ -292,9 +290,8 @@ msgstr "Il existe déjà un utilisateur avec cet adresse mail."
 #: .\dashboard\adls\views.py:204 .\dashboard\adls\views.py:331
 #: .\dashboard\general\views.py:48 .\grm\upload_views.py:49
 #, fuzzy
-#| msgid "A problem has occurred!"
 msgid "An error has occurred..."
-msgstr "Un problème est survenu !"
+msgstr "Une erreur s'est produite..."
 
 #: .\dashboard\adls\views.py:216
 msgid "Profile information"
@@ -347,9 +344,8 @@ msgstr ""
 
 #: .\dashboard\authentication\forms.py:50
 #, fuzzy
-#| msgid "The account was activated successfully."
 msgid "This account is inactive."
-msgstr "Le compte a été activé avec succès."
+msgstr "Ce compte est inactif."
 
 #: .\dashboard\authentication\forms.py:51
 #: .\dashboard\authentication\forms.py:121
@@ -394,9 +390,8 @@ msgstr "Confirmer"
 
 #: .\dashboard\general\views.py:75
 #, fuzzy
-#| msgid "The issue was successfully edited."
 msgid "The Step was successfully removed."
-msgstr "la plainte a été modifiée avec succès."
+msgstr "L'étape a été retirée avec succès."
 
 #: .\dashboard\grm\__init__.py:7
 msgid "Remain anonymous"
@@ -420,7 +415,7 @@ msgstr "appel téléphonique"
 
 #: .\dashboard\grm\__init__.py:21
 msgid "sms"
-msgstr ""
+msgstr "sms"
 
 #: .\dashboard\grm\__init__.py:23
 msgid "by letter (correspondence)"
@@ -573,10 +568,9 @@ msgid "ID Number / Access Code"
 msgstr "Nombre ID / Code d'accès"
 
 #: .\dashboard\grm\forms.py:231
-#, fuzzy
-#| msgid "administrative level"
+#: .\dashboard\templates\user_tracking\dashboard.html
 msgid "Administrative level"
-msgstr "niveau administratif"
+msgstr "Niveau administratif"
 
 #: .\dashboard\grm\forms.py:246
 #: .\dashboard\templates\grm\review_issues.html:521
@@ -653,9 +647,8 @@ msgstr "Niveau"
 
 #: .\dashboard\grm\functions.py:195 .\dashboard\grm\functions.py:254
 #, fuzzy
-#| msgid "Resources"
 msgid "Source"
-msgstr "Ressources"
+msgstr "Source"
 
 #: .\dashboard\grm\functions.py:198 .\dashboard\grm\functions.py:257
 #: .\dashboard\grm\functions.py:305
@@ -1256,7 +1249,7 @@ msgstr "Le téléchargement a échoué. Veuillez réessayer."
 #: .\dashboard\templates\common\under_construction.html:7
 #: .\dashboard\templates\common\under_construction_col.html:5
 msgid "Oops!"
-msgstr ""
+msgstr "Oups !"
 
 #: .\dashboard\templates\common\under_construction.html:9
 msgid "This section is under construction"
@@ -1281,15 +1274,14 @@ msgstr "Pourcentage"
 #: .\dashboard\templates\diagnostics\home.html:303
 #: .\dashboard\templates\grm\issue_list.html:152
 msgid "Region"
-msgstr ""
+msgstr "Région"
 
 #: .\dashboard\templates\diagnostics\home.html:30
 #: .\dashboard\templates\diagnostics\home.html:304
 #: .\dashboard\templates\grm\issue_list.html:153
 #, fuzzy
-#| msgid "Edit Profile Picture"
 msgid "Prefecture"
-msgstr "Éditer la Photo de Profil"
+msgstr "Préfecture"
 
 #: .\dashboard\templates\diagnostics\home.html:31
 #: .\dashboard\templates\diagnostics\home.html:305
@@ -1302,12 +1294,12 @@ msgstr "Commune"
 #: .\dashboard\templates\diagnostics\home.html:306
 #: .\dashboard\templates\grm\issue_list.html:155
 msgid "Canton"
-msgstr ""
+msgstr "Canton"
 
 #: .\dashboard\templates\diagnostics\home.html:33
 #: .\dashboard\templates\diagnostics\home.html:307
 msgid "Village"
-msgstr ""
+msgstr "Village"
 
 #: .\dashboard\templates\diagnostics\home.html:41
 msgid "Filter by"
@@ -1339,7 +1331,7 @@ msgstr "RÉVISER LES PLAINTES"
 
 #: .\dashboard\templates\grm\dashboard.html:39
 msgid "Add"
-msgstr ""
+msgstr "Ajouter"
 
 #: .\dashboard\templates\grm\dashboard.html:41
 msgid "ENTER NEW ISSUES"
@@ -1406,7 +1398,7 @@ msgstr "Résumé"
 #: .\dashboard\templates\grm\issue_detail.html:1002
 #: .\dashboard\templates\grm\issue_detail.html:1057
 msgid "Show sensitive data"
-msgstr ""
+msgstr "Afficher les données sensibles"
 
 #: .\dashboard\templates\grm\issue_detail.html:44
 msgid "Decisions"
@@ -1426,7 +1418,7 @@ msgstr "Consigner une nouvelle décision ou étape d'enquête"
 
 #: .\dashboard\templates\grm\issue_detail.html:92
 msgid "Attach a file"
-msgstr ""
+msgstr "Joindre un fichier"
 
 #: .\dashboard\templates\grm\issue_detail.html:149
 msgid "Reported"
@@ -1538,29 +1530,26 @@ msgstr "Aucune plainte ou demande n'a été trouvée"
 
 #: .\dashboard\templates\grm\issue_list.html:156
 msgid "CVD"
-msgstr ""
+msgstr "CVD"
 
 #: .\dashboard\templates\grm\issue_list.html:157
 msgid "Villages"
-msgstr ""
+msgstr "Villages"
 
 #: .\dashboard\templates\grm\issue_list.html:165
 #, fuzzy
-#| msgid "BACK"
 msgid "AC"
-msgstr "ARRIÈRE"
+msgstr "AC"
 
 #: .\dashboard\templates\grm\issue_list.html:166
 #, fuzzy
-#| msgid "Phone"
 msgid "AC Phone"
-msgstr "Tel"
+msgstr "AC Tel"
 
 #: .\dashboard\templates\grm\issue_list.html:167
 #, fuzzy
-#| msgid "Email"
 msgid "AC Email"
-msgstr "Email"
+msgstr "AC Email"
 
 #: .\dashboard\templates\grm\issue_list.html:170
 msgid "Complaints"
@@ -1729,15 +1718,15 @@ msgstr "Erreur"
 
 #: .\dashboard\templates\layouts\footer.html:5
 msgid "Copyright"
-msgstr ""
+msgstr "Droits d'auteur"
 
 #: .\dashboard\templates\layouts\footer.html:7
 msgid "All rights reserved"
-msgstr ""
+msgstr "Tous droits réservés"
 
 #: .\dashboard\templates\layouts\footer.html:9
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: .\dashboard\templates\layouts\navbar.html:21
 msgid "Welcome"
@@ -1754,9 +1743,8 @@ msgstr "Administrateur"
 
 #: .\dashboard\templates\layouts\sidebar.html:111
 #, fuzzy
-#| msgid "See profile"
 msgid "Profile"
-msgstr "Voir le profil"
+msgstr "Profil"
 
 #: .\dashboard\templates\layouts\sidebar.html:138
 msgid "Toggle Sidebar"
@@ -1856,47 +1844,43 @@ msgstr "Comptable"
 
 #: .\dashboard\templatetags\custom_tags.py:232
 msgid "Infra"
-msgstr ""
+msgstr "Infra"
 
 #: .\dashboard\templatetags\custom_tags.py:235
 #, fuzzy
-#| msgid "Procurement Specialist"
 msgid "Youth Program Specialist"
-msgstr "Passation de marché"
+msgstr "Spécialiste des programmes pour les jeunes"
 
 #: .\dashboard\templatetags\custom_tags.py:237
 #, fuzzy
-#| msgid "Procurement Specialist"
 msgid "Local Economic Development Specialist"
-msgstr "Passation de marché"
+msgstr "Spécialiste du développement économique local"
 
 #: .\dashboard\templatetags\custom_tags.py:239
 #, fuzzy
-#| msgid "Procurement Specialist"
 msgid "Communication Specialist"
-msgstr "Passation de marché"
+msgstr "Spécialiste en communication"
 
 #: .\dashboard\templatetags\custom_tags.py:241
 msgid "Community Facilitator"
-msgstr ""
+msgstr "Facilitateur Communautaire"
 
 #: .\dashboard\templatetags\custom_tags.py:243
 msgid "Technical Facilitator"
-msgstr ""
+msgstr "Facilitateur Technique"
 
 #: .\dashboard\templatetags\custom_tags.py:246
 msgid "Supervisor"
-msgstr ""
+msgstr "Superviseur"
 
 #: .\dashboard\templatetags\custom_tags.py:249
 #, fuzzy
-#| msgid "Evaluator"
 msgid "Validator"
-msgstr "Évaluateur"
+msgstr "Validateur"
 
 #: .\dashboard\templatetags\custom_tags.py:253 .\privacy\models.py:13
 msgid "User"
-msgstr ""
+msgstr "Utilisateur"
 
 #: .\grm\my_librairies\mail\send_mail.py:32
 msgid "See more details"
@@ -1930,9 +1914,8 @@ msgstr "Juste ce village"
 
 #: .\issue\serializers.py:26 .\issue\serializers.py:51
 #, fuzzy
-#| msgid "Must include \"email\" and \"password\"."
 msgid "Must include \"username\" and \"password\"."
-msgstr "Doit inclure \"email\" et \"mot de pass\"."
+msgstr "Doit inclure \"nom d'utilisateur\" et \"mot de pass\"."
 
 #: .\issue\views_rest.py:104
 msgid ""
@@ -2119,356 +2102,553 @@ msgstr "Groupé"
 msgid "Detailed"
 msgstr "Détaillé"
 
-
-
-
 #: .\dashboard\user_tracking\views.py
-
 msgid "User monitoring"
-
 msgstr "Suivi des utilisateurs"
 
-
-
 #: .\dashboard\user_tracking\views.py
-
 msgid "Not defined"
-
 msgstr "Non défini"
 
-
-
 #: .\dashboard\user_tracking\views.py
-
 msgid "No group"
-
 msgstr "Aucun groupe"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Start date"
-
 msgstr "Date de début"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "End date"
-
 msgstr "Date de fin"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "The date range filters accounts by their creation date (date the account was opened)."
-
 msgstr "Les filtres de dates portent sur la date de création du compte (date d'ouverture du compte)."
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "The 30- and 90-day connection windows are counted up to %(d)s."
-
 msgstr "Les fenêtres de connexion de 30 et 90 jours sont comptées jusqu'au %(d)s."
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "The 30- and 90-day connection windows are counted from today."
-
 msgstr "Les fenêtres de connexion de 30 et 90 jours sont comptées à partir d'aujourd'hui."
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "User accounts"
-
 msgstr "Comptes utilisateurs"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "opened on the platform"
-
 msgstr "ouverts sur la plateforme"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Active accounts"
-
 msgstr "Comptes actifs"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "deactivated"
-
 msgstr "désactivés"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Signed in (30 days)"
-
 msgstr "Connectés (30 jours)"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Signed in (90 days)"
-
 msgstr "Connectés (90 jours)"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "at least once"
-
 msgstr "au moins une fois"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Never signed in"
-
 msgstr "Jamais connectés"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "no login recorded"
-
 msgstr "aucune connexion enregistrée"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Accounts"
-
 msgstr "Comptes"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Signed in 30d"
-
 msgstr "Connectés 30 j"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Signed in 90d"
-
 msgstr "Connectés 90 j"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Never"
-
 msgstr "Jamais"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "User accounts by profile"
-
 msgstr "Comptes utilisateurs par profil"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "profile(s)"
-
 msgstr "profil(s)"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "No account for this selection."
-
 msgstr "Aucun compte pour cette sélection."
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "User accounts by administrative level"
-
 msgstr "Comptes utilisateurs par niveau administratif"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "level(s)"
-
 msgstr "niveau(x)"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Users by group"
-
 msgstr "Utilisateurs par groupe"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "group(s)"
-
 msgstr "groupe(s)"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "Users"
-
 msgstr "Utilisateurs"
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "No group defined."
-
 msgstr "Aucun groupe défini."
 
-
-
 #: .\dashboard\templates\user_tracking\dashboard.html
-
 msgid "A user belonging to several groups is counted once per group, so this total may exceed the number of accounts."
-
 msgstr "Un utilisateur appartenant à plusieurs groupes est compté une fois par groupe ; ce total peut donc dépasser le nombre de comptes."
 
+#: .\authentication\models.py
+msgid "last activity"
+msgstr "dernière activité"
 
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Last activity"
+msgstr "Dernière activité"
 
-
-
-#: .\authentication\models.py
-msgid "last activity"
-msgstr "dernière activité"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Last activity"
-msgstr "Dernière activité"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Last login"
-msgstr "Dernière connexion"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Registration date"
-msgstr "Date d'inscription"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Activity from"
-msgstr "Activité à partir du"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Activity to"
-msgstr "Activité jusqu'au"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Login from"
-msgstr "Connexion à partir du"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Login to"
-msgstr "Connexion jusqu'au"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Registered from"
-msgstr "Inscrit à partir du"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Registered to"
-msgstr "Inscrit jusqu'au"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "matching the filters"
-msgstr "correspondant aux filtres"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Active (30 days)"
-msgstr "Actifs (30 jours)"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Active (90 days)"
-msgstr "Actifs (90 jours)"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "at least one activity"
-msgstr "au moins une activité"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Never active"
-msgstr "Jamais actifs"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "no activity recorded"
-msgstr "aucune activité enregistrée"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Active 30d"
-msgstr "Actifs 30 j"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Active 90d"
-msgstr "Actifs 90 j"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Accounts detail"
-msgstr "Détail des comptes"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "account(s)"
-msgstr "compte(s)"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "Group(s)"
-msgstr "Groupe(s)"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "All"
-msgstr "Tous"
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "The last-activity date is recorded on every use of the platform (web or mobile), at most once every 10 minutes per account. The three date ranges are combined: an account must match them all."
-msgstr "La date de dernière activité est enregistrée à chaque utilisation de la plateforme (web ou mobile), au plus une fois toutes les 10 minutes par compte. Les trois plages de dates se combinent : un compte doit toutes les respecter."
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "The 30- and 90-day activity windows are counted up to %(d)s."
-msgstr "Les fenêtres d'activité de 30 et 90 jours sont comptées jusqu'au %(d)s."
-
-#: .\dashboard\templates\user_tracking\dashboard.html
-msgid "The 30- and 90-day activity windows are counted from today."
-msgstr "Les fenêtres d'activité de 30 et 90 jours sont comptées à partir d'aujourd'hui."
-
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Last login"
+msgstr "Dernière connexion"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Registration date"
+msgstr "Date d'inscription"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Activity from"
+msgstr "Activité à partir du"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Activity to"
+msgstr "Activité jusqu'au"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Login from"
+msgstr "Connexion à partir du"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Login to"
+msgstr "Connexion jusqu'au"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Registered from"
+msgstr "Inscrit à partir du"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Registered to"
+msgstr "Inscrit jusqu'au"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "matching the filters"
+msgstr "correspondant aux filtres"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Active (30 days)"
+msgstr "Actifs (30 jours)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Active (90 days)"
+msgstr "Actifs (90 jours)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "at least one activity"
+msgstr "au moins une activité"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Never active"
+msgstr "Jamais actifs"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "no activity recorded"
+msgstr "aucune activité enregistrée"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Active 30d"
+msgstr "Actifs 30 j"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Active 90d"
+msgstr "Actifs 90 j"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Accounts detail"
+msgstr "Détail des comptes"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "account(s)"
+msgstr "compte(s)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Group(s)"
+msgstr "Groupe(s)"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "All"
+msgstr "Tous"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "The last-activity date is recorded on every use of the platform (web or mobile), at most once every 10 minutes per account. The three date ranges are combined: an account must match them all."
+msgstr "La date de dernière activité est enregistrée à chaque utilisation de la plateforme (web ou mobile), au plus une fois toutes les 10 minutes par compte. Les trois plages de dates se combinent : un compte doit toutes les respecter."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "The 30- and 90-day activity windows are counted up to %(d)s."
+msgstr "Les fenêtres d'activité de 30 et 90 jours sont comptées jusqu'au %(d)s."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "The 30- and 90-day activity windows are counted from today."
+msgstr "Les fenêtres d'activité de 30 et 90 jours sont comptées à partir d'aujourd'hui."
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Click to see the list"
+msgstr "Cliquer pour voir la liste"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Accounts with at least one activity in the last 30 days"
+msgstr "Comptes ayant au moins une activité au cours des 30 derniers jours"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Accounts with at least one activity in the last 90 days"
+msgstr "Comptes ayant au moins une activité au cours des 90 derniers jours"
+
+#: .\dashboard\templates\user_tracking\dashboard.html
+msgid "Accounts with no activity recorded"
+msgstr "Comptes sans aucune activité enregistrée"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Safeguard"
+msgstr "Sauvegarde"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "CVGP Member"
+msgstr "Membre du CVGP"
+
+#: .\dashboard\templatetags\custom_tags.py
+msgid "Security Specialist"
+msgstr "Spécialiste en sécurité"
+# --- Module « Forfaits internet CVGP » (internet_credits, dashboard/internet_credits) ---
+
+msgid "CVGP internet credits"
+msgstr "Crédits internet CVGP"
+
+msgid "month"
+msgstr "mois"
+
+msgid "Any day of the month; stored as the 1st."
+msgstr "N'importe quel jour du mois ; enregistré au 1er."
+
+msgid "package sending date"
+msgstr "date d'envoi du forfait"
+
+msgid "package"
+msgstr "forfait"
+
+msgid "amount (FCFA)"
+msgstr "montant (FCFA)"
+
+msgid "CVGP checkbox message"
+msgstr "message à cocher du CVGP"
+
+msgid "FC/AC checkbox message"
+msgstr "message à cocher du FC/AC"
+
+msgid "monthly PDF attestation"
+msgstr "attestation du PDF mensuel"
+
+msgid "CVD PDF agreement message"
+msgstr "message d'accord du PDF par CVD"
+
+msgid "signatory name"
+msgstr "nom du signataire"
+
+msgid "signatory title"
+msgstr "fonction du signataire"
+
+msgid "created by"
+msgstr "créé par"
+
+msgid "internet credit campaign"
+msgstr "forfait internet mensuel"
+
+msgid "internet credit campaigns"
+msgstr "forfaits internet mensuels"
+
+msgid "internet credit beneficiary"
+msgstr "bénéficiaire du forfait internet"
+
+msgid "internet credit beneficiaries"
+msgstr "bénéficiaires du forfait internet"
+
+msgid "internet credit confirmation"
+msgstr "confirmation de forfait internet"
+
+msgid "internet credit confirmations"
+msgstr "confirmations de forfait internet"
+
+msgid "CVGP member"
+msgstr "Membre CVGP"
+
+msgid "FC/AC"
+msgstr "FC/AC"
+
+msgid "MGP mobile"
+msgstr "MGP mobile"
+
+msgid "DCC mobile"
+msgstr "DCC mobile"
+
+msgid "Available fields: {cvd}, {villages}, {mois}, {annee}, {forfait}, {montant}, {date_envoi}, {nom}, {telephone}"
+msgstr "Champs disponibles : {cvd}, {villages}, {mois}, {annee}, {forfait}, {montant}, {date_envoi}, {nom}, {telephone}"
+
+msgid "Month"
+msgstr "Mois"
+
+msgid "Package sending date"
+msgstr "Date d'envoi du forfait"
+
+msgid "Package"
+msgstr "Forfait"
+
+msgid "Amount (FCFA)"
+msgstr "Montant (FCFA)"
+
+msgid "Checkbox message for the CVGP member"
+msgstr "Message à cocher pour le membre CVGP"
+
+msgid "Checkbox message for the FC/AC"
+msgstr "Message à cocher pour le FC/AC"
+
+msgid "Attestation at the bottom of the monthly PDF"
+msgstr "Attestation en bas du PDF mensuel"
+
+msgid "Agreement message of the CVD PDF"
+msgstr "Message d'accord du PDF par CVD"
+
+msgid "Signatory name (PDF)"
+msgstr "Nom du signataire (PDF)"
+
+msgid "Signatory title (PDF)"
+msgstr "Fonction du signataire (PDF)"
+
+msgid "A package is already registered for this month."
+msgstr "Un forfait est déjà enregistré pour ce mois."
+
+msgid "Empty frame (handwritten signature after printing)"
+msgstr "Cadre vide (signature manuscrite après impression)"
+
+msgid "Sign on screen"
+msgstr "Signer à l'écran"
+
+msgid "Text"
+msgstr "Texte"
+
+msgid "Done at"
+msgstr "Fait à"
+
+msgid "Signatory name"
+msgstr "Nom du signataire"
+
+msgid "Signatory title"
+msgstr "Fonction du signataire"
+
+msgid "Signature"
+msgstr "Signature"
+
+msgid "Keep this text and signatory for this month"
+msgstr "Mémoriser ce texte et ce signataire pour ce mois"
+
+msgid "Please draw the signature before exporting."
+msgstr "Veuillez dessiner la signature avant l'export."
+
+msgid "CVGP internet packages"
+msgstr "Forfaits internet CVGP"
+
+msgid "CVGP not confirmed"
+msgstr "CVGP non confirmé"
+
+msgid "CVGP confirmed"
+msgstr "CVGP confirmé"
+
+msgid "FC/AC not confirmed"
+msgstr "FC/AC non confirmé"
+
+msgid "Fully confirmed"
+msgstr "Entièrement confirmés"
+
+#, python-format
+msgid "%(created)d CVD line(s) created, %(refreshed)d updated, %(removed)d removed."
+msgstr "%(created)d ligne(s) CVD créée(s), %(refreshed)d mise(s) à jour, %(removed)d retirée(s)."
+
+msgid "To check:"
+msgstr "À vérifier :"
+
+msgid "Register a monthly package"
+msgstr "Enregistrer un forfait mensuel"
+
+msgid "Edit the monthly package"
+msgstr "Modifier le forfait mensuel"
+
+msgid "Package updated. Messages of lines not yet confirmed have been updated; confirmations already signed keep the text that was checked."
+msgstr "Forfait modifié. Les messages des lignes non encore confirmées ont été mis à jour ; les confirmations déjà signées gardent le texte qui a été coché."
+
+#, python-format
+msgid "The package of %(month)s has been deleted."
+msgstr "Le forfait de %(month)s a été supprimé."
+
+#, python-format
+msgid "The confirmation of %(name)s has been reset: the notification will reappear on the mobile."
+msgstr "La confirmation de %(name)s a été réinitialisée : la notification réapparaîtra sur le mobile."
+
+#, python-format
+msgid "Export impossible: %(errors)s"
+msgstr "Export impossible : %(errors)s"
+
+msgid "Monthly packages"
+msgstr "Forfaits mensuels"
+
+msgid "Registering a package sends a notification to each CVGP member (MGP mobile) and to the FC/AC covering their CVD (MGP or DCC mobile). The CVGP member's notification disappears once they confirm; the FC/AC's disappears once both confirmations are recorded."
+msgstr "L'enregistrement d'un forfait envoie une notification à chaque membre CVGP (MGP mobile) et au FC/AC qui couvre son CVD (MGP ou DCC mobile). La notification du membre CVGP disparaît dès qu'il confirme ; celle du FC/AC disparaît une fois les deux confirmations enregistrées."
+
+msgid "Sending date"
+msgstr "Date d'envoi"
+
+msgid "Confirmed by the CVGP"
+msgstr "Confirmés par le CVGP"
+
+msgid "Confirmed by the FC/AC"
+msgstr "Confirmés par le FC/AC"
+
+msgid "Details"
+msgstr "Détails"
+
+msgid "Export to Excel"
+msgstr "Exporter en Excel"
+
+msgid "No package registered yet."
+msgstr "Aucun forfait enregistré pour l'instant."
+
+msgid "Preview (example CVD)"
+msgstr "Aperçu (CVD exemple)"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Saving creates one line per active CVGP member (one per CVD) and sends the notifications to the mobiles at their next synchronisation."
+msgstr "L'enregistrement crée une ligne par membre CVGP actif (une par CVD) et envoie les notifications aux mobiles à leur prochaine synchronisation."
+
+msgid "Clear"
+msgstr "Effacer"
+
+msgid "Generate the PDF"
+msgstr "Générer le PDF"
+
+msgid "Confirmed"
+msgstr "Confirmé"
+
+msgid "Reset this confirmation? The notification will reappear on the mobile."
+msgstr "Réinitialiser cette confirmation ? La notification réapparaîtra sur le mobile."
+
+msgid "Package of"
+msgstr "Forfait de"
+
+msgid "Adds new CVGP members and updates lines not yet confirmed"
+msgstr "Ajoute les nouveaux membres CVGP et met à jour les lignes non encore confirmées"
+
+msgid "Refresh beneficiaries"
+msgstr "Actualiser les bénéficiaires"
+
+msgid "Export PDF"
+msgstr "Exporter en PDF"
+
+msgid "Export Excel"
+msgstr "Exporter en Excel"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "Registered by"
+msgstr "Enregistré par"
+
+msgid "CVD link to check"
+msgstr "Rattachement au CVD à vérifier"
+
+msgid "Confirmations by CVD"
+msgstr "Confirmations par CVD"
+
+msgid "CVD / villages"
+msgstr "CVD / villages"
+
+msgid "CVGP confirmation"
+msgstr "Confirmation du CVGP"
+
+msgid "FC/AC confirmation"
+msgstr "Confirmation du FC/AC"
+
+msgid "To check"
+msgstr "À vérifier"
+
+msgid "Not confirmed"
+msgstr "Non confirmé"
+
+msgid "PDF of this CVD"
+msgstr "PDF de ce CVD"
+
+msgid "No CVD for this filter."
+msgstr "Aucun CVD pour ce filtre."
+
+msgid "Monthly PDF"
+msgstr "PDF mensuel"
+
+msgid "Attestation text (bottom of the document)"
+msgstr "Texte d'attestation (bas du document)"
+
+msgid "CVD PDF"
+msgstr "PDF du CVD"
+
+msgid "Agreement message"
+msgstr "Message d'accord"
+
+msgid "Delete the package of"
+msgstr "Supprimer le forfait de"
+
+msgid "Their confirmations will be deleted as well."
+msgstr "Leurs confirmations seront également supprimées."
+
+msgid "The notifications of this month will disappear from the mobiles at their next synchronisation."
+msgstr "Les notifications de ce mois disparaîtront des mobiles à leur prochaine synchronisation."
+
+#, python-format
+msgid "%(counter)s CVD has already confirmed."
+msgid_plural "%(counter)s CVD have already confirmed."
+msgstr[0] "%(counter)s CVD a déjà confirmé."
+msgstr[1] "%(counter)s CVD ont déjà confirmé."

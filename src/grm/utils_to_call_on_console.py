@@ -793,3 +793,40 @@ def backfill_last_activity_from_last_login(dry_run=False):
     print(f"{updated} compte(s) mis à jour")
     print("End")
     return updated
+
+
+def backfill_last_login_from_last_activity(dry_run=False):
+    """Renseigne `User.last_login` avec la valeur de `last_activity` pour tous les comptes dont
+    `last_login` est encore `None` (et qui ont un `last_activity`).
+
+    Sert de base après l'activation de `SIMPLE_JWT['UPDATE_LAST_LOGIN']` : auparavant, les
+    connexions mobiles (JWT via `/api/auth/token/`) n'écrivaient jamais `last_login`, si bien que
+    les utilisateurs du mobile apparaissent sans aucune connexion. `last_activity` est
+    postérieure ou égale à leur dernière connexion réelle : c'est une approximation (majorant),
+    remplacée par la vraie date dès leur prochaine connexion.
+
+    Écriture groupée via `QuerySet.update()` (pas de `save()`, pas de signaux). Ne touche
+    jamais un `last_login` déjà renseigné.
+
+    Ex :
+        backfill_last_login_from_last_activity(dry_run=True)
+        backfill_last_login_from_last_activity()
+    """
+    from django.db.models import F
+
+    qs = User.objects.filter(last_login__isnull=True, last_activity__isnull=False)
+    total = qs.count()
+    print(f"{total} compte(s) avec last_login=None et last_activity renseigné")
+
+    if dry_run:
+        for user in qs.only("email", "last_activity")[:20]:
+            print(f"  {user.email} <- {user.last_activity}")
+        if total > 20:
+            print(f"  ... (+{total - 20})")
+        print("End (DRY-RUN, rien écrit)")
+        return total
+
+    updated = qs.update(last_login=F("last_activity"))
+    print(f"{updated} compte(s) mis à jour")
+    print("End")
+    return updated

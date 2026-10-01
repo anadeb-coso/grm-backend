@@ -84,6 +84,21 @@
         .ic-c90      { background: rgba(245,186,116,.18); color: #b9740f; }
         .ic-never    { background: rgba(233,84,84,.12);   color: #d0455a; }
 
+        /* Chiffres cliquables des tuiles -> liste des comptes (modale) */
+        .um-tile button.um-tile-link {
+            background: none; border: 0; padding: 0 0 2px; margin: 0;
+            align-self: flex-start; text-align: left; cursor: pointer;
+            border-bottom: 2px dashed transparent;
+            transition: color .15s, border-color .15s;
+        }
+        .um-tile button.um-tile-link i { font-size: 12px; color: var(--um-muted); vertical-align: middle; margin-left: 4px; }
+        .um-tile button.um-tile-link:hover,
+        .um-tile button.um-tile-link:focus-visible {
+            color: var(--um-green-dark); border-bottom-color: currentColor; outline: none;
+        }
+        .um-tile button.um-tile-link:hover i,
+        .um-tile button.um-tile-link:focus-visible i { color: var(--um-green-dark); }
+
         /* ---------- Section / tables ---------- */
         .um-section {
             background: #fff;
@@ -128,6 +143,15 @@
         .um-section .dataTables_filter input { border: 1px solid var(--um-line); border-radius: 8px; padding: 4px 10px; }
         .um-section .dataTables_info { color: var(--um-muted); font-size: 12px; }
         .um-section .paginate_button.current { background: var(--um-green) !important; border-color: var(--um-green) !important; color: #fff !important; border-radius: 6px; }
+
+        /* Modale "liste des comptes" (réutilise le style des sections sans le cadre) */
+        #um-accounts-modal .modal-dialog { max-width: 95%; }
+        #um-accounts-modal .modal-content { border-radius: 16px; border: 0; }
+        #um-accounts-modal .modal-title { font-size: 16px; font-weight: 800; color: var(--um-ink); }
+        #um-accounts-modal .modal-title .um-count { font-size: 12.5px; color: var(--um-muted); font-weight: 600; margin-left: 8px; }
+        #um-accounts-modal .um-section { border: 0; box-shadow: none; padding: 0; }
+        #um-accounts-modal .um-hint { margin: 0 0 12px; }
+        table.um-table.um-table-left th, table.um-table.um-table-left td { text-align: left; }
     </style>
 {% endblock %}
 
@@ -207,19 +231,34 @@
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-c30"><i class="fas fa-bolt"></i></div>
-                <div class="um-tile-value">{{ overall.active_30 }}</div>
+                <button type="button" class="um-tile-value um-tile-link" data-um-list="a30"
+                        data-um-title="{% translate 'Active (30 days)' %}"
+                        data-um-sub="{% translate 'Accounts with at least one activity in the last 30 days' %}"
+                        title="{% translate 'Click to see the list' %}">
+                    {{ overall.active_30 }}<i class="fas fa-list-ul" aria-hidden="true"></i>
+                </button>
                 <div class="um-tile-label">{% translate "Active (30 days)" %}</div>
                 <div class="um-tile-sub">{% translate "at least one activity" %}</div>
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-c90"><i class="fas fa-history"></i></div>
-                <div class="um-tile-value">{{ overall.active_90 }}</div>
+                <button type="button" class="um-tile-value um-tile-link" data-um-list="a90"
+                        data-um-title="{% translate 'Active (90 days)' %}"
+                        data-um-sub="{% translate 'Accounts with at least one activity in the last 90 days' %}"
+                        title="{% translate 'Click to see the list' %}">
+                    {{ overall.active_90 }}<i class="fas fa-list-ul" aria-hidden="true"></i>
+                </button>
                 <div class="um-tile-label">{% translate "Active (90 days)" %}</div>
                 <div class="um-tile-sub">{% translate "at least one activity" %}</div>
             </div>
             <div class="um-tile">
                 <div class="um-tile-icon ic-never"><i class="fas fa-user-slash"></i></div>
-                <div class="um-tile-value">{{ overall.never }}</div>
+                <button type="button" class="um-tile-value um-tile-link" data-um-list="never"
+                        data-um-title="{% translate 'Never active' %}"
+                        data-um-sub="{% translate 'Accounts with no activity recorded' %}"
+                        title="{% translate 'Click to see the list' %}">
+                    {{ overall.never }}<i class="fas fa-list-ul" aria-hidden="true"></i>
+                </button>
                 <div class="um-tile-label">{% translate "Never active" %}</div>
                 <div class="um-tile-sub">{% translate "no activity recorded" %}</div>
             </div>
@@ -400,6 +439,61 @@
         </div>
 
     </div>
+
+    {# Liste des comptes ouverte au clic sur les chiffres des tuiles 30 j / 90 j / jamais actifs #}
+    <div class="modal fade" id="um-accounts-modal" tabindex="-1" role="dialog"
+         aria-labelledby="um-accounts-title" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span id="um-accounts-title"></span>
+                        <span class="um-count" id="um-accounts-count"></span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% translate 'Close' %}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="um-section">
+                        <div class="um-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="um-accounts-sub"></span>
+                            <span id="um-accounts-window">
+                                {% if anchor_is_end %}
+                                    {% blocktranslate trimmed with d=anchor_date|date:"d/m/Y" %}
+                                        The 30- and 90-day activity windows are counted up to {{ d }}.
+                                    {% endblocktranslate %}
+                                {% else %}
+                                    {% translate "The 30- and 90-day activity windows are counted from today." %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="um-table-accounts" class="um-table um-table-left" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>{% translate "Last name" %}</th>
+                                        <th>{% translate "First name" %}</th>
+                                        <th>{% translate "Phone" %}</th>
+                                        <th>{% translate "Email" %}</th>
+                                        <th>{% translate "Administrative level" %}</th>
+                                        <th>{% translate "Group(s)" %}</th>
+                                        <th>{% translate "Registration date" %}</th>
+                                        <th>{% translate "Last login" %}</th>
+                                        <th>{% translate "Last activity" %}</th>
+                                        <th>{% translate "Status" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ tile_accounts|json_script:"um-accounts-data" }}
 {% endblock %}
 
 {% block javascript %}
@@ -418,7 +512,7 @@
             ];
 
             function initTable(selector, opts) {
-                $(selector).DataTable($.extend({
+                return $(selector).DataTable($.extend({
                     language: { url: langUrl },
                     dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12't>>" +
@@ -437,6 +531,98 @@
             initTable('#um-table-group', { order: [[1, 'desc']] });
             // Détail : trié par dernière activité décroissante (colonne 8, tri via data-order).
             initTable('#um-table-detail', { order: [[8, 'desc']] });
+
+            // --- Liste des comptes au clic sur les chiffres des tuiles 30 j / 90 j / jamais actifs ---
+            {% translate "Active" as t_active %}{% translate "Inactive" as t_inactive %}{% translate "account(s)" as t_accounts %}
+            var labelActive = '{{ t_active|escapejs }}';
+            var labelInactive = '{{ t_inactive|escapejs }}';
+            var labelAccounts = '{{ t_accounts|escapejs }}';
+            var accounts = JSON.parse(document.getElementById('um-accounts-data').textContent);
+            var accountsTable = null;
+            var accountsTitle = '';
+
+            function esc(value) {
+                return $('<div>').text(value == null ? '' : String(value)).html();
+            }
+            function textCol(key) {
+                return {
+                    data: key,
+                    render: function (v, type) {
+                        if (type === 'display') { return v ? esc(v) : '—'; }
+                        return v || '';
+                    }
+                };
+            }
+            function dateCol(key) {
+                return {
+                    data: key,
+                    render: function (v, type) {
+                        if (type === 'sort' || type === 'type') { return v.t; }
+                        if (type === 'display') { return v.d || '—'; }
+                        return v.d;
+                    }
+                };
+            }
+            var accountColumns = [
+                textCol('last_name'),
+                textCol('first_name'),
+                textCol('phone'),
+                textCol('email'),
+                textCol('level'),
+                textCol('groups'),
+                dateCol('joined'),
+                dateCol('login'),
+                dateCol('activity'),
+                {
+                    data: 'is_active',
+                    render: function (v, type) {
+                        if (type === 'display') {
+                            return v ? '<span class="um-badge on">' + esc(labelActive) + '</span>'
+                                     : '<span class="um-badge off">' + esc(labelInactive) + '</span>';
+                        }
+                        if (type === 'sort' || type === 'type') { return v ? 1 : 0; }
+                        return v ? labelActive : labelInactive;
+                    }
+                }
+            ];
+            // Exports : libellés en texte brut (orthogonal 'export') et titre = liste affichée.
+            var accountButtons = exportButtons.map(function (button) {
+                return $.extend({}, button, {
+                    title: function () { return accountsTitle; },
+                    exportOptions: { orthogonal: 'export' }
+                });
+            });
+
+            $('.um-tile-link').on('click', function () {
+                var $btn = $(this);
+                var key = $btn.data('umList');
+                var rows = accounts.filter(function (account) { return account[key]; });
+                // "Jamais actifs" : pas de dernière activité -> tri par date d'enregistrement.
+                var order = key === 'never' ? [[6, 'desc']] : [[8, 'desc']];
+
+                accountsTitle = $btn.data('umTitle');
+                $('#um-accounts-title').text(accountsTitle);
+                $('#um-accounts-count').text(rows.length + ' ' + labelAccounts);
+                $('#um-accounts-sub').text($btn.data('umSub') + '.');
+                $('#um-accounts-window').toggle(key !== 'never');
+
+                if (accountsTable === null) {
+                    accountsTable = initTable('#um-table-accounts', {
+                        data: rows,
+                        columns: accountColumns,
+                        order: order,
+                        buttons: accountButtons,
+                        deferRender: true
+                    });
+                } else {
+                    accountsTable.clear().rows.add(rows).search('').order(order).draw();
+                }
+                $('#um-accounts-modal').modal('show');
+            });
+
+            $('#um-accounts-modal').on('shown.bs.modal', function () {
+                if (accountsTable !== null) { accountsTable.columns.adjust(); }
+            });
         });
     </script>
 {% endblock javascript %}

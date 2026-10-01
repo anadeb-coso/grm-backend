@@ -216,6 +216,8 @@ def get_group_high(user):
         if user.groups.filter(name="Director").exists():
             return gettext_lazy("Director").__str__()
         
+        if user.groups.filter(name="Safeguard").exists():
+            return gettext_lazy("Safeguard").__str__()
         if user.groups.filter(name="Evaluator").exists():
             return gettext_lazy("Evaluator").__str__()
         if user.groups.filter(name="Financial").exists():
@@ -241,6 +243,8 @@ def get_group_high(user):
             return gettext_lazy("Community Facilitator").__str__()
         if user.groups.filter(name="TechnicalFacilitator").exists():
             return gettext_lazy("Technical Facilitator").__str__()
+        if user.groups.filter(name="SecuritySpecialist").exists():
+            return gettext_lazy("Security Specialist").__str__()
         
         if user.groups.filter(name="Supervisor").exists():
             return gettext_lazy("Supervisor").__str__()

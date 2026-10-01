@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
-from django.utils import timezone
+from django.utils import dateformat, timezone
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
 
@@ -31,7 +31,7 @@ from issue.models import Adl
 # ``dashboard.templatetags.custom_tags.get_group_high`` : chaque compte est rangé sous son
 # profil "le plus élevé" (un seul par compte), le superuser primant sur tout.
 PROFILE_ORDER = (
-    ('Admin', _('Administrator')),
+    ('Safeguard', _('Safeguard')),
     ('Minister', _('Minister')),
     ('Advisor', _('Advisor')),
     ('GeneralManager', _('General Manager')),
@@ -51,7 +51,9 @@ PROFILE_ORDER = (
     ('CommunityFacilitator', _('Community Facilitator')),
     ('TechnicalFacilitator', _('Technical Facilitator')),
     ('Supervisor', _('Supervisor')),
-    ('Validator', _('Validator')),
+    ('FullStack', _('FullStack')),
+    ('SecuritySpecialist', _('Security Specialist')),
+    ('CVGPMembers', _('CVGP Member')),
 )
 
 # (clé GET début, clé GET fin, champ modèle) — chaque plage est indépendante et optionnelle.
@@ -70,6 +72,16 @@ def _new_bucket():
         'active_30': 0,
         'active_90': 0,
         'never': 0,
+    }
+
+
+def _dt_cell(value):
+    """Cellule date de la liste des comptes (modale des tuiles) : libellé affiché + clé de tri."""
+    if not value:
+        return {'d': '', 't': 0}
+    return {
+        'd': dateformat.format(timezone.localtime(value), 'd/m/Y H:i'),
+        't': int(value.timestamp()),
     }
 
 
@@ -166,7 +178,7 @@ class UserMonitoringView(AdminPermissionRequiredMixin, PageMixin, LoginRequiredM
 
         users = list(
             users_qs.prefetch_related('groups').only(
-                'id', 'email', 'first_name', 'last_name',
+                'id', 'email', 'first_name', 'last_name', 'phone_number',
                 'is_active', 'is_superuser', 'last_login', 'last_activity', 'date_joined',
             )
         )
@@ -252,6 +264,12 @@ class UserMonitoringView(AdminPermissionRequiredMixin, PageMixin, LoginRequiredM
                 'date_joined': user.date_joined,
                 'last_login': user.last_login,
                 'last_activity': user.last_activity,
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'phone': user.phone_number or '',
+                'active_30': is_a30,
+                'active_90': is_a90,
+                'never': never,
             })
 
         epoch = timezone.make_aware(datetime(1970, 1, 1), timezone.get_current_timezone())
@@ -273,4 +291,25 @@ class UserMonitoringView(AdminPermissionRequiredMixin, PageMixin, LoginRequiredM
         context['by_group'] = by_group_rows
         context['groups_count'] = len(by_group)
         context['detail_rows'] = detail_rows
+        # Liste des comptes affichée au clic sur les chiffres des tuiles "Actifs (30 jours)",
+        # "Actifs (90 jours)" et "Jamais actifs" (filtrée côté navigateur sur a30/a90/never) :
+        # mêmes comptes et mêmes fenêtres que les compteurs, donc toujours cohérente avec eux.
+        context['tile_accounts'] = [
+            {
+                'last_name': row['last_name'],
+                'first_name': row['first_name'],
+                'phone': row['phone'],
+                'email': row['email'],
+                'level': row['level'],
+                'groups': row['groups'],
+                'joined': _dt_cell(row['date_joined']),
+                'login': _dt_cell(row['last_login']),
+                'activity': _dt_cell(row['last_activity']),
+                'is_active': row['is_active'],
+                'a30': row['active_30'],
+                'a90': row['active_90'],
+                'never': row['never'],
+            }
+            for row in detail_rows
+        ]
         return context

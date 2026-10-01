@@ -50,7 +50,7 @@ urlpatterns = [
     path('administrative-levels/', include('administrativelevels.urls')),
     path('privacy/', include('privacy.urls')),
     path('issue/', include('issue.urls')),
-    path('api/issue/', include('issue.urls')),
+    path('api/issue/', include('issue.urls', namespace='api_issue')),
 
     path('download-file-view/<str:path>/<str:content_type>/', download_file_view, name='download_file_view'),
 

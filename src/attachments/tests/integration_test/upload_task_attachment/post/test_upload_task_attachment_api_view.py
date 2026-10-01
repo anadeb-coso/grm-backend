@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.template.defaultfilters import filesizeformat
 from parameterized import parameterized
 from rest_framework.reverse import reverse
 
@@ -180,11 +181,14 @@ class TestUploadTaskAttachmentAPIView(BaseTestCase):
                 assert str(data[k][0]) == self.error_messages['required_field']
         assert str(data['file'][0]) == self.error_messages['required_file']
 
+    # Limite lue dans `settings.MAX_UPLOAD_SIZE` (100 Mo aujourd'hui, 5 Mo à l'origine) : le
+    # message attendu est calculé comme dans attachments/serializers.py::FileSerializer plutôt
+    # que codé en dur.
     @parameterized.expand([
-        ('5.0 MB', settings.MAX_UPLOAD_SIZE),
-        ('5.1 MB', settings.MAX_UPLOAD_SIZE + int(0.1 * 1024 * 1024)),
+        ('at_limit', settings.MAX_UPLOAD_SIZE),
+        ('over_limit', settings.MAX_UPLOAD_SIZE + int(0.1 * 1024 * 1024)),
     ])
-    def test_file_size(self, size_representation, size):
+    def test_file_size(self, case, size):
         task = TaskFactory()
         file = self.create_file(size)
         input_data = {
@@ -200,10 +204,11 @@ class TestUploadTaskAttachmentAPIView(BaseTestCase):
         response = self.post(self.url, input_data, authorized=False, format='multipart')
         data = response.data
 
-        if size_representation == '5.0 MB':
+        if case == 'at_limit':
             assert response.status_code == 201
         else:
             assert response.status_code == 400
             assert len(data) == 1
-            assert str(data['file'][0]) == self.error_messages['file_size'] % {'max_size': '5.0\xa0MB',
-                                                                               'size': '5.1\xa0MB'}
+            assert str(data['file'][0]) == self.error_messages['file_size'] % {
+                'max_size': filesizeformat(settings.MAX_UPLOAD_SIZE), 'size': filesizeformat(size),
+            }

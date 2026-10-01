@@ -127,6 +127,52 @@ class AdlListView(ListAPIView):
         return Response([_facilitator_to_legacy_dict(adl.representative) for adl in self.get_queryset()])
 
 
+class AdlUpdateLocalitiesView(APIView):
+    """Pendant de `update-user-adls/` (GRM -> CDD) dans l'autre sens : CDD pousse ici les localités
+    d'un facilitateur modifiées depuis sa page « Localités ». Même enregistrement que le formulaire
+    `edit-user-government-worker/<id>/` : `GovernmentWorker` (niveau principal, niveaux choisis et
+    localités additionnelles, villages étendus à leur CVD) ; le signal `post_save` met ensuite à jour
+    l'`Adl` et renvoie les villages calculés à CDD."""
+    permission_classes = [HasGrmServiceKey]
+
+    def post(self, request):
+        from authentication.models import GovernmentWorker
+        from authentication.utils import expand_administrative_ids_with_cvd
+
+        email = (request.data.get('email') or '').strip()
+        if not email:
+            return Response({'detail': 'email is required'}, status=400)
+        user = User.objects.filter(email__iexact=email).first()
+        if not user:
+            raise Http404
+
+        administrative_id = request.data.get('administrative_id')
+        administrative_id = str(administrative_id) if administrative_id not in (None, '') else None
+        administrative_ids = [str(i) for i in (request.data.get('administrative_ids') or [])]
+        additional_administrative_ids = [str(i) for i in (request.data.get('additional_administrative_ids') or [])]
+
+        governmentworker = GovernmentWorker.objects.filter(user=user).first()
+        if governmentworker is None:
+            governmentworker = GovernmentWorker(user=user, department=1)
+
+        governmentworker.administrative_id = administrative_id
+        if administrative_id == "1":  # TOGO : même règle qu'à la création du profil
+            governmentworker.administrative_ids = list()
+            governmentworker.additional_administrative_ids = list()
+        else:
+            governmentworker.administrative_ids = expand_administrative_ids_with_cvd(administrative_ids, administrative_id)
+            governmentworker.additional_administrative_ids = expand_administrative_ids_with_cvd(additional_administrative_ids)
+        governmentworker.save()
+
+        return Response({
+            'status': 'success',
+            'adl': Adl.objects.filter(representative=user, is_deleted=False).exists(),
+            'administrative_id': governmentworker.administrative_id,
+            'administrative_ids': governmentworker.administrative_ids,
+            'additional_administrative_ids': governmentworker.additional_administrative_ids,
+        })
+
+
 class SetUserPasswordView(APIView):
     """Remplace la synchronisation de mot de passe CDD -> CouchDB `eadls`/MySQL legacy `grm`
     (usermanager/views_forget_password.py, usermanager/views_change_password.py) : CDD pousse ici

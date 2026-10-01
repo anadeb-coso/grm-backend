@@ -119,11 +119,38 @@ def set_user_government_worker_adl(government_worker):
         ])
 
         update_user_adl_on_cdd_app(
-            government_worker.user.email, settings.GRM_SECRET_KEY_GENRATE, village_ids, additional_village_ids
+            government_worker.user.email, settings.GRM_SECRET_KEY_GENRATE, village_ids, additional_village_ids,
+            administrative_id=government_worker.administrative_id,
+            administrative_ids=adl.administrative_region_ids,
+            additional_administrative_region_ids=adl.additional_administrative_region_ids,
         )
     except Exception as exc:
         print(government_worker.user.id)
         pass
+
+
+def expand_administrative_ids_with_cvd(ids, _id=None):
+    """Même règle que les formulaires EADL du dashboard (`CreateAdlGovernmentWorkerProfileFormView` /
+    `EditAdlGovernmentWorkerProfileFormView._administrative_ids`) : ajoute `_id` à `ids`, puis
+    remplace chaque village rattaché à un CVD par tous les villages de ce CVD."""
+    from administrativelevels.models import AdministrativeLevel
+    from grm.call_objects_from_other_db import mis_objects_call
+
+    ids = list(ids or [])
+    if _id and _id not in ids:
+        ids.append(_id)
+
+    all_adl_on_cvd = []
+    for _id in ids:
+        _obj = mis_objects_call.filter_objects(AdministrativeLevel, id=int(_id)).first()
+        if _obj and _obj.cvd:
+            for _village in _obj.cvd.get_villages():
+                if str(_village.id) not in all_adl_on_cvd:
+                    all_adl_on_cvd.append(str(_village.id))
+        else:
+            all_adl_on_cvd.append(_id)
+
+    return list(set(all_adl_on_cvd))
 
 
 def delete_user_government_worker_adl(government_worker):

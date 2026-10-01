@@ -36,17 +36,28 @@ def send_code_by_mail(user, code):
 
 
 def update_user_adl_on_cdd_app(
-        facilitator_email, grm_secret_key_generate, stabilization_administrative_ids, additional_administrative_ids
+        facilitator_email, grm_secret_key_generate, stabilization_administrative_ids, additional_administrative_ids,
+        administrative_id=None, administrative_ids=None, additional_administrative_region_ids=None, notify=True,
 ):
+    """Transmet à CDD les villages (et, pour que CDD garde exactement le choix de l'agent, le niveau
+    principal et les niveaux choisis avant calcul des villages) d'un EADL. `notify=False` : CDD
+    n'envoie pas d'email au facilitateur (remplissage initial, cf. commande `push_adls_to_cdd`)."""
     url = f"{settings.CDD_URL_BASE}/authentication/api/facilitators/update-user-adls/"
 
     data = {
         "facilitator_email": facilitator_email,
         "grm_secret_key_generate": grm_secret_key_generate,
         "stabilization_administrative_ids": stabilization_administrative_ids,
-        "additional_administrative_ids": additional_administrative_ids
+        "additional_administrative_ids": additional_administrative_ids,
+        "administrative_id": administrative_id,
+        "administrative_ids": administrative_ids,
+        "additional_administrative_region_ids": additional_administrative_region_ids,
+        "notify": notify,
     }
     # try:
-    response = requests.post(url, json=data)
+    # `timeout` : CDD peut lui-même être en train d'attendre la réponse du GRM (modification des
+    # localités depuis CDD -> GRM -> renvoi ici) ; ne jamais bloquer indéfiniment.
+    response = requests.post(url, json=data, timeout=60)
+    return response
     # except:
     #     pass

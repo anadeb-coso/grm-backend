@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from django.views import generic
@@ -24,6 +25,7 @@ class HomeFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
 
         context['all_total_issues'] = Issue.objects.filter(confirmed=True, is_deleted=False).count()
+        context['access_token'] = settings.MAPBOX_ACCESS_TOKEN
 
         return context
 

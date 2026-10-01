@@ -60,6 +60,8 @@ urlpatterns = [
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
     path('api/', include('sync.urls')),
+    # Confirmations de forfait internet CVGP (mobile DCC ; le mobile MGP passe par la sync).
+    path('api/internet-credits/', include('internet_credits.urls')),
 
     # Section B du CLAUDE.md : API inter-services (CDD, MIS) authentifiée par le secret partagé
     # GRM_SECRET_KEY_GENRATE, remplace l'accès direct des autres plateformes aux bases CouchDB

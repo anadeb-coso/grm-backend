@@ -1,0 +1,6 @@
+<div class="form-group {{ col|default:'col-md-6' }}">
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<small class="ic-hint d-block">{{ field.help_text }}</small>{% endif %}
+    {% for error in field.errors %}<small class="text-danger d-block">{{ error }}</small>{% endfor %}
+</div>

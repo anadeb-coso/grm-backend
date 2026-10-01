@@ -10,6 +10,7 @@ urlpatterns = [
     # path('subprojects/', include('dashboard.subprojects.urls')),
     path('grm/', include('dashboard.grm.urls')),
     path('user-monitoring/', include('dashboard.user_tracking.urls')),
+    path('internet-credits/', include('dashboard.internet_credits.urls')),
     path('logs/', include('dashboard.logs.urls')),
     path('couchdb-proxy/', include('dashboard.couchdb_proxy.urls')),
     path('general/', include('dashboard.general.urls')),

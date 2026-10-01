@@ -1,0 +1,69 @@
+{% extends 'layouts/base.html' %}
+{% load static i18n %}
+
+{% block extracss %}
+    {{ block.super }}
+    {% include 'internet_credits/_styles.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="ic-page">
+        <section class="ic-section">
+            <header>
+                <h2>{% translate "Monthly packages" %}</h2>
+                <div class="ic-actions">
+                    <a href="{% url 'dashboard:internet_credits:create' %}" class="btn btn-ic btn-sm">
+                        <i class="fa fa-plus"></i> {% translate "Register a monthly package" %}
+                    </a>
+                </div>
+            </header>
+            <p class="ic-hint">
+                {% blocktranslate %}Registering a package sends a notification to each CVGP member (MGP mobile) and to the FC/AC covering their CVD (MGP or DCC mobile). The CVGP member's notification disappears once they confirm; the FC/AC's disappears once both confirmations are recorded.{% endblocktranslate %}
+            </p>
+            <div class="table-responsive">
+                <table class="ic-table">
+                    <thead>
+                    <tr>
+                        <th>{% translate "Month" %}</th>
+                        <th>{% translate "Sending date" %}</th>
+                        <th>{% translate "Package" %}</th>
+                        <th>{% translate "CVD" %}</th>
+                        <th>{% translate "Confirmed by the CVGP" %}</th>
+                        <th>{% translate "Confirmed by the FC/AC" %}</th>
+                        <th>{% translate "Fully confirmed" %}</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in rows %}
+                        {% with campaign=row.campaign stats=row.stats %}
+                            <tr>
+                                <td><a href="{% url 'dashboard:internet_credits:detail' campaign.pk %}"><b>{{ campaign.month_label }}</b></a></td>
+                                <td>{{ campaign.sent_date|date:"d/m/Y" }}</td>
+                                <td>{{ campaign.package_label }}<br/><span class="ic-muted ic-small">{{ campaign.amount_display }}</span></td>
+                                <td>{{ stats.total }}</td>
+                                <td>
+                                    <b>{{ stats.cvgp_confirmed }}</b> / {{ stats.total }}
+                                    <div class="ic-progress"><span style="width: {{ stats.cvgp_percent }}%"></span></div>
+                                </td>
+                                <td><b>{{ stats.fc_confirmed }}</b> / {{ stats.total }}</td>
+                                <td><b>{{ stats.complete }}</b> / {{ stats.total }}</td>
+                                <td class="text-right" style="white-space: nowrap;">
+                                    <a class="btn btn-ic-outline btn-sm" href="{% url 'dashboard:internet_credits:detail' campaign.pk %}"
+                                       title="{% translate 'Details' %}"><i class="fa fa-eye"></i></a>
+                                    <a class="btn btn-ic-outline btn-sm" href="{% url 'dashboard:internet_credits:update' campaign.pk %}"
+                                       title="{% translate 'Edit' %}"><i class="fa fa-edit"></i></a>
+                                    <a class="btn btn-ic-outline btn-sm" href="{% url 'dashboard:internet_credits:export_excel' campaign.pk %}"
+                                       title="{% translate 'Export to Excel' %}"><i class="fa fa-file-excel"></i></a>
+                                </td>
+                            </tr>
+                        {% endwith %}
+                    {% empty %}
+                        <tr><td colspan="8" class="ic-muted">{% translate "No package registered yet." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+{% endblock %}

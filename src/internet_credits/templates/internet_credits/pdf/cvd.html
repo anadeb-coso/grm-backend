@@ -1,0 +1,84 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm 1.5cm 1.8cm 1.5cm;
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 1.5cm; width: 18cm; top: 28.5cm; height: 0.6cm;
+            }
+        }
+        {% include "internet_credits/pdf/_styles.html" %}
+        body { font-size: 9.5pt; }
+        table.detail { width: 100%; }
+        table.detail td { border: 0.5pt solid #9aa5ad; padding: 2pt 4pt; vertical-align: top; }
+        table.detail td.label { background-color: #f3f7f5; width: 16%; color: #2f3a45; }
+        table.confirmations { width: 100%; }
+        table.confirmations td.confirmation { border: 0.5pt solid #9aa5ad; padding: 5pt; vertical-align: top; width: 50%; }
+        table.confirmations th { background-color: #e8f6f0; border: 0.5pt solid #9aa5ad; padding: 3pt; text-align: left; }
+    </style>
+</head>
+<body>
+<div id="footer_content" class="small muted">
+    Forfait internet CVGP — {{ campaign.month_label }} — {{ beneficiary.label }} — généré le {{ generated_at|date:"d/m/Y H:i" }}
+</div>
+
+<h1>Attestation de réception du forfait internet</h1>
+<p class="muted">CVD {{ beneficiary.label }} — {{ campaign.month_label }}</p>
+
+<table class="detail">
+    <tr>
+        <td class="label">Mois</td><td><b>{{ campaign.month_label }}</b></td>
+        <td class="label">Date d'envoi</td><td>{{ campaign.sent_date|date:"d/m/Y" }}</td>
+    </tr>
+    <tr>
+        <td class="label">Forfait</td><td colspan="3">{{ campaign.package_label }} — {{ campaign.amount_display }}</td>
+    </tr>
+    <tr>
+        <td class="label">CVD</td><td><b>{{ beneficiary.label }}</b></td>
+        <td class="label">Villages</td><td>{{ beneficiary.village_names|default:"—" }}</td>
+    </tr>
+    <tr>
+        <td class="label">Membre CVGP</td><td>{{ beneficiary.member_name }}</td>
+        <td class="label">Numéro</td><td>{{ beneficiary.phone_number|default:"—" }}</td>
+    </tr>
+</table>
+
+<h2>Confirmations</h2>
+<table class="confirmations">
+    <tr><th>Membre CVGP</th><th>FC/AC</th></tr>
+    <tr>
+        <td class="confirmation">
+            {% if cvgp %}
+                <span class="ok">Confirmé</span> par {{ cvgp.confirmed_by_name }}<br/>
+                <span class="muted">le {{ cvgp.confirmed_at|date:"d/m/Y à H:i" }}</span><br/><br/>
+                <span class="box">[X]</span> {{ cvgp.message }}
+                {% if cvgp.description %}<br/><br/><span class="muted">Description :</span> {{ cvgp.description }}{% endif %}
+                {% if cvgp.signature %}<br/><br/><span class="muted small">Signature</span><br/><img src="{{ cvgp.signature }}" width="150"/>{% endif %}
+            {% else %}
+                <span class="ko">Non confirmé</span>
+            {% endif %}
+        </td>
+        <td class="confirmation">
+            {% for fc in fcs %}
+                {% if not forloop.first %}<br/><br/>{% endif %}
+                <span class="ok">Confirmé</span> par {{ fc.confirmed_by_name }}<br/>
+                <span class="muted">le {{ fc.confirmed_at|date:"d/m/Y à H:i" }}</span><br/><br/>
+                <span class="box">[X]</span> {{ fc.message }}
+                {% if fc.description %}<br/><br/><span class="muted">Description :</span> {{ fc.description }}{% endif %}
+                {% if fc.signature %}<br/><br/><span class="muted small">Signature</span><br/><img src="{{ fc.signature }}" width="150"/>{% endif %}
+            {% empty %}
+                <span class="ko">Non confirmé</span>
+            {% endfor %}
+        </td>
+    </tr>
+</table>
+
+<div class="attestation">
+    <p>{{ agreement|linebreaksbr }}</p>
+    {% include "internet_credits/pdf/_signature_block.html" %}
+</div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% load i18n %}
+<div class="ic-confirmation">
+    <span class="ic-badge on">{% translate "Confirmed" %}</span>
+    {% if show_name %}<b>{{ confirmation.confirmed_by_name }}</b>{% endif %}
+    <div class="ic-muted ic-small">
+        {{ confirmation.confirmed_at|date:"d/m/Y H:i" }} · {{ confirmation.get_source_display }}
+    </div>
+    <div class="ic-small mt-1">[x] {{ confirmation.message }}</div>
+    {% if confirmation.description %}<div class="ic-small ic-muted mt-1"><i class="fa fa-comment"></i> {{ confirmation.description }}</div>{% endif %}
+    {% if confirmation.signature %}
+        <img class="ic-signature" loading="lazy" alt="{% translate 'Signature' %}"
+             src="{% url 'dashboard:internet_credits:signature' confirmation.pk %}"/>
+    {% endif %}
+    {% translate "Reset this confirmation? The notification will reappear on the mobile." as reset_question %}
+    <form method="post" action="{% url 'dashboard:internet_credits:reset_confirmation' confirmation.pk %}" class="mt-1"
+          onsubmit="return confirm('{{ reset_question|escapejs }}');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link btn-sm p-0 text-danger ic-small"><i class="fa fa-undo"></i> {% translate "Reset" %}</button>
+    </form>
+</div>

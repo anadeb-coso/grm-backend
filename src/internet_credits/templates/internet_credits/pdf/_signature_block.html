@@ -1,0 +1,18 @@
+<table class="attestation-signature" style="width: 100%; margin-top: 8pt;">
+    <tr>
+        <td style="width: 55%; vertical-align: top;">
+            Fait à {% if signature.place %}{{ signature.place }}{% else %}.................................{% endif %},
+            le {{ signature.date|date:"d/m/Y" }}
+        </td>
+        <td style="width: 45%; vertical-align: top;">
+            {% if signature.signatory_name %}<b>{{ signature.signatory_name }}</b><br/>{% endif %}
+            {% if signature.signatory_title %}{{ signature.signatory_title }}<br/>{% endif %}
+            <span class="muted small">Signature</span><br/>
+            {% if signature.drawn_signature %}
+                <img src="{{ signature.drawn_signature }}" width="190"/>
+            {% else %}
+                <table style="width: 8cm;"><tr><td class="sigbox">&nbsp;</td></tr></table>
+            {% endif %}
+        </td>
+    </tr>
+</table>

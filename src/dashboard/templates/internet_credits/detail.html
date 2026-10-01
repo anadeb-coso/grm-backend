@@ -1,0 +1,166 @@
+{% extends 'layouts/base.html' %}
+{% load static i18n %}
+
+{% block extracss %}
+    {{ block.super }}
+    {% include 'internet_credits/_styles.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="ic-page">
+        <section class="ic-section">
+            <header>
+                <h2>{% translate "Package of" %} {{ campaign.month_label }}</h2>
+                <div class="ic-actions">
+                    <a href="{% url 'dashboard:internet_credits:update' campaign.pk %}" class="btn btn-ic-outline btn-sm">
+                        <i class="fa fa-edit"></i> {% translate "Edit" %}</a>
+                    <form method="post" action="{% url 'dashboard:internet_credits:refresh' campaign.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-ic-outline btn-sm"
+                                title="{% translate 'Adds new CVGP members and updates lines not yet confirmed' %}">
+                            <i class="fa fa-sync"></i> {% translate "Refresh beneficiaries" %}</button>
+                    </form>
+                    <button type="button" class="btn btn-ic btn-sm" data-toggle="modal" data-target="#ic-monthly-export">
+                        <i class="fa fa-file-pdf"></i> {% translate "Export PDF" %}</button>
+                    <a href="{% url 'dashboard:internet_credits:export_excel' campaign.pk %}" class="btn btn-ic btn-sm">
+                        <i class="fa fa-file-excel"></i> {% translate "Export Excel" %}</a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-toggle="modal" data-target="#ic-delete">
+                        <i class="fa fa-trash"></i> {% translate "Delete" %}</button>
+                </div>
+            </header>
+            <div class="ic-muted">
+                {% translate "Sending date" %} : <b class="text-dark">{{ campaign.sent_date|date:"d/m/Y" }}</b>
+                · {% translate "Package" %} : <b class="text-dark">{{ campaign.package_label }}</b>
+                · {% translate "Amount" %} : <b class="text-dark">{{ campaign.amount_display }}</b>
+                {% if campaign.created_by %}· {% translate "Registered by" %} {{ campaign.created_by.name }}{% endif %}
+            </div>
+        </section>
+
+        <div class="ic-stats">
+            <div class="ic-tile"><div class="ic-tile-value">{{ stats.total }}</div><div class="ic-tile-label">{% translate "CVD" %}</div></div>
+            <div class="ic-tile"><div class="ic-tile-value" style="color: var(--ic-green-dark)">{{ stats.cvgp_confirmed }}</div><div class="ic-tile-label">{% translate "Confirmed by the CVGP" %}</div></div>
+            <div class="ic-tile"><div class="ic-tile-value" style="color: var(--ic-red)">{{ stats.cvgp_pending }}</div><div class="ic-tile-label">{% translate "CVGP not confirmed" %}</div></div>
+            <div class="ic-tile"><div class="ic-tile-value">{{ stats.fc_confirmed }}</div><div class="ic-tile-label">{% translate "Confirmed by the FC/AC" %}</div></div>
+            <div class="ic-tile"><div class="ic-tile-value">{{ stats.complete }}</div><div class="ic-tile-label">{% translate "Fully confirmed" %}</div></div>
+        </div>
+
+        {% if warnings %}
+            <section class="ic-section" style="border-color: rgba(245,186,116,.6);">
+                <header><h2><i class="fa fa-exclamation-triangle" style="color: var(--ic-orange)"></i> {% translate "CVD link to check" %}</h2></header>
+                <ul class="mb-0">
+                    {% for b in warnings %}<li><b>{{ b.member_name }}</b> ({{ b.label }}) : {{ b.resolution_warning }}</li>{% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
+        <section class="ic-section">
+            <header>
+                <h2>{% translate "Confirmations by CVD" %}</h2>
+                <div class="ic-filters">
+                    {% for value, label in status_filters %}
+                        <a href="?status={{ value }}" class="{% if status == value %}active{% endif %}">{{ label }}</a>
+                    {% endfor %}
+                </div>
+            </header>
+            <div class="table-responsive">
+                <table class="ic-table">
+                    <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>{% translate "CVD / villages" %}</th>
+                        <th>{% translate "CVGP member" %}</th>
+                        <th style="min-width: 260px;">{% translate "CVGP confirmation" %}</th>
+                        <th style="min-width: 240px;">{% translate "FC/AC confirmation" %}</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for line in lines %}
+                        {% with b=line.beneficiary %}
+                            <tr>
+                                <td>{{ line.index }}</td>
+                                <td>
+                                    <b>{{ b.label }}</b>
+                                    {% if b.show_village_names %}<div class="ic-muted ic-small">{{ b.village_names }}</div>{% endif %}
+                                    {% if b.resolution_warning %}<span class="ic-badge warn" title="{{ b.resolution_warning }}">{% translate "To check" %}</span>{% endif %}
+                                </td>
+                                <td>{{ b.member_name }}<div class="ic-muted ic-small">{{ b.phone_number }}</div></td>
+                                <td>
+                                    {% if line.cvgp %}
+                                        {% include 'internet_credits/_confirmation.html' with confirmation=line.cvgp show_name=False %}
+                                    {% else %}
+                                        <span class="ic-badge off">{% translate "Not confirmed" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% for fc in line.fcs %}
+                                        {% include 'internet_credits/_confirmation.html' with confirmation=fc show_name=True %}
+                                    {% empty %}
+                                        <span class="ic-badge off">{% translate "Not confirmed" %}</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-right">
+                                    <button type="button" class="btn btn-ic-outline btn-sm ic-cvd-export"
+                                            data-action="{% url 'dashboard:internet_credits:export_cvd_pdf' b.pk %}"
+                                            data-label="{{ b.label }}" title="{% translate 'PDF of this CVD' %}">
+                                        <i class="fa fa-file-pdf"></i> PDF</button>
+                                </td>
+                            </tr>
+                        {% endwith %}
+                    {% empty %}
+                        <tr><td colspan="6" class="ic-muted">{% translate "No CVD for this filter." %}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block modals %}
+    {% translate "Monthly PDF" as monthly_title %}
+    {% translate "Attestation text (bottom of the document)" as attestation_label %}
+    {% url 'dashboard:internet_credits:export_pdf' campaign.pk as monthly_action %}
+    {% include 'internet_credits/_export_modal.html' with modal_id='ic-monthly-export' form=monthly_export_form modal_title=monthly_title text_label=attestation_label action=monthly_action %}
+
+    {% translate "CVD PDF" as cvd_title %}
+    {% translate "Agreement message" as agreement_label %}
+    {% include 'internet_credits/_export_modal.html' with modal_id='ic-cvd-export' form=cvd_export_form modal_title=cvd_title text_label=agreement_label %}
+
+    <div class="modal fade" id="ic-delete" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form method="post" action="{% url 'dashboard:internet_credits:delete' campaign.pk %}" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header"><h5 class="modal-title"><b>{% translate "Delete the package of" %} {{ campaign.month_label }}</b></h5></div>
+                <div class="modal-body">
+                    {% if stats.cvgp_confirmed or stats.fc_confirmed %}
+                        <div class="alert alert-warning">
+                            {% blocktranslate count counter=stats.cvgp_confirmed %}{{ counter }} CVD has already confirmed.{% plural %}{{ counter }} CVD have already confirmed.{% endblocktranslate %}
+                            {% translate "Their confirmations will be deleted as well." %}
+                        </div>
+                    {% endif %}
+                    {% translate "The notifications of this month will disappear from the mobiles at their next synchronisation." %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ic-outline" data-dismiss="modal">{% translate "Cancel" %}</button>
+                    <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script src="{% static 'js/internet_credits.js' %}"></script>
+    <script>
+        $('.ic-cvd-export').on('click', function () {
+            var modal = $('#ic-cvd-export');
+            modal.find('form').attr('action', $(this).data('action'));
+            var title = modal.find('.ic-export-title');
+            if (!title.data('base')) title.data('base', title.text());
+            title.text(title.data('base') + ' — ' + $(this).data('label'));
+            modal.modal('show');
+        });
+    </script>
+{% endblock %}

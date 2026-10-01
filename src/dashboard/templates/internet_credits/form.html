@@ -1,0 +1,84 @@
+{% extends 'layouts/base.html' %}
+{% load static i18n %}
+
+{% block extracss %}
+    {{ block.super }}
+    {% include 'internet_credits/_styles.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="ic-page">
+        <form method="post" class="ic-section" novalidate>
+            {% csrf_token %}
+            <header><h2>{{ title }}</h2></header>
+            {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+            <div class="row">
+                {% include 'internet_credits/_field.html' with field=form.period col='col-md-3' %}
+                {% include 'internet_credits/_field.html' with field=form.sent_date col='col-md-3' %}
+                {% include 'internet_credits/_field.html' with field=form.package_label col='col-md-3' %}
+                {% include 'internet_credits/_field.html' with field=form.amount col='col-md-3' %}
+            </div>
+            <div class="row">
+                {% include 'internet_credits/_field.html' with field=form.cvgp_message_template %}
+                {% include 'internet_credits/_field.html' with field=form.fc_message_template %}
+            </div>
+            <div class="row">
+                {% include 'internet_credits/_field.html' with field=form.attestation_text %}
+                {% include 'internet_credits/_field.html' with field=form.agreement_text %}
+            </div>
+            <div class="row">
+                {% include 'internet_credits/_field.html' with field=form.signatory_name %}
+                {% include 'internet_credits/_field.html' with field=form.signatory_title %}
+            </div>
+
+            <div class="ic-section" style="background: #f6faf8; box-shadow: none;">
+                <b>{% translate "Preview (example CVD)" %}</b>
+                <p class="mb-1 mt-2"><span class="ic-muted">{% translate "CVGP member" %} :</span> <span id="ic-preview-cvgp"></span></p>
+                <p class="mb-0"><span class="ic-muted">{% translate "FC/AC" %} :</span> <span id="ic-preview-fc"></span></p>
+            </div>
+
+            <div class="ic-actions mt-3">
+                <button type="submit" class="btn btn-ic"><i class="fa fa-save"></i> {% translate "Save" %}</button>
+                <a href="{% url 'dashboard:internet_credits:list' %}" class="btn btn-ic-outline">{% translate "Cancel" %}</a>
+            </div>
+            {% if not object %}
+                <p class="ic-hint mt-2">{% translate "Saving creates one line per active CVGP member (one per CVD) and sends the notifications to the mobiles at their next synchronisation." %}</p>
+            {% endif %}
+        </form>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script>
+        (function () {
+            var MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août',
+                          'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+            function render(template) {
+                var period = $('#id_period').val() || '';
+                var parts = period.split('-');
+                var sent = ($('#id_sent_date').val() || '').split('-').reverse().join('/');
+                var amount = ($('#id_amount').val() || '').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                var values = {
+                    cvd: 'TCHANFIERI', villages: 'TCHANFIERI', nom: 'Nom du membre', telephone: '228XXXXXXXX',
+                    mois: parts.length > 1 ? MONTHS[parseInt(parts[1], 10) - 1] : '{mois}',
+                    annee: parts[0] || '{annee}', forfait: $('#id_package_label').val(), montant: amount,
+                    date_envoi: sent
+                };
+                return (template || '').replace(/\{(\w+)\}/g, function (match, key) {
+                    return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : match;
+                });
+            }
+
+            function refresh() {
+                $('#ic-preview-cvgp').text(render($('#id_cvgp_message_template').val()));
+                $('#ic-preview-fc').text(render($('#id_fc_message_template').val()));
+            }
+
+            $('form input, form textarea').on('input change', refresh);
+            refresh();
+        })();
+    </script>
+{% endblock %}

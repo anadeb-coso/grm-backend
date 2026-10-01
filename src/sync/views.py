@@ -18,6 +18,14 @@ from issue.models import (
     IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueStatus,
     IssueStatusStory, IssueType, Reason,
 )
+from internet_credits.models import (
+    InternetCreditBeneficiary, InternetCreditCampaign, InternetCreditConfirmation,
+)
+from internet_credits.serializers import (
+    InternetCreditBeneficiarySyncSerializer, InternetCreditCampaignSyncSerializer,
+    InternetCreditConfirmationSyncSerializer,
+)
+from internet_credits.services import apply_confirmation_push, pull_visibility_filters
 from sync.models import SyncLog
 from sync.serializers import (
     AdlSerializer, AttachmentPullSerializer, BpProjectSyncSerializer,
@@ -64,6 +72,20 @@ SYNC_READONLY_MODELS = {
     'issue_citizen_groups_2': (IssueCitizenGroup2, IssueCitizenGroup2Serializer),
     'adls': (Adl, AdlSerializer),
     'attachments': (Attachment, AttachmentPullSerializer),
+    # Forfait internet CVGP : campagnes diffusées à tous, lignes (bénéficiaires) filtrées par
+    # utilisateur au pull (cf. `internet_credits.services.pull_visibility_filters`).
+    'internet_credit_campaigns': (InternetCreditCampaign, InternetCreditCampaignSyncSerializer),
+    'internet_credit_beneficiaries': (InternetCreditBeneficiary, InternetCreditBeneficiarySyncSerializer),
+}
+
+# Tables acceptées au push, mais PAS via le traitement générique `PushView._process_table` :
+# chaque enregistrement passe par une fonction métier dédiée (contrôle du rôle et du périmètre,
+# idempotence), qui renvoie les ids refusés au lieu de faire échouer tout le push.
+SYNC_VALIDATED_WRITABLE_MODELS = {
+    'internet_credit_confirmations': (InternetCreditConfirmation, InternetCreditConfirmationSyncSerializer),
+}
+VALIDATED_PUSH_HANDLERS = {
+    'internet_credit_confirmations': apply_confirmation_push,
 }
 
 # Domaine "budget participatif" (budgeting/models.py) : personnel à un facilitateur — jamais
@@ -82,7 +104,7 @@ SYNC_WRITABLE_MODELS = {
     **{name: (Model, Serializer) for name, (Model, Serializer, _owner) in SYNC_OWNED_MODELS.items()},
 }
 
-ALL_SYNCED_MODELS = {**SYNC_WRITABLE_MODELS, **SYNC_READONLY_MODELS}
+ALL_SYNCED_MODELS = {**SYNC_WRITABLE_MODELS, **SYNC_READONLY_MODELS, **SYNC_VALIDATED_WRITABLE_MODELS}
 OWNER_LOOKUPS = {name: owner for name, (_m, _s, owner) in SYNC_OWNED_MODELS.items()}
 
 PAGE_SIZE = 500
@@ -219,6 +241,17 @@ class PullView(APIView):
         # `None` signifie accès complet, sinon un `Q()` appliqué uniquement à la table `issues`
         # ci-dessous (cf. docstring de la classe, point 4).
         issue_visibility_q = _issue_visibility_filter(request.user)
+        # Filtre de visibilité par table (`None` = aucun filtre) : `issues` (point 4 ci-dessus)
+        # et les tables du forfait internet CVGP (lignes du membre CVGP / du périmètre FC-AC).
+        table_visibility_q = {'issues': issue_visibility_q, **pull_visibility_filters(request.user)}
+
+        # Tables à renvoyer intégralement plutôt qu'en diff incrémental (`full_tables`, cf.
+        # grm-frontend/src/database/sync.js) : tables créées par une migration de schéma
+        # WatermelonDB depuis le dernier pull (`migration.tables` — leurs lignes antérieures à
+        # `last_pulled_at` n'ont jamais été envoyées à cet appareil), ou tables filtrées par
+        # utilisateur que le mobile vient de vider parce qu'un autre compte s'y est connecté.
+        full_tables = {t for t in (request.GET.get('full_tables') or '').split(',') if t}
+        epoch = datetime.fromtimestamp(0, tz=dt_timezone.utc)
 
         changes = {}
         next_offsets = {}
@@ -228,7 +261,8 @@ class PullView(APIView):
             offset = offsets.get(table_name, 0)
             owner_lookup = OWNER_LOOKUPS.get(table_name)
             owner_filter = {owner_lookup: request.user} if owner_lookup else {}
-            is_issues_table = table_name == 'issues'
+            visibility_q = table_visibility_q.get(table_name)
+            table_since = epoch if table_name in full_tables else last_pulled_dt
 
             # Le client WatermelonDB est configuré avec `sendCreatedAsUpdated: true`
             # (grm-frontend/src/database/sync.js) : par convention documentée de la librairie
@@ -238,11 +272,11 @@ class PullView(APIView):
             # mais permanent (`[Sync] 'sendCreatedAsUpdated' option is enabled, and yet server
             # sends some records as 'created'`). On ne distingue donc plus create vs update ici.
             changed_qs = Model.objects.filter(
-                Q(created_at__gt=last_pulled_dt) | Q(updated_at__gt=last_pulled_dt),
+                Q(created_at__gt=table_since) | Q(updated_at__gt=table_since),
                 is_deleted=False, **owner_filter,
             )
-            if is_issues_table and issue_visibility_q is not None:
-                changed_qs = changed_qs.filter(issue_visibility_q)
+            if visibility_q is not None:
+                changed_qs = changed_qs.filter(visibility_q)
             changed_qs = changed_qs.order_by('updated_at', 'id')
 
             all_changed_ids = list(changed_qs.values_list('id', flat=True))
@@ -263,10 +297,10 @@ class PullView(APIView):
             # un rafraîchissement manuel. On calcule donc le tombstone de la même façon pour toutes
             # les tables synchronisées, écriture ou lecture seule.
             deleted_qs = Model.objects.filter(
-                updated_at__gt=last_pulled_dt, is_deleted=True, **owner_filter,
+                updated_at__gt=table_since, is_deleted=True, **owner_filter,
             )
-            if is_issues_table and issue_visibility_q is not None:
-                deleted_qs = deleted_qs.filter(issue_visibility_q)
+            if visibility_q is not None:
+                deleted_qs = deleted_qs.filter(visibility_q)
             deleted_qs = deleted_qs.order_by('updated_at', 'id')
             table_changes['deleted'] = list(deleted_qs.values_list('id', flat=True)) if offset == 0 else []
 
@@ -370,6 +404,16 @@ class PushView(APIView):
         except (ValidationError, DjangoValidationError, IntegrityError) as exc:
             return self._error_response(exc)
 
+        # Tables à validation métier dédiée (confirmations de forfait internet CVGP) : traitées
+        # après les autres, enregistrement par enregistrement. Un refus (hors périmètre, forfait
+        # supprimé entre-temps...) n'annule rien d'autre et ne fait pas échouer le push : l'id est
+        # renvoyé dans `rejected`, et le mobile retire cette ligne de sa base locale.
+        rejected = {}
+        for table_name, handler in VALIDATED_PUSH_HANDLERS.items():
+            table_rejected = handler(request.user, changes.get(table_name, {}))
+            if table_rejected:
+                rejected[table_name] = table_rejected
+
         _update_push_sync_log(request)
 
 
@@ -382,6 +426,8 @@ class PushView(APIView):
         except Exception as exc:
             pass
 
+        if rejected:
+            return Response({'rejected': rejected}, status=200)
         return Response(status=204)
 
     @staticmethod

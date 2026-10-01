@@ -69,6 +69,15 @@
                         <p>{% translate "GRM" %}</p>
                     </a>
                 </li>
+                {% if user.is_superuser or user|has_group:"Admin" or user|has_group:"InternetCreditManager" %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:internet_credits:list' %}"
+                       class="nav-link {% if active_level1 == 'internet_credits' %}active{% endif %}">
+                        <i class="nav-icon fas fa-wifi"></i>
+                        <p>{% translate "CVGP internet packages" %}</p>
+                    </a>
+                </li>
+                {% endif %}
                 {% if user.is_superuser or user|has_group:"Admin" %}
                 <li class="nav-item">
                     <a href="{% url 'dashboard:user_tracking:home' %}"

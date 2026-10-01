@@ -1,0 +1,45 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <style>
+        @page {
+            size: a4 landscape;
+            margin: 1.2cm 1.2cm 1.6cm 1.2cm;
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 1.2cm; width: 27.3cm; top: 20.1cm; height: 0.6cm;
+            }
+        }
+        {% include "internet_credits/pdf/_styles.html" %}
+    </style>
+</head>
+<body>
+<div id="footer_content" class="small muted">
+    Forfait internet CVGP — {{ campaign.month_label }} — généré le {{ generated_at|date:"d/m/Y H:i" }}
+    — page <pdf:pagenumber/> / <pdf:pagecount/>
+</div>
+
+<h1>Confirmation de réception du forfait internet — CVGP</h1>
+<p>
+    <span class="muted">Mois :</span> <b>{{ campaign.month_label }}</b>
+    &nbsp;&nbsp;&nbsp; <span class="muted">Date d'envoi :</span> {{ campaign.sent_date|date:"d/m/Y" }}
+    &nbsp;&nbsp;&nbsp; <span class="muted">Forfait :</span> {{ campaign.package_label }} — {{ campaign.amount_display }}
+    <br/>
+    <span class="muted">CVD :</span> <b>{{ stats.total }}</b>
+    &nbsp;&nbsp;&nbsp; <span class="muted">Confirmés par le membre CVGP :</span> <b class="ok">{{ stats.cvgp_confirmed }}</b>
+    &nbsp;&nbsp;&nbsp; <span class="muted">Non confirmés :</span> <b class="ko">{{ stats.cvgp_pending }}</b>
+    &nbsp;&nbsp;&nbsp; <span class="muted">Confirmés par le FC/AC :</span> <b>{{ stats.fc_confirmed }}</b>
+</p>
+
+<h2>1. CVD ayant confirmé la réception ({{ confirmed|length }})</h2>
+{% include "internet_credits/pdf/_lines.html" with lines=confirmed %}
+
+<h2>2. CVD n'ayant pas encore confirmé ({{ pending|length }})</h2>
+{% include "internet_credits/pdf/_lines.html" with lines=pending %}
+
+<div class="attestation">
+    <p>{{ attestation|linebreaksbr }}</p>
+    {% include "internet_credits/pdf/_signature_block.html" %}
+</div>
+</body>
+</html>

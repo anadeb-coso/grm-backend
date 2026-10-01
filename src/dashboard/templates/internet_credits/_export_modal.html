@@ -1,0 +1,56 @@
+{% load i18n %}
+<div class="modal fade ic-export-modal" id="{{ modal_id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <form method="post" action="{{ action|default:'' }}" class="modal-content ic-export-form" data-prefix="{{ form.prefix }}">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title"><b class="ic-export-title">{{ modal_title }}</b></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{% translate 'Close' %}"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="{{ form.text.id_for_label }}">{{ text_label }}</label>
+                    {{ form.text }}
+                    <small class="ic-hint d-block">{{ form.text.help_text }}</small>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label for="{{ form.place.id_for_label }}">{{ form.place.label }}</label>
+                        {{ form.place }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="{{ form.signatory_name.id_for_label }}">{{ form.signatory_name.label }}</label>
+                        {{ form.signatory_name }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="{{ form.signatory_title.id_for_label }}">{{ form.signatory_title.label }}</label>
+                        {{ form.signatory_title }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{{ form.signature_mode.label }}</label>
+                    {% for radio in form.signature_mode %}
+                        <div class="form-check">
+                            {{ radio.tag }}
+                            <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="ic-pad-wrapper" style="display: none;"
+                     data-empty-message="{% translate 'Please draw the signature before exporting.' %}">
+                    <canvas></canvas>
+                    <button type="button" class="btn btn-sm btn-ic-outline ic-pad-clear"><i class="fa fa-eraser"></i> {% translate "Clear" %}</button>
+                </div>
+                {{ form.drawn_signature }}
+                <div class="form-check mt-3">
+                    {{ form.remember }}
+                    <label class="form-check-label" for="{{ form.remember.id_for_label }}">{{ form.remember.label }}</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ic-outline" data-dismiss="modal">{% translate "Cancel" %}</button>
+                <button type="submit" class="btn btn-ic"><i class="fa fa-file-pdf"></i> {% translate "Generate the PDF" %}</button>
+            </div>
+        </form>
+    </div>
+</div>

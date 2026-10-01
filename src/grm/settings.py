@@ -59,6 +59,7 @@ CREATED_APPS = [
     'budgeting',
     'sync',
     'service_api',
+    'internet_credits',
 ]
 
 THIRD_PARTY_APPS = [
@@ -345,6 +346,7 @@ SIMPLE_JWT = {
     # 'REFRESH_TOKEN_LIFETIME': timedelta(days=3650),  # 10 ans
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
 }
 
 # Fichiers (upload d'attachments mobile, cf. sync/attachment_views.py)

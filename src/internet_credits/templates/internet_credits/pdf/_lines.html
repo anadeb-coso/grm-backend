@@ -1,0 +1,46 @@
+<table class="list" repeat="1">
+    <thead>
+    <tr>
+        <th style="width: 3%;">N°</th>
+        <th style="width: 15%;">CVD / villages</th>
+        <th style="width: 12%;">Membre CVGP</th>
+        <th style="width: 9%;">Téléphone</th>
+        <th style="width: 27%;">Confirmation du membre CVGP</th>
+        <th style="width: 11%;">Signature CVGP</th>
+        <th style="width: 13%;">Confirmation FC/AC</th>
+        <th style="width: 10%;">Signature FC/AC</th>
+    </tr>
+    </thead>
+    {% for line in lines %}
+        {% with b=line.beneficiary cvgp=line.cvgp fc=line.fc %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><b>{{ b.label }}</b>{% if b.show_village_names %}<br/><span class="small muted">{{ b.village_names }}</span>{% endif %}</td>
+            <td>{{ b.member_name }}</td>
+            <td>{{ b.phone_number }}</td>
+            <td>
+                {% if cvgp %}
+                    <span class="ok">Confirmé</span> le {{ cvgp.confirmed_at|date:"d/m/Y H:i" }}<br/>
+                    <span class="checked"><span class="box">[X]</span> {{ cvgp.message }}</span>
+                    {% if cvgp.description %}<br/><span class="small muted">{{ cvgp.description }}</span>{% endif %}
+                {% else %}
+                    <span class="ko">Non confirmé</span>
+                {% endif %}
+            </td>
+            <td>{% if cvgp and cvgp.signature %}<img src="{{ cvgp.signature }}" width="80"/>{% endif %}</td>
+            <td>
+                {% if fc %}
+                    <span class="ok">Confirmé</span><br/>{{ fc.confirmed_by_name }}<br/>
+                    <span class="small muted">le {{ fc.confirmed_at|date:"d/m/Y H:i" }}</span>
+                    {% if fc.description %}<br/><span class="small muted">{{ fc.description }}</span>{% endif %}
+                {% else %}
+                    <span class="ko">Non confirmé</span>
+                {% endif %}
+            </td>
+            <td>{% if fc and fc.signature %}<img src="{{ fc.signature }}" width="70"/>{% endif %}</td>
+        </tr>
+        {% endwith %}
+    {% empty %}
+        <tr><td colspan="8" class="muted">Aucun CVD.</td></tr>
+    {% endfor %}
+</table>

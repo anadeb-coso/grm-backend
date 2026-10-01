@@ -301,7 +301,7 @@
                                 <td align="left">{{ pilot_locality.name }}</td>
                                 <td align="left">{{ pilot_locality.get_villages_name }}</td>
 
-                                {% with pilot_locality.headquarters_village.id|getADL as adl_profile %}
+                                {% with pilot_locality.headquarters_village.id|getADL:"CVGPMembers" as adl_profile %}
                                     {% if adl_profile %}
                                         <td align="left">{{ adl_profile.representative.phone_number }}</td>
                                     {% else %}

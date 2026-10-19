@@ -13,8 +13,8 @@
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                {% if user.photo %}
-                    <img src="{{ user.photo }}" class="img-circle" alt="User Image"/>
+                {% if user.photo_url %}
+                    <img src="{{ user.photo_url }}" class="img-circle" alt="User Image"/>
                 {% else %}
                     <img src="{% static 'images/default-avatar.jpg' %}" class="img-circle" alt="User Image"/>
                 {% endif %}
@@ -123,6 +123,10 @@
                 <li class="nav-item" id="nav-profile">
                     <form action="{% url 'profile' %}" method="POST">
                         {% csrf_token %}
+                        {# `/profile/` n'est pas préfixé par la langue : on transmet celle de la page. #}
+                        {% get_current_language as CURRENT_LANGUAGE %}
+                        <input type="hidden" name="language" value="{{ CURRENT_LANGUAGE }}">
+
                         <button
                             class="nav-link">
                             <i class="nav-icon fa fa-user"></i>

@@ -2652,3 +2652,102 @@ msgid "%(counter)s CVD has already confirmed."
 msgid_plural "%(counter)s CVD have already confirmed."
 msgstr[0] "%(counter)s CVD a déjà confirmé."
 msgstr[1] "%(counter)s CVD ont déjà confirmé."
+
+# Notifications des commentaires (issue/notifications.py, cloche du dashboard)
+msgid "COSO GRM - New comment on an issue"
+msgstr "COSO MGP - Nouveau commentaire sur une plainte"
+
+msgid "Tracking code"
+msgstr "Code de suivi"
+
+msgid "Date of the issue"
+msgstr "Date de la plainte"
+
+msgid "Intake date"
+msgstr "Date d'enregistrement"
+
+msgid "Comment by"
+msgstr "Commentaire de"
+
+msgid "Send this comment by email"
+msgstr "Envoyer ce commentaire par email"
+
+msgid "Other email addresses to notify"
+msgstr "Autres adresses email à notifier"
+
+msgid "Separate addresses with commas"
+msgstr "Séparez les adresses par des virgules"
+
+msgid "Other accounts to notify"
+msgstr "Autres comptes à notifier"
+
+msgid "Unread issues"
+msgstr "Plaintes non lues"
+
+msgid "Issues with new comments"
+msgstr "Plaintes avec de nouveaux commentaires"
+
+msgid "Unpublished issues"
+msgstr "Plaintes non publiées"
+
+msgid "Not started"
+msgstr "Non démarrées"
+
+msgid "Unresolved"
+msgstr "Non résolues"
+
+msgid "See all issues"
+msgstr "Voir toutes les plaintes"
+
+msgid "%(counter)s notification"
+msgid_plural "%(counter)s notifications"
+msgstr[0] "%(counter)s notification"
+msgstr[1] "%(counter)s notifications"
+
+msgid "%(counter)s unread comment"
+msgid_plural "%(counter)s unread comments"
+msgstr[0] "%(counter)s commentaire non lu"
+msgstr[1] "%(counter)s commentaires non lus"
+
+# Destinataires des notifications email (admin Django, issue.models.NotificationRecipient)
+msgid "Safeguard specialists"
+msgstr "Spécialistes en sauvegardes"
+
+msgid "Safeguard specialist assistants"
+msgstr "Assistants des spécialistes en sauvegardes"
+
+msgid "Coordinators"
+msgstr "Coordonnateurs"
+
+msgid "Regional coordinators"
+msgstr "Coordonnateurs régionaux"
+
+msgid "Other specialists"
+msgstr "Autres spécialistes"
+
+msgid "Others"
+msgstr "Autres"
+
+msgid "list"
+msgstr "liste"
+
+msgid "role"
+msgstr "rôle"
+
+msgid "notification recipient"
+msgstr "destinataire des notifications"
+
+msgid "notification recipients"
+msgstr "destinataires des notifications"
+
+msgid "Activate the selected recipients"
+msgstr "Activer les destinataires sélectionnés"
+
+msgid "Deactivate the selected recipients"
+msgstr "Désactiver les destinataires sélectionnés"
+
+#: dashboard/templates/grm/issue_detail.html
+#: dashboard/templates/grm/new_issue_confirm.html
+#: dashboard/templates/grm/new_issue_details.html
+msgid "Do you really want to delete this attachment?"
+msgstr "Voulez-vous vraiment supprimer cette pièce jointe ?"

@@ -15,8 +15,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from budgeting.models import BpProject, BudgetAllocationEntry, Phase, Task
 from issue.models import (
     Adl, Attachment, Comment, EscalationLevel, EscalationReason, Issue, IssueAgeGroup,
-    IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueStatus,
-    IssueStatusStory, IssueType, Reason,
+    IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueNotification,
+    IssueStatus, IssueStatusStory, IssueType, Reason,
+)
+from issue.notifications import (
+    apply_notification_read_push, pull_visibility_filters as notification_pull_visibility_filters,
+    send_comment_notifications,
 )
 from internet_credits.models import (
     InternetCreditBeneficiary, InternetCreditCampaign, InternetCreditConfirmation,
@@ -32,7 +36,7 @@ from sync.serializers import (
     BudgetAllocationEntrySyncSerializer, CommentSyncSerializer, EscalationLevelSyncSerializer,
     EscalationReasonSyncSerializer, IssueAgeGroupSerializer, IssueCategorySerializer,
     IssueCitizenGroup1Serializer, IssueCitizenGroup2Serializer, IssueDepartmentSerializer,
-    IssueStatusStorySyncSerializer, IssueStatusSerializer, IssueSyncSerializer,
+    IssueNotificationSyncSerializer, IssueStatusStorySyncSerializer, IssueStatusSerializer, IssueSyncSerializer,
     IssueTypeSerializer, PhaseSyncSerializer, ReasonSyncSerializer, TaskSyncSerializer,
 )
 
@@ -83,9 +87,13 @@ SYNC_READONLY_MODELS = {
 # idempotence), qui renvoie les ids refusés au lieu de faire échouer tout le push.
 SYNC_VALIDATED_WRITABLE_MODELS = {
     'internet_credit_confirmations': (InternetCreditConfirmation, InternetCreditConfirmationSyncSerializer),
+    # Notifications de commentaire : filtrées sur le destinataire au pull, le mobile ne fait que
+    # les marquer comme lues (issue.notifications.apply_notification_read_push).
+    'issue_notifications': (IssueNotification, IssueNotificationSyncSerializer),
 }
 VALIDATED_PUSH_HANDLERS = {
     'internet_credit_confirmations': apply_confirmation_push,
+    'issue_notifications': apply_notification_read_push,
 }
 
 # Domaine "budget participatif" (budgeting/models.py) : personnel à un facilitateur — jamais
@@ -243,7 +251,11 @@ class PullView(APIView):
         issue_visibility_q = _issue_visibility_filter(request.user)
         # Filtre de visibilité par table (`None` = aucun filtre) : `issues` (point 4 ci-dessus)
         # et les tables du forfait internet CVGP (lignes du membre CVGP / du périmètre FC-AC).
-        table_visibility_q = {'issues': issue_visibility_q, **pull_visibility_filters(request.user)}
+        table_visibility_q = {
+            'issues': issue_visibility_q,
+            **pull_visibility_filters(request.user),
+            **notification_pull_visibility_filters(request.user),
+        }
 
         # Tables à renvoyer intégralement plutôt qu'en diff incrémental (`full_tables`, cf.
         # grm-frontend/src/database/sync.js) : tables créées par une migration de schéma
@@ -321,6 +333,12 @@ class PullView(APIView):
             send_a_new_issue_notification()
             send_issue_status_notifications()
         except Exception as exc:
+            pass
+        # Bloc séparé : un échec des tâches ci-dessus ne doit pas bloquer les notifications de
+        # commentaire (issue/notifications.py).
+        try:
+            send_comment_notifications()
+        except Exception:
             pass
         
         return Response({
@@ -424,6 +442,12 @@ class PushView(APIView):
             send_a_new_issue_notification()
             send_issue_status_notifications()
         except Exception as exc:
+            pass
+        # Bloc séparé : un échec des tâches ci-dessus ne doit pas bloquer les notifications de
+        # commentaire (issue/notifications.py).
+        try:
+            send_comment_notifications()
+        except Exception:
             pass
 
         if rejected:

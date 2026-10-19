@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django import forms
 from django.core.exceptions import ValidationError
 import django.contrib.auth.password_validation as validators

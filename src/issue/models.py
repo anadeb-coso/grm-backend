@@ -297,6 +297,126 @@ class Comment(TimestampedSyncModel):
     comment = models.TextField()
     due_at = models.DateTimeField()
 
+    # Commentaire saisi par un utilisateur dans la zone « Commentaires » (web ou mobile), par
+    # opposition à ceux générés automatiquement par les actions (acceptée, résolue, escaladée...),
+    # déjà notifiées par email : seuls les premiers déclenchent les notifications de commentaire
+    # (issue/notifications.py).
+    is_user_comment = models.BooleanField(default=False)
+    # Case « Envoyer par email » (cochée par défaut dans les formulaires) : sans elle, seules les
+    # notifications dans l'application (mobile, cloche web) sont créées.
+    send_email = models.BooleanField(default=False)
+    # Destinataires ajoutés à la main par l'auteur, en plus des membres notifiés d'office.
+    notify_emails = models.JSONField(default=list, blank=True)
+    notify_user_ids = models.JSONField(default=list, blank=True)
+    # Anti-doublon : renseigné dès que les notifications de ce commentaire ont été traitées.
+    notifications_processed_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def notify_emails_value(self):
+        return safe_json_value(self.notify_emails) or []
+
+    @property
+    def notify_user_ids_value(self):
+        return safe_json_value(self.notify_user_ids) or []
+
+
+class IssueNotification(TimestampedSyncModel):
+    """Notification « nouveau commentaire » adressée à un compte : une ligne par destinataire et
+    par commentaire (issue/notifications.py). Synchronisée vers le mobile, filtrée sur le
+    destinataire, qui ne peut qu'y renseigner `read_at` (sync/views.py)."""
+    KIND_COMMENT = 'comment'
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='issue_notifications',
+    )
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='notifications')
+    comment = models.ForeignKey(
+        Comment, null=True, blank=True, on_delete=models.CASCADE, related_name='notifications',
+    )
+    kind = models.CharField(max_length=20, default=KIND_COMMENT)
+    read_at = models.DateTimeField(null=True, blank=True)
+    # Copies prises au moment de la notification : affichables même quand l'issue n'est pas dans
+    # le périmètre synchronisé du destinataire (compte ajouté à la main par l'auteur).
+    issue_code = models.CharField(max_length=100, blank=True, null=True)
+    comment_text = models.TextField(blank=True, null=True)
+    author_name = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['recipient', 'comment'], name='unique_issue_notification_per_comment'),
+        ]
+        indexes = [models.Index(fields=['recipient', 'read_at'])]
+
+
+class IssueReadState(models.Model):
+    """Dernière ouverture d'une issue par un compte sur le dashboard web (cloche : issues non
+    lues)."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='issue_read_states')
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='read_states')
+    last_read_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'issue'], name='unique_issue_read_state'),
+        ]
+
+
+class NotificationRecipient(models.Model):
+    """Destinataire des notifications email des issues (listes de l'équipe MGP), modifiable dans
+    l'admin Django. Remplace les listes autrefois codées en dur dans grm/constants.py ; lu par
+    issue/notification_recipients.py::recipient_emails."""
+    GROUP_SAFEGUARD_SPECIALISTS = 'safeguard_specialists'
+    GROUP_SAFEGUARD_ASSISTANTS = 'safeguard_assistants'
+    GROUP_COORDINATORS = 'coordinators'
+    GROUP_REGIONAL_COORDINATORS = 'regional_coordinators'
+    GROUP_OTHER_SPECIALISTS = 'other_specialists'
+    GROUP_ANADEB = 'anadeb'
+    GROUP_OTHERS = 'others'
+    GROUP_CHOICES = (
+        (GROUP_SAFEGUARD_SPECIALISTS, _('Safeguard specialists')),
+        (GROUP_SAFEGUARD_ASSISTANTS, _('Safeguard specialist assistants')),
+        (GROUP_COORDINATORS, _('Coordinators')),
+        (GROUP_REGIONAL_COORDINATORS, _('Regional coordinators')),
+        (GROUP_OTHER_SPECIALISTS, _('Other specialists')),
+        (GROUP_ANADEB, _('ANADEB')),
+        (GROUP_OTHERS, _('Others')),
+    )
+
+    email = models.EmailField(verbose_name=_('email address'))
+    name = models.CharField(max_length=255, blank=True, verbose_name=_('name'))
+    group = models.CharField(max_length=40, choices=GROUP_CHOICES, verbose_name=_('list'))
+    role = models.CharField(max_length=100, blank=True, verbose_name=_('role'))
+    is_active = models.BooleanField(default=True, verbose_name=_('active'))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('notification recipient')
+        verbose_name_plural = _('notification recipients')
+        ordering = ('group', 'email')
+        constraints = [
+            models.UniqueConstraint(fields=['group', 'email'], name='unique_notification_recipient_per_group'),
+        ]
+
+    def clean(self):
+        # Avant la vérification d'unicité de l'admin : « A@x.org » et « a@x.org » sont la même adresse.
+        self.email = (self.email or '').strip().lower()
+
+    def save(self, *args, **kwargs):
+        self.email = (self.email or '').strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.email} ({self.get_group_display()})'
+
+
+class NotificationBaseline(models.Model):
+    """Point de départ du suivi « non lu » d'un compte, posé à sa première consultation de la
+    cloche : seules les issues créées ou modifiées après comptent comme non lues (sinon tout
+    l'historique existant apparaîtrait non lu à la mise en service)."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notification_baseline')
+    since = models.DateTimeField()
+
 
 class IssueStatusStory(TimestampedSyncModel):
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='issue_status_stories')

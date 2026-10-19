@@ -35,13 +35,14 @@ from grm.utils import (
     get_child_administrative_regions_using_mis, get_parent_administrative_level_using_mis,
     cryptography_fernet_encrypt, cryptography_fernet_decrypt,
 )
-from dashboard.grm.functions import send_assignee_notification_by_mail
+from dashboard.grm.functions import get_notifications_bell_summary, send_assignee_notification_by_mail
 from dashboard.tasks import (
     check_issues, send_sms_message, escalate_issues, send_a_new_issue_notification,
     send_issue_status_notifications,
 )
 from authentication.permissions import AdminPermissionRequiredMixin
 from privacy.functions import get_last_category_password, get_all_privacy_passwords
+from issue.notifications import clean_emails, clean_user_ids, mark_issue_read, send_comment_notifications
 from issue.models import (
     Issue, IssueAgeGroup, IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment,
     IssueStatus, IssueType, Wave,
@@ -63,6 +64,11 @@ def _get_issue_department(department_id):
     issue/models.py::IssueCategory) — remplace l'ancienne requête Mango
     `grm_db.get_query_result({"id": department_id, "type": "issue_department"})`."""
     return IssueDepartment.objects.filter(legacy_id=department_id).first()
+
+
+def _is_issue_assignee(doc, user):
+    assignee = doc.get('assignee') if doc else None
+    return isinstance(assignee, dict) and assignee.get('id') == user.id
 
 
 class IssueCommentsContextMixin:
@@ -234,6 +240,10 @@ class IssueMixin:
         permission_to_edit = False
         if user.groups.filter(name="Admin").exists():
             permission_to_edit = True
+        elif _is_issue_assignee(self.doc, user):
+            # L'assigné traite l'issue sur le web comme sur le mobile (commentaires, décisions,
+            # preuves), même sans profil d'agent ni village dans son périmètre administratif.
+            permission_to_edit = True
         elif hasattr(user, 'governmentworker') and self.doc and "administrative_region" in self.doc and "administrative_id" in self.doc["administrative_region"]:
             parents_id = user.governmentworker.all_administrative_ids
             descendants = []
@@ -255,6 +265,17 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
     submit_button = _('Upload')
     permissions = ('read',)
 
+    def check_permissions(self):
+        super().check_permissions()
+        if not self.has_permission or not self.doc.get('confirmed'):
+            return
+        # Preuves d'une issue enregistrée : réservées à l'assigné, et aux administrateurs qui en
+        # avaient déjà la possibilité (les brouillons du formulaire de saisie web restent ouverts
+        # à leur auteur, cf. StartNewIssueView).
+        user = self.request.user
+        if not (_is_issue_assignee(self.doc, user) or user.groups.filter(name="Admin").exists()):
+            self.has_permission = False
+
     def form_valid(self, form):
         data = form.cleaned_data
         attachments = self.doc['attachments'] if 'attachments' in self.doc else list()
@@ -263,11 +284,14 @@ class UploadIssueAttachmentFormView(IssueMixin, AJAXRequestMixin, ModalFormMixin
         reasons = self.doc['reasons'] if 'reasons' in self.doc else list()
 
         if len(attachments) < self.max_attachments or reason:
-            issue_password_file = data['issue_password_file'] or self.request.session["issue_password"]
+            # `issue_password` n'est en session qu'après l'assistant d'enregistrement d'une plainte
+            # (NewIssueMixin.set_details_fields) : KeyError -> erreur 500 depuis le détail d'une plainte.
+            issue_password_file = data['issue_password_file'] or self.request.session.get("issue_password")
             file = data['file']
             _ok = True
             
-            category_id = int(data['category_id'] if 'category_id' in data and data['category_id'] else (self.doc['category']["id"] if 'category' in self.doc and isinstance(self.doc['category'], dict) else 0))
+            # `or 0` : catégorie sans `legacy_id` (créée depuis l'admin) -> `id` None, TypeError -> 500.
+            category_id = int((data['category_id'] if 'category_id' in data and data['category_id'] else (self.doc['category']["id"] if 'category' in self.doc and isinstance(self.doc['category'], dict) else 0)) or 0)
             
             if ((category_id in (4, 7)) or not self.doc.get('category')) and issue_password_file:
                 last_category_password = get_last_category_password(category_id)
@@ -333,7 +357,7 @@ class IssueAttachmentDecryptView(IssueMixin, ModalFormMixin, LoginRequiredMixin,
     def get(self, request, *args, **kwargs):
         self.specific_permissions()
 
-        password = request.GET.get('password') or self.request.session["issue_password"]
+        password = request.GET.get('password') or self.request.session.get("issue_password")
 
         if not password:
             raise Http404
@@ -952,12 +976,21 @@ class IssueDetailsFormView(PageMixin, IssueMixin, IssueCommentsContextMixin, Log
             auto_increment_id=kwargs['issue'],
         )
 
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        # Après le contrôle d'accès (get_context_data) : l'issue et ses notifications de
+        # commentaire sont désormais lues pour la cloche.
+        mark_issue_read(request.user, self.doc.issue)
+        return response
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.request.user.id
         user = self.request.user
 
-        if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
+        if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists() or _is_issue_assignee(self.doc, user):
+            # L'assigné doit pouvoir traiter son issue sur le web même avant sa publication,
+            # comme il le fait déjà sur le mobile.
             pass
         else:
             if not self.doc.get('publish'):
@@ -1099,7 +1132,13 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
                         pass
                     self.doc.add_reason(subject='comment', comment=comment, user=request.user)
                 else:
-                    self.doc.add_comment(comment, user=request.user)
+                    record = self.doc.add_comment(
+                        comment, user=request.user, is_user_comment=True,
+                        send_email=request.POST.get('send_email') in ('on', 'true', 'True', '1'),
+                        notify_emails=clean_emails(request.POST.get('notify_emails', '')),
+                        notify_user_ids=clean_user_ids(request.POST.getlist('notify_users')),
+                    )
+                    send_comment_notifications([record.pk])
                 msg = _("The comment was sent successfully.")
                 messages.add_message(self.request, messages.SUCCESS, msg, extra_tags='success')
         else:
@@ -1472,6 +1511,16 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
 
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)
+
+
+class NotificationsBellView(LoginRequiredMixin, generic.View):
+    """Cloche de la barre du haut (layouts/navbar.html) : nombre à afficher sur la pastille et
+    contenu du menu déroulant, rechargés périodiquement par layouts/foot.html."""
+
+    def get(self, request, *args, **kwargs):
+        summary = get_notifications_bell_summary(request)
+        html = render(request, 'grm/notifications_bell.html', {'summary': summary}).content.decode('utf-8')
+        return JsonResponse({'count': summary['badge_count'], 'html': html})
 
 
 class GetChoicesForNextAdministrativeLevelView(AJAXRequestMixin, LoginRequiredMixin, JSONResponseMixin, generic.View):

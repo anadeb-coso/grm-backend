@@ -20,6 +20,7 @@ urlpatterns = [
     path('new-issue-step-5/<int:issue>/', views.NewIssueConfirmFormView.as_view(), name='new_issue_step_5'),
     path('new-issue-step-6/<int:issue>/', views.NewIssueConfirmationFormView.as_view(), name='new_issue_step_6'),
     path('review-issues', views.ReviewIssuesFormView.as_view(), name='review_issues'),
+    path('notifications-bell', views.NotificationsBellView.as_view(), name='notifications_bell'),
     path('issue-list', views.IssueListView.as_view(), name='issue_list'),
     path('issue-list/datatable', views.IssueListDatatableJsonView.as_view(), name='issue_list_datatable'),
     path('issue-detail/<int:issue>/', views.IssueDetailsFormView.as_view(), name='issue_detail'),

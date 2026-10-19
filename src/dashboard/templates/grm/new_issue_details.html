@@ -158,7 +158,11 @@
             }
         });
 
+        {% translate "Do you really want to delete this attachment?" as delete_attachment_question %}
         $(document).on('click', '.delete-attachment', function () {
+            if (!confirm("{{ delete_attachment_question|escapejs }}")) {
+                return;
+            }
             $.ajax({
                 url: $(this).data('url'),
                 type: 'POST'

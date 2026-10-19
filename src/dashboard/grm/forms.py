@@ -273,10 +273,21 @@ class IssueCommentForm(forms.Form):
         attrs={'rows': '3', 'placeholder': _('Add comment')}))
     issue_password_comment = forms.CharField(label='', max_length=7, min_length=7, required=False,
                                              widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
+    # Notifications du commentaire (issue/notifications.py) : les membres de l'issue sont notifiés
+    # d'office ; l'auteur peut ajouter des adresses et des comptes, et choisir l'envoi par email.
+    send_email = forms.BooleanField(label=_('Send this comment by email'), required=False, initial=True)
+    notify_emails = forms.CharField(
+        label=_('Other email addresses to notify'), required=False,
+        widget=forms.TextInput(attrs={'placeholder': _('Separate addresses with commas')}),
+    )
+    notify_users = forms.MultipleChoiceField(label=_('Other accounts to notify'), required=False, choices=())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['issue_password_comment'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
+        from django.contrib.auth import get_user_model
+        users = get_user_model().objects.filter(is_active=True).order_by('first_name', 'last_name', 'id')
+        self.fields['notify_users'].choices = [(user.id, user.name.strip() or user.email) for user in users]
 
 
 class IssueReasonCommentForm(forms.Form):

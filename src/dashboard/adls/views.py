@@ -352,7 +352,7 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
         if user is None:
             raise Http404
 
-        photo_url = user.photo.url if user.photo else ''
+        photo_url = user.photo_url
         if data['file']:
             user.photo = data['file']
             photo_url = None  # renseigné après save()
@@ -370,7 +370,7 @@ class EditAdlProfileFormView(ADLMixin, AJAXRequestMixin, ModalFormMixin, LoginRe
         user.save()
 
         if photo_url is None:
-            photo_url = user.photo.url if user.photo else ''
+            photo_url = user.photo_url
 
         # `Adl.representative_name` est un cache dénormalisé (utilisé côté sync mobile) — on le
         # garde synchronisé avec le nom réel de l'utilisateur.

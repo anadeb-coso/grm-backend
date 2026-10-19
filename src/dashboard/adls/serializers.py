@@ -21,7 +21,7 @@ def adl_to_legacy_dict(adl):
             'name': representative.name,
             'email': representative.email,
             'phone': representative.phone_number,
-            'photo': representative.photo.url if representative.photo else '',
+            'photo': representative.photo_url,
             'is_active': representative.is_active,
         } if representative else None),
     }

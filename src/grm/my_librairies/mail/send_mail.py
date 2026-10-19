@@ -13,13 +13,15 @@ def send_email(
             # "palerbo@gmail.com", #Evaluator
             # "gounsougleyename@yahoo.fr", "mass.zato36@gmail.com", #CDDSpecialist
             # "yiroko777@gmail.com", "kegbaof@gmail.com" #Safeguard
-        ]):
+        ],
+        bcc=None):
     
     try:
 
         if settings.DEBUG:
             to = [settings.RECIPIENT_EMAIL_DEFAULT]
             cc = [settings.RECIPIENT_EMAIL_DEFAULT]
+            bcc = []
             
         # to = ['adaboubvincent@gmail.com']
         # cc = []
@@ -36,7 +38,7 @@ def send_email(
 
         text_content = plaintext.render(datas)
         html_content = htmly.render(datas)
-        msg = EmailMultiAlternatives(subject, text_content, to=to, cc=cc)
+        msg = EmailMultiAlternatives(subject, text_content, to=to, cc=cc, bcc=bcc or [])
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 

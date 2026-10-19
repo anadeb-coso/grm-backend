@@ -173,7 +173,9 @@ class RestGetIssues(APIView):
                 )
             )
         else:
-            queryset = queryset.filter(publish=True)
+            # Même règle que dashboard.grm.functions.build_issue_queryset : les issues assignées à
+            # l'utilisateur restent visibles même non publiées.
+            queryset = queryset.filter(Q(publish=True) | Q(assignee_id=user.id))
 
         if start_date:
             start_date_dt = datetime.strptime(start_date, '%d/%m/%Y')

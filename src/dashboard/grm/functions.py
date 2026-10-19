@@ -8,11 +8,8 @@ from sys import platform
 
 from grm.utils import datetime_str
 from grm.my_librairies.mail.send_mail import send_email
-from grm.constants import (
-    SAFEGUARD_SPECIALIST_EMAILS, OTHER_SPECIALISTS_MAILS, ANADEB_EMAILS,
-    OTHERS_EMAILS, ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS, COORDINATORS_EMAILS,
-    REGIONAL_COORDINATORS_EMAILS
-)
+from issue.models import NotificationRecipient
+from issue.notification_recipients import recipient_emails
 from dashboard.grm import CHOICE_EMAIL
 from administrativelevels.models import AdministrativeLevel
 from grm.my_librairies.functions import strip_accents
@@ -99,7 +96,9 @@ def build_issue_queryset(request):
             )
         )
     else:
-        queryset = queryset.filter(publish=True)
+        # Les issues assignées à l'utilisateur restent visibles même non publiées : il doit
+        # pouvoir les traiter sur le web comme sur le mobile.
+        queryset = queryset.filter(Q(publish=True) | Q(assignee_id=user.id))
 
     if start_date or wave_object:
         if start_date:
@@ -147,6 +146,83 @@ def build_issue_queryset(request):
 
     return queryset, wave_administrative_ids
 
+
+BELL_CACHE_SECONDS = 60
+BELL_LIST_SIZE = 5
+PUBLISHER_GROUPS = ('Admin', 'Safeguard')
+
+
+def get_notifications_bell_summary(request):
+    """Contenu de la cloche du dashboard pour `request.user`, sur son périmètre (mêmes issues que la
+    page « Review Issues », `build_issue_queryset` sans filtre) :
+    - issues non lues : créées ou modifiées (changement de statut) depuis sa dernière ouverture,
+      et après le début de son suivi (`NotificationBaseline`, posé à sa première consultation) ;
+    - issues avec de nouveaux commentaires : ses notifications de commentaire non lues ;
+    - issues non publiées, pour les comptes autorisés à publier ;
+    - nombre d'issues non démarrées, en cours et non résolues.
+    Mis en cache par utilisateur (invalidé à la lecture d'une issue et à chaque notification)."""
+    from django.core.cache import cache
+    from django.db.models import Count, F, Max, OuterRef, Subquery
+    from django.db.models.functions import Coalesce, Greatest
+    from django.utils import timezone
+
+    from issue.models import IssueNotification, IssueReadState, IssueStatusStory, NotificationBaseline
+    from issue.notifications import bell_cache_key
+
+    user = request.user
+    cached = cache.get(bell_cache_key(user.id))
+    if cached is not None:
+        return cached
+
+    perimeter, _ = build_issue_queryset(request)
+    perimeter = perimeter.select_related(None).prefetch_related(None).order_by()
+    since = NotificationBaseline.objects.get_or_create(user=user, defaults={'since': timezone.now()})[0].since
+
+    last_read = IssueReadState.objects.filter(user=user, issue=OuterRef('pk')).values('last_read_at')[:1]
+    last_status_change = IssueStatusStory.objects.filter(
+        issue=OuterRef('pk'), is_deleted=False,
+    ).order_by('-created_at').values('created_at')[:1]
+    unread = perimeter.annotate(
+        last_read=Subquery(last_read), last_status_change=Subquery(last_status_change),
+    ).annotate(
+        activity=Greatest('created_at', Coalesce('last_status_change', 'created_at')),
+    ).filter(activity__gt=since).filter(Q(last_read__isnull=True) | Q(activity__gt=F('last_read')))
+
+    unread_comments = IssueNotification.objects.filter(
+        recipient=user, read_at__isnull=True, is_deleted=False, issue__is_deleted=False,
+    )
+
+    counts = perimeter.aggregate(
+        not_started=Count('pk', filter=Q(status__initial_status=True)),
+        in_progress=Count('pk', filter=Q(
+            status__isnull=False, status__initial_status=False, status__final_status=False,
+            status__rejected_status=False, status__unresolved_status=False,
+        )),
+        unresolved=Count('pk', filter=Q(status__unresolved_status=True)),
+        unpublished=Count('pk', filter=Q(publish=False)),
+    )
+    can_publish = user.groups.filter(name__in=PUBLISHER_GROUPS).exists()
+
+    summary = {
+        'unread_count': unread.count(),
+        'unread_issues': list(
+            unread.order_by('-activity').values('auto_increment_id', 'internal_code', 'activity')[:BELL_LIST_SIZE]
+        ),
+        'commented_count': unread_comments.values('issue').distinct().count(),
+        'commented_issues': list(
+            unread_comments.values('issue__auto_increment_id', 'issue_code')
+            .annotate(unread=Count('id'), last=Max('created_at')).order_by('-last')[:BELL_LIST_SIZE]
+        ),
+        'can_publish': can_publish,
+        'unpublished_count': counts['unpublished'] if can_publish else 0,
+        'not_started_count': counts['not_started'],
+        'in_progress_count': counts['in_progress'],
+        'unresolved_count': counts['unresolved'],
+    }
+    summary['badge_count'] = summary['unread_count'] + summary['commented_count'] + summary['unpublished_count']
+    cache.set(bell_cache_key(user.id), summary, BELL_CACHE_SECONDS)
+    return summary
+
 def get_issue_status_stories(user, doc, status):
     issue_status_stories = doc["issue_status_stories"] if doc.get("issue_status_stories") else []
     
@@ -164,6 +240,28 @@ def get_issue_status_stories(user, doc, status):
     return issue_status_stories
 
 
+# Listes de l'équipe MGP (admin Django, issue.models.NotificationRecipient), lues à chaque envoi.
+def _safeguard_specialist_emails():
+    return recipient_emails(NotificationRecipient.GROUP_SAFEGUARD_SPECIALISTS)
+
+
+def _team_email_cc():
+    """Copie des emails de nouvelle issue, d'escalade et de changement de statut."""
+    return recipient_emails(
+        NotificationRecipient.GROUP_COORDINATORS, NotificationRecipient.GROUP_REGIONAL_COORDINATORS,
+        NotificationRecipient.GROUP_SAFEGUARD_ASSISTANTS, NotificationRecipient.GROUP_OTHER_SPECIALISTS,
+        NotificationRecipient.GROUP_ANADEB, NotificationRecipient.GROUP_OTHERS,
+    )
+
+
+def _assignment_team_email_cc():
+    """Copie de l'email d'assignation."""
+    return recipient_emails(
+        NotificationRecipient.GROUP_REGIONAL_COORDINATORS, NotificationRecipient.GROUP_SAFEGUARD_ASSISTANTS,
+        NotificationRecipient.GROUP_OTHERS,
+    )
+
+
 def _citizen_email_cc(issue):
     """Le plaignant n'est mis en copie des notifications email d'une issue que s'il a choisi
     l'email comme moyen de contact lors de l'enregistrement (`contact_information.type ==
@@ -174,6 +272,20 @@ def _citizen_email_cc(issue):
         if contact:
             return [contact]
     return []
+
+
+def _village_actors_email_cc(issue):
+    """Acteurs de terrain qui interviennent directement dans le village de l'issue (membres CVD,
+    FC/AC, FT, SZ), mis en copie de toutes les notifications email de l'issue, comme les
+    notifications de commentaire (issue/notifications.py::village_actor_ids)."""
+    from issue.notifications import village_actor_emails
+
+    region = issue.get('administrative_region') or {}
+    village_id = region.get('administrative_id') if isinstance(region, dict) else region
+    try:
+        return village_actor_emails(village_id)
+    except Exception:
+        return []
 
 
 def send_notification_by_mail(issue):
@@ -200,8 +312,8 @@ def send_notification_by_mail(issue):
                 "url": f"{settings.GRM_URL_BASE}/grm/issue-detail/{issue['auto_increment_id']}/",
                 'current_year': datetime.now().year,
             },
-            SAFEGUARD_SPECIALIST_EMAILS,
-            cc= COORDINATORS_EMAILS + REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALISTS_MAILS + ANADEB_EMAILS + OTHERS_EMAILS + _citizen_email_cc(issue)
+            _safeguard_specialist_emails(),
+            cc=_team_email_cc() + _citizen_email_cc(issue) + _village_actors_email_cc(issue)
         )
     except:
         return None
@@ -229,8 +341,8 @@ def send_notification_on_escalation_by_mail(issue):
                 "url": f"{settings.GRM_URL_BASE}/grm/issue-detail/{issue['auto_increment_id']}/",
                 'current_year': datetime.now().year,
             },
-            SAFEGUARD_SPECIALIST_EMAILS,
-            cc= COORDINATORS_EMAILS + REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALISTS_MAILS + ANADEB_EMAILS + OTHERS_EMAILS + _citizen_email_cc(issue)
+            _safeguard_specialist_emails(),
+            cc=_team_email_cc() + _citizen_email_cc(issue) + _village_actors_email_cc(issue)
         )
     except:
         return None
@@ -265,7 +377,7 @@ def send_assignee_notification_by_mail(issue, user):
                 'current_year': datetime.now().year,
             },
             [user.email],
-            cc=REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHERS_EMAILS + _citizen_email_cc(issue)
+            cc=_assignment_team_email_cc() + _citizen_email_cc(issue) + _village_actors_email_cc(issue)
         )
     except:
         return None
@@ -308,8 +420,8 @@ def send_issue_status_update_notification_by_mail(issue, kind, story_comment=Non
                 "url": f"{settings.GRM_URL_BASE}/grm/issue-detail/{issue['auto_increment_id']}/",
                 'current_year': datetime.now().year,
             },
-            SAFEGUARD_SPECIALIST_EMAILS,
-            cc=COORDINATORS_EMAILS + REGIONAL_COORDINATORS_EMAILS + ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS + OTHER_SPECIALISTS_MAILS + ANADEB_EMAILS + OTHERS_EMAILS + _citizen_email_cc(issue)
+            _safeguard_specialist_emails(),
+            cc=_team_email_cc() + _citizen_email_cc(issue) + _village_actors_email_cc(issue)
         )
     except:
         return None

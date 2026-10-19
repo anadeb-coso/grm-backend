@@ -9,42 +9,8 @@ ISSUES_CATEGORY = (
 )
 
 
-SAFEGUARD_SPECIALIST_EMAILS = [
-    # "yiroko777@gmail.com", 
-    "kegbaof@gmail.com",
-    # "adaboubvincent@gmail.com"
-    "gtchilingatolbert@yahoo.fr",
-]
-
-ASSISTANTS_SAFEGUARD_SPECIALIST_EMAILS = [
-    # "badassan13@gmail.com", 
-    "ourorachid2013@gmail.com", 
-    # "estherdjallo@gmail.com", 
-    "aholouvitt@gmail.com"
-]
-
-COORDINATORS_EMAILS = [
-    "dametouglet@hotmail.com", "tdametougle@gmail.com"
-]
-
-REGIONAL_COORDINATORS_EMAILS = [
-    "nikabouolivier2017@gmail.com", 
-    "ayassouhola@gmail.com", 
-    # "moukeram@yahoo.fr"
-]
-
-OTHER_SPECIALISTS_MAILS = [
-    "palerbo@gmail.com", #Evaluator
-    "gounsougleyename@yahoo.fr", "mass.zato36@gmail.com" #CDDSpecialist
-]
-
-ANADEB_EMAILS = [
-    
-]
-
-OTHERS_EMAILS = [
-    "sig.anadeb@gmail.com", "cosotogosig@gmail.com"
-]
+# Les listes de destinataires des notifications email (spécialistes sauvegarde, coordinateurs...)
+# sont gérées dans l'admin Django : issue.models.NotificationRecipient.
 
 COUNTRY_NAME = 'TOGO'
 COUNTRY_CODE = 'TG'

@@ -1,0 +1,55 @@
+{% load i18n %}
+<span class="dropdown-item dropdown-header">
+    {% blocktranslate count counter=summary.badge_count %}{{ counter }} notification{% plural %}{{ counter }} notifications{% endblocktranslate %}
+</span>
+
+<div class="dropdown-divider"></div>
+<span class="dropdown-item text-bold">
+    <i class="fas fa-envelope mr-2 text-primary"></i> {% translate 'Unread issues' %}
+    <span class="float-right badge {% if summary.unread_count %}badge-danger{% else %}badge-light{% endif %}">{{ summary.unread_count }}</span>
+</span>
+{% for issue in summary.unread_issues %}
+    <a href="{% url 'dashboard:grm:issue_detail' issue.auto_increment_id %}" class="dropdown-item pl-5 fs13">
+        {{ issue.internal_code }}
+        <span class="float-right text-muted text-sm">{{ issue.activity|timesince }}</span>
+    </a>
+{% endfor %}
+
+<div class="dropdown-divider"></div>
+<span class="dropdown-item text-bold">
+    <i class="fas fa-comments mr-2 text-primary"></i> {% translate 'Issues with new comments' %}
+    <span class="float-right badge {% if summary.commented_count %}badge-danger{% else %}badge-light{% endif %}">{{ summary.commented_count }}</span>
+</span>
+{% for issue in summary.commented_issues %}
+    <a href="{% url 'dashboard:grm:issue_detail' issue.issue__auto_increment_id %}" class="dropdown-item pl-5 fs13">
+        {{ issue.issue_code }}
+        <span class="float-right text-muted text-sm">
+            {% blocktranslate count counter=issue.unread %}{{ counter }} unread comment{% plural %}{{ counter }} unread comments{% endblocktranslate %}
+        </span>
+    </a>
+{% endfor %}
+
+{% if summary.can_publish %}
+    <div class="dropdown-divider"></div>
+    <a href="{% url 'dashboard:grm:review_issues' %}" class="dropdown-item text-bold">
+        <i class="fas fa-eye-slash mr-2 text-warning"></i> {% translate 'Unpublished issues' %}
+        <span class="float-right badge {% if summary.unpublished_count %}badge-warning{% else %}badge-light{% endif %}">{{ summary.unpublished_count }}</span>
+    </a>
+{% endif %}
+
+<div class="dropdown-divider"></div>
+<a href="{% url 'dashboard:grm:review_issues' %}" class="dropdown-item">
+    <i class="fas fa-hourglass-start mr-2 text-secondary"></i> {% translate 'Not started' %}
+    <span class="float-right text-muted">{{ summary.not_started_count }}</span>
+</a>
+<a href="{% url 'dashboard:grm:review_issues' %}" class="dropdown-item">
+    <i class="fas fa-spinner mr-2 text-info"></i> {% translate 'In progress' %}
+    <span class="float-right text-muted">{{ summary.in_progress_count }}</span>
+</a>
+<a href="{% url 'dashboard:grm:review_issues' %}" class="dropdown-item">
+    <i class="fas fa-exclamation-triangle mr-2 text-danger"></i> {% translate 'Unresolved' %}
+    <span class="float-right text-muted">{{ summary.unresolved_count }}</span>
+</a>
+
+<div class="dropdown-divider"></div>
+<a href="{% url 'dashboard:grm:review_issues' %}" class="dropdown-item dropdown-footer">{% translate 'See all issues' %}</a>

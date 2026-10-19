@@ -796,7 +796,11 @@
                 '<i class="fas fa-chevron-circle-down text-primary" style="margin-top:12px;"></i>');
         });
 
+        {% translate "Do you really want to delete this attachment?" as delete_attachment_question %}
         $(document).on('click', '.delete-attachment', function () {
+            if (!confirm("{{ delete_attachment_question|escapejs }}")) {
+                return;
+            }
             $.ajax({
                 url: $(this).data('url'),
                 type: 'POST'
@@ -846,15 +850,24 @@
                 $.ajax({
                     type: "POST",
                     url: "{% url 'dashboard:grm:add_comment_to_issue' doc.auto_increment_id %}",
+                    // `traditional` : `notify_users` envoyé en paramètres répétés (getlist côté Django).
+                    traditional: true,
                     data: {
                         "comment": comment.val(),
                         issue_password_comment: $('#id_issue_password_comment').val(),
+                        send_email: $('#id_send_email').is(':checked') ? 'on' : '',
+                        notify_emails: $('#id_notify_emails').val() || '',
+                        notify_users: $('#id_notify_users').val() || [],
                     },
                     success: function (response) {
                         showPopupMessage(response.msg);
                         loadComments();
                         comment.val('');
-                        
+                        if (!response.comment) {
+                            $('#id_notify_emails').val('');
+                            $('#id_notify_users').val(null).trigger('change');
+                        }
+
                         if(response.comment){
                             comment.val(response.comment);
                         }else{

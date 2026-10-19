@@ -46,7 +46,12 @@ def profile(request):
             scheme = request.scheme
             domain = request.get_host()
             full_url = f"{scheme}://{domain}"
-            language = get_language()
+            # Langue de la page d'où vient la demande (champ du formulaire, layouts/sidebar.html) :
+            # `/profile/` n'est pas préfixé par la langue, `get_language()` suit donc le cookie ou
+            # l'`Accept-Language` du navigateur — page Profil en anglais depuis une page en français.
+            language = request.POST.get('language')
+            if language not in dict(settings.LANGUAGES):
+                language = get_language()
 
             previous_url = request.headers.get('Referer', full_url)
 

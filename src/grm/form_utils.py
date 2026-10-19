@@ -1,5 +1,5 @@
 from django.core.validators import RegexValidator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 _password_regex = r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$'
 password_regex = RegexValidator(

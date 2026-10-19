@@ -1,4 +1,6 @@
 import os
+import re
+from urllib.parse import urlparse
 
 # import cryptocode
 # from hashlib import scrypt
@@ -47,7 +49,29 @@ class User(AbstractUser):
     @property
     def name(self):
         return f'{self.first_name} {self.last_name}'
-    
+
+    @property
+    def photo_url(self):
+        """URL affichable de la photo, ou '' (les pages affichent alors l'avatar par défaut).
+
+        Les comptes repris des anciennes bases portent souvent une URL complète à la place d'un
+        nom de fichier : l'image factice `https://via.placeholder.com/150` (service fermé), voire
+        l'URL S3 de cette adresse, tronquée à 100 caractères (`https://cddfiles.s3.amazonaws.com/
+        https%3A/via.placeholder.com/150?AWSAccessKeyId=…`). `{{ user.photo }}` (nom brut) et
+        `photo.url` (stockage S3 appliqué à une URL) donnaient alors une image cassée."""
+        name = self.photo.name if self.photo else ''
+        if not name:
+            return ''
+        if name.startswith(('http://', 'https://')):
+            parsed = urlparse(name)
+            if 'placeholder.com' in parsed.netloc or re.search(r'https?(%3A|:)/', parsed.path):
+                return ''
+            return name
+        try:
+            return self.photo.url
+        except Exception:
+            return ''
+
     @property
     def administrative_level(self):
         if self and hasattr(self, 'governmentworker'):

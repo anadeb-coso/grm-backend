@@ -1,10 +1,13 @@
-amqp==5.0.7
+# setuptools fixé : fournit `pkg_resources`, importé par drf-yasg, gunicorn, simplejwt... et absent
+# du venv de la plateforme EB "Python 3.11 / Amazon Linux 2023" (même version que CDD/SIG).
+setuptools==65.5.0
+amqp==5.2.0
 appdirs==1.4.4
-asgiref==3.4.1
+asgiref==3.8.1
 attrs==20.3.0
 beautifulsoup4==4.9.3
 billiard==3.6.4.0
-celery==5.2.1
+celery==5.2.7
 certifi==2020.12.5
 cffi==1.15.1
 cfgv==3.2.0
@@ -20,23 +23,23 @@ cron-descriptor==1.2.35
 # cryptocode
 distlib==0.3.1
 dj-database-url==0.5.0
-Django==3.2
-django-bootstrap4==2.3.1
+Django==4.1.13
+django-bootstrap4==22.2
 django-celery-results==2.2.0
-django-celery-beat==2.2.1
+django-celery-beat==2.5.0
 django-environ==0.4.5
 django-storages==1.13.1
-django-timezone-field==4.2.3
-djangorestframework==3.12.2
+django-timezone-field==7.2.1
+djangorestframework==3.14.0
 djangorestframework-simplejwt==4.8.0
-drf-yasg==1.20.0
+drf-yasg==1.21.7
 factory-boy==3.2.0
 Faker==5.4.0
 filelock==3.0.12
 flake8==3.8.4
-gevent==21.12.0
-greenlet==1.1.2
-gunicorn==20.0.4
+gevent==24.2.1
+greenlet==3.0.3
+gunicorn==20.1.0
 identify==1.5.12
 idna==2.10
 importlib-metadata==2.1.1
@@ -44,36 +47,36 @@ inflection==0.5.1
 iniconfig==1.1.1
 itypes==1.2.0
 Jinja2==2.11.2
-kombu==5.2.2
+kombu==5.4.0
 MarkupSafe==1.1.1
 mccabe==0.6.1
 mysqlclient==2.1.1
 nodeenv==1.5.0
-packaging==20.8
+packaging==24.1
 parameterized==0.8.1
 Pillow
 pluggy==0.13.1
 pre-commit==2.9.3
 prompt-toolkit==3.0.24
 psycopg2-binary
-py==1.10.0
+py==1.11.0
 pycodestyle==2.6.0
 pycparser==2.21
 pycryptodomex==3.15.0
 pyflakes==2.2.0
 PyJWT==2.3.0
 pyparsing==2.4.7
-pytest==6.2.1
-pytest-django==4.1.0
+pytest==7.4.4
+pytest-django==4.7.0
 python-crontab==3.3.0
-python-dateutil==2.8.1
-pytz==2020.4
-PyYAML==5.3.1
+python-dateutil==2.9.0.post0
+pytz==2024.1
+PyYAML==6.0.1
 requests==2.25.1
 ruamel.yaml
 ruamel.yaml.clib
 shortuuid==1.0.1
-six==1.15.0
+six==1.16.0
 soupsieve==2.1
 sqlparse==0.4.1
 text-unidecode==1.3
@@ -83,19 +86,20 @@ typing-extensions==3.7.4.3
 tzdata==2024.1
 uritemplate==3.0.1
 urllib3==1.26.2
-vine==5.0.0
+vine==5.1.0
 virtualenv==20.3.0
 wcwidth==0.2.5
 zipp==3.4.0
 zope.event==4.5.0
-zope.interface==5.4.0
+zope.interface==6.4.post2
 cryptography==41.0.1
 # python-magic-bin==0.4.14 #for developpment
 python-magic #for production
 s3transfer==0.6.0
 boto3==1.24.61
-pandas==1.3.5
-openpyxl==3.0.10 #openpyxl==3.1.2
+pandas==2.2.2
+numpy==2.1.0
+openpyxl==3.1.0 #openpyxl==3.1.2
 redis==5.0.2
 django-cors-headers==3.10.0
 # PDF (forfaits internet CVGP, internet_credits/exports.py). pyhanko/pyhanko-certvalidator

@@ -9,8 +9,8 @@
         </li>
         <li class="nav-item d-none d-sm-inline-block">
             <div class="image">
-                {% if user.photo %}
-                    <img src="{{ user.photo }}" class="img-circle" alt="User Image"/>
+                {% if user.photo_url %}
+                    <img src="{{ user.photo_url }}" class="img-circle" alt="User Image"/>
                 {% else %}
                     <img src="{% static 'images/default-avatar.jpg' %}" class="img-circle" alt="User Image"/>
                 {% endif %}
@@ -38,27 +38,19 @@
         {% if OTHER_LANGUAGES %}
             {% include 'layouts/language_dropdown.html' %}
         {% endif %}
-{% comment %}         <li class="nav-item dropdown white-shaded-nav-item mr-3">
-            <a class="nav-link" data-toggle="dropdown" href="#">
+        {% if user.is_authenticated %}
+        {# Cloche des notifications MGP : contenu chargé et rafraîchi par layouts/foot.html. #}
+        <li class="nav-item dropdown white-shaded-nav-item mr-3" id="notifications-bell"
+            data-url="{% url 'dashboard:grm:notifications_bell' %}">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="{% translate 'Notifications' %}">
                 <i class="far fa-bell align-bottom"></i>
-                <span class="badge badge-primary navbar-badge-point">&nbsp;</span>
+                <span class="badge badge-danger navbar-badge" id="notifications-bell-count" style="display: none;"></span>
             </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                <span class="dropdown-item dropdown-header">5 Notifications</span>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-envelope mr-2"></i> 2 new messages
-                    <span class="float-right text-muted text-sm">3 mins</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-file mr-2"></i> 3 new reports
-                    <span class="float-right text-muted text-sm">2 days</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" id="notifications-bell-menu">
+                <span class="dropdown-item dropdown-header">{% translate 'Notifications' %}</span>
             </div>
-        </li> {% endcomment %}
+        </li>
+        {% endif %}
         <li class="nav-item white-shaded-nav-item">
             <a class="nav-link" href="{% url 'dashboard:authentication:logout' %}" title="{% translate 'Logout' %}"
                role="button">

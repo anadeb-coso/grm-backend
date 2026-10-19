@@ -1,11 +1,13 @@
+import json
+
 from rest_framework import serializers
 
 from administrativelevels.models import AdministrativeLevel
 from budgeting.models import BpProject, BudgetAllocationEntry, Phase, Task
 from issue.models import (
     Adl, Attachment, Comment, EscalationLevel, EscalationReason, Issue, IssueAgeGroup,
-    IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueStatus,
-    IssueStatusStory, IssueType, Reason,
+    IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueNotification,
+    IssueStatus, IssueStatusStory, IssueType, Reason,
 )
 
 # ---------------------------------------------------------------------------
@@ -35,9 +37,39 @@ class IssueSyncSerializer(serializers.ModelSerializer):
 
 
 class CommentSyncSerializer(serializers.ModelSerializer):
+    # Listes de destinataires ajoutés à la main : stockées en chaîne JSON côté mobile (colonne
+    # `string` WatermelonDB), acceptées ici sous les deux formes.
+    JSON_LIST_FIELDS = ('notify_emails', 'notify_user_ids')
+
     class Meta:
         model = Comment
         fields = '__all__'
+        read_only_fields = ['notifications_processed_at']
+
+    def to_internal_value(self, data):
+        data = dict(data)
+        for field in self.JSON_LIST_FIELDS:
+            if field not in data:
+                continue
+            value = data[field]
+            if isinstance(value, str):
+                try:
+                    value = json.loads(value) if value.strip() else []
+                except ValueError:
+                    value = []
+            data[field] = value if isinstance(value, list) else []
+        return super().to_internal_value(data)
+
+
+class IssueNotificationSyncSerializer(serializers.ModelSerializer):
+    """Pull seul (filtré sur le destinataire) ; le mobile ne renvoie que `read_at`, traité par
+    issue.notifications.apply_notification_read_push."""
+    class Meta:
+        model = IssueNotification
+        fields = [
+            'id', 'recipient', 'issue', 'comment', 'kind', 'read_at', 'issue_code', 'comment_text',
+            'author_name', 'is_deleted', 'created_at', 'updated_at',
+        ]
 
 
 class IssueStatusStorySyncSerializer(serializers.ModelSerializer):

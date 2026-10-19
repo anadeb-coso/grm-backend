@@ -39,6 +39,17 @@ def _dt_str(value):
     return timezone.localtime(value, timezone.utc).strftime(_LEGACY_DATETIME_FORMAT) if timezone.is_aware(value) else value.strftime(_LEGACY_DATETIME_FORMAT)
 
 
+def _citizen_type_int(value):
+    """`Issue.citizen_type` est un CharField ('1', '2'...) alors que les documents CouchDB
+    portaient un entier, comparé tel quel par les templates (`doc.citizen_type == 1` : nom
+    confidentiel masqué à qui n'est pas assigné) et par `get_citizen_type_alt_display` (clés
+    entières de CITIZEN_TYPE_CHOICES_ALT) — avec la chaîne, le nom n'était jamais masqué."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 # Rang hiérarchique fixe (Canton -> Préfecture/Région (même palier) -> Pays, cf.
 # grm-frontend/src/screens/Home/IssueActions/containers/Content.js::get_next_administrative_level)
 # utilisé pour déterminer le niveau d'escalade COURANT, plutôt que `created_at` : sur les issues
@@ -208,7 +219,7 @@ def issue_to_legacy_dict(issue):
         'confirmed': issue.confirmed,
         'citizen': issue.citizen,
         'contact_medium': issue.contact_medium,
-        'citizen_type': issue.citizen_type,
+        'citizen_type': _citizen_type_int(issue.citizen_type),
         'citizen_group_1': {'id': None, 'name': issue.citizen_group_1} if issue.citizen_group_1 else '',
         'citizen_group_2': {'id': None, 'name': issue.citizen_group_2} if issue.citizen_group_2 else '',
         'citizen_or_group': issue.citizen_or_group,
@@ -398,15 +409,19 @@ class LegacyIssueDoc(dict):
 
     # --- Ajouts persistés immédiatement (remplacent liste.insert(0, x) + doc.save()) ----------
 
-    def add_comment(self, comment, user=None, due_at=None):
-        Comment.objects.create(
+    def add_comment(self, comment, user=None, due_at=None, **extra_fields):
+        """`extra_fields` : options de notification d'un commentaire écrit (`is_user_comment`,
+        `send_email`, `notify_emails`, `notify_user_ids`, cf. issue/models.py::Comment)."""
+        record = Comment.objects.create(
             issue=self.issue,
             author_id=user.id if user else None,
             author_name=user.name if user else None,
             comment=comment,
             due_at=due_at or timezone.now(),
+            **extra_fields,
         )
         self.refresh()
+        return record
 
     def add_reason(self, subject='reason', comment=None, user=None, due_at=None, attachment=None):
         record = Reason.objects.create(

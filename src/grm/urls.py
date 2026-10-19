@@ -28,6 +28,7 @@ from django.http import HttpResponse
 from . import views, upload_views
 from grm.my_librairies.download_file import download_file_view
 from sync.views import TokenBlacklistView
+from authentication.serializers import EmailTokenObtainPairSerializer
 
 handler400 = 'dashboard.authentication.views.handler400'
 handler403 = 'dashboard.authentication.views.handler403'
@@ -56,7 +57,8 @@ urlpatterns = [
 
     # Stack Postgres/WatermelonDB (CLAUDE.md Section A) : additive, ne touche pas aux
     # endpoints CouchDB existants ci-dessus.
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # E-mail accepté à la place du `username` (cf. EmailTokenObtainPairSerializer).
+    path('api/auth/token/', TokenObtainPairView.as_view(serializer_class=EmailTokenObtainPairSerializer), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
     path('api/', include('sync.urls')),

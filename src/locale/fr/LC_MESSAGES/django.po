@@ -2817,3 +2817,7 @@ msgstr "Se déconnecter"
 #: authentication/platform_tokens.py
 msgid "Your session has expired. Please log in again."
 msgstr "Votre session a expiré. Veuillez vous reconnecter."
+
+#: .uthentication\platform_tokens.py
+msgid "This account has no access to the MGP."
+msgstr "Ce compte n'a pas d'accès au MGP."

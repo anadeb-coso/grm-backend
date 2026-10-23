@@ -86,11 +86,19 @@ class PlatformTokenAuthentication(BaseAuthentication):
             return None
         if not is_platform_token(token):
             return None
-        user = user_from_token(token)
-        if user is None:
+        email = email_from_token(token)
+        if not email:
             raise exceptions.AuthenticationFailed({
                 'detail': _("Your session has expired. Please log in again."),
                 'token_invalid': True,
+            })
+        user = get_user_model().objects.filter(email__iexact=email, is_active=True).order_by('id').first()
+        if user is None:
+            # Jeton valable (session DCC ouverte), mais la personne n'a pas de compte actif sur le MGP : ce n'est pas
+            # une session expirée — le mobile ne doit pas redemander le mot de passe (cas des comptes de formation).
+            raise exceptions.PermissionDenied({
+                'detail': _("This account has no access to the MGP."),
+                'no_grm_account': True,
             })
         return user, None
 

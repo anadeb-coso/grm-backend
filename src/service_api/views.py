@@ -173,6 +173,104 @@ class AdlUpdateLocalitiesView(APIView):
         })
 
 
+FACILITATOR_GROUPS = {
+    'community_facilitator': 'CommunityFacilitator',
+    'technical_facilitator': 'TechnicalFacilitator',
+}
+
+
+class FacilitatorAccountView(APIView):
+    """Compte MGP d'un facilitateur créé dans le DCC (sens unique : le MGP ne crée jamais de facilitateur dans le
+    DCC).
+
+    `create: true` : crée le compte (e-mail, nom, téléphone, empreinte du mot de passe du DCC — un seul mot de
+    passe pour les deux plateformes, pas de code d'activation —, groupe CommunityFacilitator/TechnicalFacilitator,
+    profil d'agent et localités de stabilisation comme `adls/update-localities/`). Un compte de même e-mail
+    existant est laissé tel quel (`status: exists`).
+    `create: false` : reporte un nouvel e-mail, nom ou téléphone sur le compte trouvé par `previous_email` (404 s'il
+    n'existe pas)."""
+    permission_classes = [HasGrmServiceKey]
+
+    def post(self, request):
+        from django.contrib.auth.hashers import identify_hasher
+        from django.contrib.auth.models import Group
+        from django.db import transaction
+
+        data = request.data
+        email = (data.get('email') or '').strip()
+        if not email:
+            return Response({'detail': 'email is required'}, status=400)
+
+        if not data.get('create'):
+            previous = (data.get('previous_email') or email).strip()
+            user = User.objects.filter(email__iexact=previous).first()
+            if not user:
+                raise Http404
+            if User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
+                return Response({'detail': 'email already used'}, status=409)
+            user.email = email
+            user.first_name = data.get('first_name') or user.first_name
+            user.last_name = data.get('last_name') or user.last_name
+            user.phone_number = data.get('phone') or user.phone_number
+            user.save(update_fields=['email', 'first_name', 'last_name', 'phone_number'])
+            # `representative_name` : copie du nom lue par la synchronisation mobile ; `updated_at` explicitement listé
+            # (cf. authentication/utils.py::delete_adl_user_adl).
+            for adl in Adl.objects.filter(representative=user):
+                adl.representative_name = user.get_full_name()
+                adl.save(update_fields=['representative_name', 'updated_at'])
+            return Response({'status': 'updated', 'id': user.id})
+
+        existing = User.objects.filter(email__iexact=email).first()
+        if existing:
+            return Response({'status': 'exists', 'id': existing.id})
+
+        group_name = FACILITATOR_GROUPS.get(data.get('facilitator_type'))
+        if not group_name:
+            return Response({'detail': 'unknown facilitator_type'}, status=400)
+        password_hash = data.get('password_hash') or ''
+        try:
+            identify_hasher(password_hash)
+        except ValueError:
+            return Response({'detail': 'invalid password_hash'}, status=400)
+
+        with transaction.atomic():
+            user = User(
+                email=email, first_name=data.get('first_name') or '', last_name=data.get('last_name') or '',
+                phone_number=data.get('phone') or '', is_active=bool(data.get('is_active', True)),
+            )
+            user.password = password_hash  # même mot de passe que dans le DCC
+            user._skip_validation_code_mail = True  # identifiants déjà envoyés par le DCC
+            user.save()
+            user.groups.add(Group.objects.get_or_create(name=group_name)[0])
+
+        self._save_government_worker(user, data)
+        return Response({
+            'status': 'created', 'id': user.id,
+            'adl': Adl.objects.filter(representative=user, is_deleted=False).exists(),
+        })
+
+    @staticmethod
+    def _save_government_worker(user, data):
+        """Profil d'agent et localités : même enregistrement qu'`AdlUpdateLocalitiesView` (le signal `post_save`
+        met à jour l'`Adl` et renvoie les villages calculés au DCC)."""
+        from authentication.models import GovernmentWorker
+        from authentication.utils import expand_administrative_ids_with_cvd
+
+        administrative_id = data.get('administrative_id')
+        administrative_id = str(administrative_id) if administrative_id not in (None, '') else None
+        administrative_ids = [str(i) for i in (data.get('administrative_ids') or [])]
+        additional_administrative_ids = [str(i) for i in (data.get('additional_administrative_ids') or [])]
+
+        governmentworker = GovernmentWorker(user=user, department=1, administrative_id=administrative_id)
+        if administrative_id == "1":
+            governmentworker.administrative_ids = list()
+            governmentworker.additional_administrative_ids = list()
+        else:
+            governmentworker.administrative_ids = expand_administrative_ids_with_cvd(administrative_ids, administrative_id) if administrative_id or administrative_ids else list()
+            governmentworker.additional_administrative_ids = expand_administrative_ids_with_cvd(additional_administrative_ids)
+        governmentworker.save()
+
+
 class SetUserPasswordView(APIView):
     """Remplace la synchronisation de mot de passe CDD -> CouchDB `eadls`/MySQL legacy `grm`
     (usermanager/views_forget_password.py, usermanager/views_change_password.py) : CDD pousse ici
@@ -185,7 +283,7 @@ class SetUserPasswordView(APIView):
         new_password = request.data.get('new_password')
         if not email or not new_password:
             return Response({'detail': 'email and new_password are required'}, status=400)
-        user = User.objects.filter(email=email).first()
+        user = User.objects.filter(email=email).first() or User.objects.filter(email__iexact=email).first()
         if not user:
             raise Http404
         user.set_password(new_password)

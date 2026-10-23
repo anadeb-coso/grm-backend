@@ -64,7 +64,9 @@ def create_or_update_adl_user_adl(user, updated=False):
     tout juste créé : on envoie le code de validation par email, comme avant."""
     from issue.models import Adl
 
-    if not updated:
+    # Compte créé par le DCC (`_skip_validation_code_mail`, cf. service_api.views.FacilitatorAccountView) : il a
+    # déjà son mot de passe, envoyé par le DCC avec ses identifiants ; pas de code d'activation.
+    if not updated and not getattr(user, '_skip_validation_code_mail', False):
         send_code_by_mail(user, get_validation_code(user.email))  # Send user account code on their Email
 
     Adl.objects.get_or_create(

@@ -11,6 +11,7 @@ urlpatterns = [
     path('adls/villages-with-adls/', views.VillagesWithAdlsView.as_view(), name='villages-with-adls'),
     path('adls/update-localities/', views.AdlUpdateLocalitiesView.as_view(), name='adl-update-localities'),
     path('users/set-password/', views.SetUserPasswordView.as_view(), name='set-user-password'),
+    path('users/facilitator/', views.FacilitatorAccountView.as_view(), name='facilitator-account'),
     path('issue-categories/', views.IssueCategoryListView.as_view(), name='issue-categories'),
     path('issue-statuses/', views.IssueStatusListView.as_view(), name='issue-statuses'),
     path('issues/', views.IssueListView.as_view(), name='issues'),

@@ -11,6 +11,7 @@ urlpatterns = [
         template_name='authentication/login.html',
         redirect_authenticated_user=True), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('first-login-password/', views.FirstLoginPasswordView.as_view(), name='first_login_password'),
 
     path('register/', views.RegisterADLView.as_view(), name='register'),
     path('conform-code/<str:csrf_token>/<str:email>/<str:password>', views.ConfirmCodeADLView.as_view(), name='confirm_code')

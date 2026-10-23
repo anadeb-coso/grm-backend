@@ -2,12 +2,27 @@ import django.contrib.auth.password_validation as validators
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.exceptions import APIException
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from authentication.password_change import password_change_required
 from authentication.utils import get_validation_code
 from authentication.models import User
 from issue.models import Adl
+
+
+class PasswordChangeRequired(APIException):
+    """Mot de passe initial (compte créé dans le DCC) pas encore changé : ni jeton ni profil avant le changement
+    (écran dédié des applications mobiles, qui appelle le DCC). `code` permet au mobile de reconnaître le cas."""
+    status_code = status.HTTP_403_FORBIDDEN
+    default_code = 'password_change_required'
+
+    def __init__(self):
+        super().__init__({
+            'detail': _('You must change your password before your first login.'),
+            'code': self.default_code,
+        })
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -27,7 +42,10 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
             )
             if user is not None:
                 attrs[self.username_field] = user.username
-        return super().validate(attrs)
+        data = super().validate(attrs)
+        if password_change_required(self.user.email):
+            raise PasswordChangeRequired()
+        return data
 
 
 def _government_worker_administrative_id(user):
@@ -121,6 +139,9 @@ class UserAuthSerializer(serializers.Serializer):
         else:
             msg = _('Must include "email" and "password".')
             raise serializers.ValidationError(msg, code='authorization')
+
+        if password_change_required(user.email):
+            raise PasswordChangeRequired()
 
         attrs['doc_id'] = str(user.id)
         attrs['eadl'] = _facilitator_to_legacy_dict(user)

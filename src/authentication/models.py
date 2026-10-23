@@ -8,6 +8,7 @@ import shortuuid as uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.db.models import Count, Q
 
@@ -21,6 +22,7 @@ from authentication.utils import (create_or_update_adl_user_adl, delete_adl_user
 from administrativelevels.models import AdministrativeLevel
 from grm.call_objects_from_other_db import mis_objects_call
 from issue.models import Issue, Adl
+from authentication.password_change import remember_password_change_check
 
 def photo_path(instance, filename):
     filename, file_extension = os.path.splitext(filename)
@@ -500,5 +502,7 @@ pre_delete.connect(delete_user, sender=User)  # pre_delete : le cascade SET_NULL
                                                # doit encore pointer sur ce user au moment du lookup
                                                # (post_delete arriverait trop tard, cf. authentication/utils.py)
 post_save.connect(create_or_update_user, sender=User)
+# Mot de passe initial (compte créé dans le DCC) : vérifié à la connexion web, cf. authentication/password_change.py
+user_logged_in.connect(remember_password_change_check, dispatch_uid='grm_password_change_check')
 post_save.connect(set_user_government_worker, sender=GovernmentWorker)
 post_delete.connect(delete_user_government_worker, sender=GovernmentWorker)

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authentication.models import User
+from authentication.password_change import password_change_required
 from authentication.serializers import (
     ADLActiveResponseSerializer, CredentialSerializer, RegisterSerializer,
     UserAuthSerializer, _facilitator_to_legacy_dict
@@ -89,7 +90,10 @@ class MyProfileAPIView(generics.GenericAPIView):
         }
         credential_serializer = CredentialSerializer(data=credentials)
         credential_serializer.is_valid(raise_exception=True)
-        return Response(credential_serializer.data, status=status.HTTP_200_OK)
+        data = dict(credential_serializer.data)
+        # Session restaurée par le mobile : mot de passe initial (compte créé dans le DCC) encore à changer.
+        data['password_change_required'] = password_change_required(request.user.email)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class ADLActiveAPIView(generics.GenericAPIView):

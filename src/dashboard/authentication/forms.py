@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django import forms
 from django.core.exceptions import ValidationError
 import django.contrib.auth.password_validation as validators
@@ -178,3 +179,15 @@ class ConfirmCodeForm(forms.Form):
         user.save(update_fields=['password'])
 
         return self.cleaned_data
+
+
+class FirstLoginPasswordForm(forms.Form):
+    """Changement du mot de passe initial (compte créé dans le DCC) à la première connexion : fait par le DCC pour
+    toutes les plateformes (cf. authentication/password_change.py)."""
+    current_password = forms.CharField(label=gettext_lazy("Current password"), strip=False,
+                                       widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
+    new_password = forms.CharField(label=gettext_lazy("New password"), strip=False, max_length=16,
+                                   widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+                                   help_text=gettext_lazy("8 to 16 letters and digits, with at least one letter and one digit."))
+    new_password_confirm = forms.CharField(label=gettext_lazy("New password confirmation"), strip=False, max_length=16,
+                                           widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))

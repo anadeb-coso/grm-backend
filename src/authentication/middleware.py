@@ -57,3 +57,44 @@ class LastActivityMiddleware:
         except Exception:
             return None
         return result[0] if result else None
+
+
+class PasswordChangeRequiredMiddleware:
+    """Compte créé dans le DCC dont le mot de passe initial n'a été changé sur aucune plateforme : toute page du
+    dashboard renvoie vers le changement obligatoire (`dashboard:authentication:first_login_password`). Seul le
+    namespace `dashboard` est concerné : l'API mobile refuse elle-même le jeton (authentication/serializers.py).
+    Vérifié une fois par session. Doit suivre AuthenticationMiddleware."""
+
+    EXEMPT_VIEW_NAMES = {
+        'dashboard:authentication:first_login_password',
+        'dashboard:authentication:login',
+        'dashboard:authentication:logout',
+    }
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        from authentication.password_change import CHECKED_SESSION_KEY, password_change_required
+
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated or request.session.get(CHECKED_SESSION_KEY):
+            return None
+        match = request.resolver_match
+        if match is None or tuple(match.namespaces[:1]) != ('dashboard',) or match.view_name in self.EXEMPT_VIEW_NAMES:
+            return None
+        if not password_change_required(user.email):
+            request.session[CHECKED_SESSION_KEY] = True
+            return None
+
+        from django.http import JsonResponse
+        from django.shortcuts import redirect
+        from django.utils.translation import gettext
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'detail': gettext('You must change your password before your first login.'),
+                                 'code': 'password_change_required'}, status=403)
+        return redirect('dashboard:authentication:first_login_password')

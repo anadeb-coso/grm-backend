@@ -86,6 +86,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Mot de passe initial (compte créé dans le DCC) à changer à la première connexion.
+    'authentication.middleware.PasswordChangeRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'authentication.middleware.LastActivityMiddleware',
@@ -331,6 +333,8 @@ GRM_SECRET_KEY_GENRATE = env('GRM_SECRET_KEY_GENRATE')
 # ---------------------------------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # jeton de session du mobile DCC (délivré par le DCC, valable sur le DCC, le SIG et le MGP), avant les JWT
+        'authentication.platform_tokens.PlatformTokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',

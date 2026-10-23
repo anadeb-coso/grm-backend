@@ -2751,3 +2751,69 @@ msgstr "Désactiver les destinataires sélectionnés"
 #: dashboard/templates/grm/new_issue_details.html
 msgid "Do you really want to delete this attachment?"
 msgstr "Voulez-vous vraiment supprimer cette pièce jointe ?"
+
+#: .\authentication\middleware.py:98 .\authentication\serializers.py:23
+msgid "You must change your password before your first login."
+msgstr "Vous devez changer votre mot de passe avant votre première connexion."
+
+#: .\authentication\password_change.py:65
+msgid ""
+"The password could not be changed: the DCC platform cannot be reached. "
+"Please try again later."
+msgstr ""
+"Le mot de passe n'a pas pu être changé : la plateforme DCC est injoignable. "
+"Réessayez plus tard."
+
+#: .\authentication\password_change.py:69
+#, python-format
+msgid "The password could not be changed (error %(status)s)."
+msgstr "Le mot de passe n'a pas pu être changé (erreur %(status)s)."
+
+#: .\dashboard\authentication\forms.py:187
+msgid "Current password"
+msgstr "Mot de passe actuel"
+
+#: .\dashboard\authentication\forms.py:189
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+#: .\dashboard\authentication\forms.py:191
+msgid "8 to 16 letters and digits, with at least one letter and one digit."
+msgstr "8 à 16 lettres et chiffres, avec au moins une lettre et un chiffre."
+
+#: .\dashboard\authentication\forms.py:192
+msgid "New password confirmation"
+msgstr "Confirmation du nouveau mot de passe"
+
+#: .\dashboard\authentication\views.py:119
+msgid ""
+"Your password has been changed. It is now valid on all the platforms (DCC, "
+"MGP and SIG)."
+msgstr ""
+"Votre mot de passe a été changé. Il est désormais valable sur toutes les "
+"plateformes (DCC, MGP et SIG)."
+
+#: .\dashboard\templates\authentication\first_login_password.html:11
+msgid "Change your password"
+msgstr "Changez votre mot de passe"
+
+#: .\dashboard\templates\authentication\first_login_password.html:25
+msgid ""
+"Welcome! For your security, please choose your own password before going "
+"further. It will be valid on all the platforms (DCC, MGP and SIG)."
+msgstr ""
+"Bienvenue ! Pour votre sécurité, choisissez votre propre mot de passe avant "
+"d'aller plus loin. Il sera valable sur toutes les plateformes (DCC, MGP et "
+"SIG)."
+
+#: .\dashboard\templates\authentication\first_login_password.html:35
+msgid "Change my password"
+msgstr "Changer mon mot de passe"
+
+#: .\dashboard\templates\authentication\first_login_password.html:38
+msgid "Log out"
+msgstr "Se déconnecter"
+
+#: authentication/platform_tokens.py
+msgid "Your session has expired. Please log in again."
+msgstr "Votre session a expiré. Veuillez vous reconnecter."

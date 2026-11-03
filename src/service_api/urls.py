@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, views_account
 
 app_name = 'service_api'
 
@@ -10,6 +10,7 @@ urlpatterns = [
     path('adls/by-village/', views.AdlByVillageView.as_view(), name='adl-by-village'),
     path('adls/villages-with-adls/', views.VillagesWithAdlsView.as_view(), name='villages-with-adls'),
     path('adls/update-localities/', views.AdlUpdateLocalitiesView.as_view(), name='adl-update-localities'),
+    path('users/account/', views_account.UserAccountView.as_view(), name='user-account'),
     path('users/set-password/', views.SetUserPasswordView.as_view(), name='set-user-password'),
     path('users/facilitator/', views.FacilitatorAccountView.as_view(), name='facilitator-account'),
     path('issue-categories/', views.IssueCategoryListView.as_view(), name='issue-categories'),

@@ -2821,3 +2821,145 @@ msgstr "Votre session a expiré. Veuillez vous reconnecter."
 #: .uthentication\platform_tokens.py
 msgid "This account has no access to the MGP."
 msgstr "Ce compte n'a pas d'accès au MGP."
+
+#: profile
+msgid "Super administrator"
+msgstr "Super administrateur"
+
+#: profile
+msgid "Change password"
+msgstr "Changer le mot de passe"
+
+#: profile
+msgid "Personal information"
+msgstr "Informations personnelles"
+
+#: profile
+msgid "Full Name"
+msgstr "Nom complet"
+
+#: profile
+msgid "Sex"
+msgstr "Sexe"
+
+#: profile
+msgid "Female"
+msgstr "Femme"
+
+#: profile
+msgid "Male"
+msgstr "Homme"
+
+#: profile
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+#: profile
+msgid "Facilitator code"
+msgstr "Code facilitateur"
+
+#: profile
+msgid "Platform access"
+msgstr "Accès aux plateformes"
+
+#: profile
+msgid "Roles"
+msgstr "Rôles"
+
+#: profile
+msgid "No role assigned"
+msgstr "Aucun rôle attribué"
+
+#: profile
+msgid "Security"
+msgstr "Sécurité"
+
+#: profile
+msgid "The new password applies to all your accounts: DCC, MGP and SIG."
+msgstr "Le nouveau mot de passe s'applique à tous vos comptes : DCC, MGP et SIG."
+
+#: profile
+msgid "My projects"
+msgstr "Mes projets"
+
+#: profile
+msgid "Cycles"
+msgstr "Cycles"
+
+#: profile
+msgid "You are not assigned to any project yet."
+msgstr "Vous n'êtes encore affecté à aucun projet."
+
+#: profile
+msgid "Area of intervention"
+msgstr "Zone d'intervention"
+
+#: profile
+msgid "No locality assigned."
+msgstr "Aucune localité attribuée."
+
+#: profile
+msgid "Account"
+msgstr "Compte"
+
+#: profile
+msgid "Member since"
+msgstr "Membre depuis"
+
+#: profile
+msgid "Mobile mode"
+msgstr "Mode mobile"
+
+#: profile
+msgid "Test mode"
+msgstr "Mode test"
+
+#: profile
+msgid "Production"
+msgstr "Production"
+
+#: profile
+msgid "Note: If you have accounts on the CDD, GRM and/or MIS platforms, their passwords will also be changed."
+msgstr "Remarque : si vous avez des comptes sur les plateformes DCC, MGP et/ou SIG, leurs mots de passe seront aussi changés."
+
+#: profile
+msgid "Profile picture"
+msgstr "Photo de profil"
+
+#: profile
+msgid "The DCC platform cannot be reached at the moment."
+msgstr "La plateforme DCC est injoignable pour le moment."
+
+#: profile
+msgid "Community facilitator"
+msgstr "Animateur communautaire"
+
+#: profile
+msgid "Technical facilitator"
+msgstr "Animateur technique"
+
+#: profile
+msgid "Web DCC"
+msgstr "DCC web"
+
+#: profile
+msgid "Mobile DCC"
+msgstr "DCC mobile"
+
+#: profile
+msgid "SIG (COSOMIS)"
+msgstr "SIG (COSOMIS)"
+
+#: profile
+msgid "MGP (GRM)"
+msgstr "MGP (GRM)"
+
+#: profile
+msgid "The password has been changed on all the platforms."
+msgstr "Le mot de passe a été changé sur toutes les plateformes."
+
+#: profile
+msgid "%(counter)s village"
+msgid_plural "%(counter)s villages"
+msgstr[0] "%(counter)s village"
+msgstr[1] "%(counter)s villages"

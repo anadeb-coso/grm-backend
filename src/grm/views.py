@@ -4,6 +4,8 @@ from django.utils.translation import get_language
 from django.contrib.auth.decorators import login_required
 import requests
 from django.http import Http404
+from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
 
 from grm.functions import get_validation_code
 
@@ -39,60 +41,68 @@ def set_language(request):
 
 
 
+def _profile_language(request):
+    """`/profile/` is not prefixed by the language: the sidebar sends the page's one, kept for the password step."""
+    from django.utils import translation
+
+    language = request.GET.get('language') or request.POST.get('language') or request.session.get('profile_language')
+    if language in dict(settings.LANGUAGES):
+        request.session['profile_language'] = language
+        translation.activate(language)
+    return get_language()
+
+
 @login_required
 def profile(request):
+    """Profile page of the logged-in user, served by the MGP itself (same content as the DCC one). Opened with a
+    GET; a POST (old link) is redirected to the GET page."""
+    from django.shortcuts import redirect
+
+    from authentication.profile_service import build_profile_details
+    from dashboard.authentication.forms import FirstLoginPasswordForm
+
+    language = _profile_language(request)
     if request.method == 'POST':
-        try:
-            scheme = request.scheme
-            domain = request.get_host()
-            full_url = f"{scheme}://{domain}"
-            # Langue de la page d'où vient la demande (champ du formulaire, layouts/sidebar.html) :
-            # `/profile/` n'est pas préfixé par la langue, `get_language()` suit donc le cookie ou
-            # l'`Accept-Language` du navigateur — page Profil en anglais depuis une page en français.
-            language = request.POST.get('language')
-            if language not in dict(settings.LANGUAGES):
-                language = get_language()
-
-            previous_url = request.headers.get('Referer', full_url)
-
-            #Recuperation de Token
-            session = requests.Session()
-            response = session.get(f"{settings.CDD_URL_BASE}/authentication/get-csrf-token/")
-
-            if response.status_code == 200:
-                data = response.json()
-                token = data.get("csrfToken")
-            else:
-                raise Http404
-            
-            cookies = session.cookies.get_dict()
-            headers = {
-                "X-CSRFToken": token,
-                "Referer": f"{settings.CDD_URL_BASE}/",
-                "Origin": settings.CDD_URL_BASE
-            }
-            post_data = {
-                'email': request.user.email,
-                'code': get_validation_code(request.user.email),
-                'redirection_url': full_url,
-                'csrfmiddlewaretoken': token,
-                'language': language,
-                'previous_url': previous_url,
-            }
-            
-            response_post = session.post(f"{settings.CDD_URL_BASE}/{language}/user-manager/", headers=headers, cookies=cookies, data=post_data)
-
-            content = response_post.text\
-                .replace('/static/', f'{settings.CDD_URL_BASE}/static/')\
-                .replace(f'url: "/{language}/', f'url: "{settings.CDD_URL_BASE}/{language}/')\
-                .replace('action="/i18n/', f'action="{settings.CDD_URL_BASE}/i18n/')
+        return redirect(f"{request.path}?language={language}")
+    return render(request, 'profile.html', {
+        'title': _('Profile'),
+        'd': build_profile_details(request.user, language),
+        'password_form': FirstLoginPasswordForm(),
+        'open_password': request.GET.get('password') == '1',
+    })
 
 
-            return HttpResponse(content)
+@login_required
+def profile_change_password(request):
+    """New password for all the person's accounts (DCC, SIG, facilitator, MGP), applied by the DCC."""
+    from django.contrib import messages
+    from django.contrib.auth import get_user_model, update_session_auth_hash
+    from django.shortcuts import redirect
 
+    from authentication.password_change import CHECKED_SESSION_KEY
+    from authentication.profile_service import build_profile_details, change_password_on_all_platforms
+    from dashboard.authentication.forms import FirstLoginPasswordForm
 
-        except Exception as e:
-            print("Erreur :", e)
-            raise Http404
-        
-    raise Http404
+    if request.method != 'POST':
+        return redirect('profile')
+    _profile_language(request)
+    form = FirstLoginPasswordForm(request.POST)
+    if form.is_valid():
+        data = form.cleaned_data
+        ok, message = change_password_on_all_platforms(
+            request.user.email, data['current_password'], data['new_password'], data['new_password_confirm'],
+            language=get_language(),
+        )
+        if ok:
+            # The DCC has just written the new password on this MGP account: keep this session open.
+            update_session_auth_hash(request, get_user_model().objects.get(pk=request.user.pk))
+            request.session[CHECKED_SESSION_KEY] = True
+            messages.success(request, message or _("The password has been changed on all the platforms."))
+            return redirect('profile')
+        form.add_error(None, message)
+    return render(request, 'profile.html', {
+        'title': _('Profile'),
+        'd': build_profile_details(request.user, _profile_language(request)),
+        'password_form': form,
+        'open_password': True,
+    })

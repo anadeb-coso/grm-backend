@@ -121,18 +121,12 @@
                     }
                 </style>
                 <li class="nav-item" id="nav-profile">
-                    <form action="{% url 'profile' %}" method="POST">
-                        {% csrf_token %}
-                        {# `/profile/` n'est pas préfixé par la langue : on transmet celle de la page. #}
-                        {% get_current_language as CURRENT_LANGUAGE %}
-                        <input type="hidden" name="language" value="{{ CURRENT_LANGUAGE }}">
-
-                        <button
-                            class="nav-link">
-                            <i class="nav-icon fa fa-user"></i>
-                            <p>{% translate "Profile" %}</p>
-                        </button>
-                    </form>
+                    {# `/profile/` n'est pas préfixé par la langue : on transmet celle de la page. #}
+                    {% get_current_language as CURRENT_LANGUAGE %}
+                    <a href="{% url 'profile' %}?language={{ CURRENT_LANGUAGE }}" class="nav-link {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'profile_change_password' %}active{% endif %}">
+                        <i class="nav-icon fa fa-user"></i>
+                        <p>{% translate "Profile" %}</p>
+                    </a>
                 </li>
 
 

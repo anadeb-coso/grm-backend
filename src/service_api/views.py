@@ -188,7 +188,10 @@ class FacilitatorAccountView(APIView):
     profil d'agent et localités de stabilisation comme `adls/update-localities/`). Un compte de même e-mail
     existant est laissé tel quel (`status: exists`).
     `create: false` : reporte un nouvel e-mail, nom ou téléphone sur le compte trouvé par `previous_email` (404 s'il
-    n'existe pas)."""
+    n'existe pas).
+    `account_type: "user"` (création) : utilisateur du DCC non facilitateur ; `groups` = noms de ses groupes du DCC
+    (seuls ceux qui existent sur le MGP sont attribués) ; profil d'agent seulement si des localités d'intervention
+    sont transmises."""
     permission_classes = [HasGrmServiceKey]
 
     def post(self, request):
@@ -224,9 +227,15 @@ class FacilitatorAccountView(APIView):
         if existing:
             return Response({'status': 'exists', 'id': existing.id})
 
-        group_name = FACILITATOR_GROUPS.get(data.get('facilitator_type'))
-        if not group_name:
-            return Response({'detail': 'unknown facilitator_type'}, status=400)
+        is_user = data.get('account_type') == 'user'
+        if is_user:
+            # mêmes noms de groupes dans les deux plateformes ; ceux propres au DCC sont ignorés
+            groups = list(Group.objects.filter(name__in=[str(g) for g in (data.get('groups') or [])]))
+        else:
+            group_name = FACILITATOR_GROUPS.get(data.get('facilitator_type'))
+            if not group_name:
+                return Response({'detail': 'unknown facilitator_type'}, status=400)
+            groups = [Group.objects.get_or_create(name=group_name)[0]]
         password_hash = data.get('password_hash') or ''
         try:
             identify_hasher(password_hash)
@@ -241,9 +250,12 @@ class FacilitatorAccountView(APIView):
             user.password = password_hash  # même mot de passe que dans le DCC
             user._skip_validation_code_mail = True  # identifiants déjà envoyés par le DCC
             user.save()
-            user.groups.add(Group.objects.get_or_create(name=group_name)[0])
+            if groups:
+                user.groups.add(*groups)
 
-        self._save_government_worker(user, data)
+        # Utilisateur sans localités : pas de profil d'agent (son retour vers le DCC créerait une zone vide).
+        if not is_user or data.get('administrative_id') not in (None, '') or data.get('administrative_ids'):
+            self._save_government_worker(user, data)
         return Response({
             'status': 'created', 'id': user.id,
             'adl': Adl.objects.filter(representative=user, is_deleted=False).exists(),

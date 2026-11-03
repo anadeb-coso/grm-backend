@@ -43,6 +43,7 @@ urlpatterns = [
     path("health/", health),
     path('set-language/', views.set_language, name='set_language'),
     path('profile/', views.profile, name='profile'),
+    path('profile/change-password/', views.profile_change_password, name='profile_change_password'),
     # path('admin/', admin.site.urls),
     path('attachments/', include('attachments.urls')),
     path('authentication/', include('authentication.urls')),

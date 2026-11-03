@@ -22,6 +22,8 @@ from corsheaders.defaults import default_headers
 env = environ.Env()
 env.read_env()
 
+VERSION_CUSTOM = env('VERSION_CUSTOM', default='2026.11.02.2')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

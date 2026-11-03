@@ -1,0 +1,181 @@
+{% extends 'layouts/base.html' %}
+{% load static i18n %}
+
+{% block extracss %}
+<style>
+    :root { --pf-blue: #1a9e6e; --pf-blue-dark: #146c4b; --pf-blue-soft: #e3f6ee; --pf-text: #212529; --pf-muted: #495057; --pf-border: #e5e9ee; }
+    .pf-card { background: #fff; border-radius: 12px; border: 1px solid var(--pf-border); box-shadow: 0 2px 8px rgba(16, 24, 40, .05); margin-bottom: 20px; overflow: hidden; }
+    .pf-card-title { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 20px; font-size: 15px; font-weight: 700; color: var(--pf-text); border-bottom: 1px solid var(--pf-border); }
+    .pf-card-title i { color: var(--pf-blue); width: 18px; text-align: center; }
+    .pf-card-title .pf-count { margin-left: auto; background: var(--pf-blue-soft); color: var(--pf-blue-dark); border-radius: 999px; padding: 1px 10px; font-size: 12px; }
+    .pf-card-body { padding: 16px 20px; }
+    .pf-hero-banner { height: 110px; background: linear-gradient(120deg, #146c4b 0%, #1a9e6e 55%, #4cc79a 100%); }
+    .pf-hero-body { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px; padding: 0 24px 20px; margin-top: -56px; }
+    .pf-avatar { width: 120px; height: 120px; border-radius: 50%; border: 5px solid #fff; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .12); flex-shrink: 0; }
+    .pf-identity { flex: 1; min-width: 220px; padding-bottom: 4px; }
+    .pf-identity h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; color: var(--pf-text); }
+    .pf-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 600; background: var(--pf-blue-soft); color: var(--pf-blue-dark); margin: 2px 4px 2px 0; }
+    .pf-badge.pf-badge-strong { background: var(--pf-blue); color: #fff; }
+    .pf-badge.pf-badge-gray { background: #eef1f4; color: var(--pf-muted); }
+    .pf-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 600; background: var(--pf-blue); color: #fff; cursor: pointer; }
+    .pf-btn:hover { background: var(--pf-blue-dark); color: #fff; }
+    .pf-info { list-style: none; margin: 0; padding: 0; }
+    .pf-info li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--pf-border); }
+    .pf-info li:last-child { border-bottom: 0; }
+    .pf-info .pf-key { width: 42%; color: var(--pf-muted); display: flex; align-items: center; gap: 8px; }
+    .pf-info .pf-key i { width: 16px; text-align: center; color: var(--pf-blue); }
+    .pf-info .pf-value { flex: 1; font-weight: 600; word-break: break-word; color: var(--pf-text); }
+    .pf-platforms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pf-platform { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--pf-border); background: #fafbfc; color: #5a6268; }
+    .pf-platform i.pf-pi { font-size: 18px; width: 22px; text-align: center; }
+    .pf-platform.pf-on { background: var(--pf-blue-soft); border-color: #bfe8d6; color: var(--pf-blue-dark); font-weight: 600; }
+    .pf-platform .pf-state { margin-left: auto; font-size: 13px; }
+    .pf-projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .pf-project { border: 1px solid var(--pf-border); border-left: 4px solid var(--pf-blue); border-radius: 10px; padding: 14px; }
+    .pf-project h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px; color: var(--pf-text); }
+    .pf-project p { color: var(--pf-muted); margin: 0 0 8px; font-size: 13px; }
+    .pf-empty { color: var(--pf-muted); text-align: center; padding: 18px 0; }
+    .pf-empty i { display: block; font-size: 28px; color: #c3cad1; margin-bottom: 8px; }
+    @media (max-width: 575px) { .pf-hero-body { justify-content: center; text-align: center; } .pf-platforms { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with user_obj=d.user %}
+<div class="pf-card">
+    <div class="pf-hero-banner"></div>
+    <div class="pf-hero-body">
+        <img src="{% if d.gender %}{% static 'images/avatars/'|add:d.gender|add:'.svg' %}{% else %}{% static 'images/avatars/neutral.svg' %}{% endif %}" alt="{% translate 'Profile picture' %}" class="pf-avatar">
+        <div class="pf-identity">
+            <h1>{% if d.civility %}<span class="font-weight-normal">{{ d.civility }}</span> {% endif %}{{ d.full_name }}</h1>
+            <div class="mb-2"><i class="far fa-envelope mr-1"></i>{{ user_obj.email|default:"-" }}</div>
+            {% if d.facilitator_type %}<span class="pf-badge"><i class="fas fa-hands-helping"></i>{{ d.facilitator_type }}</span>{% endif %}
+            {% if user_obj.is_superuser %}<span class="pf-badge pf-badge-strong"><i class="fas fa-crown"></i>{% translate "Super administrator" %}</span>{% endif %}
+        </div>
+        <div class="pb-1">
+            <button type="button" class="pf-btn" data-toggle="modal" data-target="#modal-password"><i class="fas fa-key"></i> {% translate "Change password" %}</button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+<div class="col-lg-5">
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-id-card"></i>{% translate "Personal information" %}</h2>
+        <div class="pf-card-body"><ul class="pf-info">
+            <li><span class="pf-key"><i class="fas fa-user"></i>{% translate "Full Name" %}</span><span class="pf-value">{{ d.full_name }}</span></li>
+            {% if d.civility %}<li><span class="pf-key"><i class="fas fa-venus-mars"></i>{% translate "Sex" %}</span>
+                <span class="pf-value">{% if d.gender == 'female' %}{% translate "Female" %}{% elif d.gender == 'male' %}{% translate "Male" %}{% else %}{{ d.civility }}{% endif %}</span></li>{% endif %}
+            <li><span class="pf-key"><i class="fas fa-at"></i>{% translate "Email" %}</span><span class="pf-value">{{ user_obj.email|default:"-" }}</span></li>
+            <li><span class="pf-key"><i class="fas fa-phone"></i>{% translate "Phone" %}</span><span class="pf-value">{{ d.phone|default:"-" }}</span></li>
+            <li><span class="pf-key"><i class="fas fa-user-tag"></i>{% translate "Username" %}</span><span class="pf-value">{{ d.usernames|join:", "|default:"-" }}</span></li>
+            {% if d.facilitator %}<li><span class="pf-key"><i class="fas fa-barcode"></i>{% translate "Facilitator code" %}</span><span class="pf-value">{{ d.facilitator.code }}</span></li>{% endif %}
+        </ul></div>
+    </div>
+
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-th-large"></i>{% translate "Platform access" %}</h2>
+        <div class="pf-card-body"><div class="pf-platforms">
+            {% for p in d.platforms %}
+            <div class="pf-platform {% if p.active %}pf-on{% endif %}" {% if p.unknown %}title="{% translate 'The DCC platform cannot be reached at the moment.' %}"{% endif %}>
+                <i class="fas {{ p.icon }} pf-pi"></i><span>{{ p.name }}</span>
+                <span class="pf-state">{% if p.unknown %}<i class="fas fa-question-circle"></i>{% elif p.active %}<i class="fas fa-check-circle"></i>{% else %}<i class="far fa-circle"></i>{% endif %}</span>
+            </div>
+            {% endfor %}
+        </div></div>
+    </div>
+
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-users-cog"></i>{% translate "Roles" %}<span class="pf-count">{{ d.groups|length }}</span></h2>
+        <div class="pf-card-body">
+            {% for group in d.groups %}<span class="pf-badge">{% translate group %}</span>{% empty %}<span>{% translate "No role assigned" %}</span>{% endfor %}
+        </div>
+    </div>
+
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-shield-alt"></i>{% translate "Security" %}</h2>
+        <div class="pf-card-body">
+            <a href="#" class="d-flex align-items-center text-dark" data-toggle="modal" data-target="#modal-password" style="gap:14px">
+                <span class="pf-badge pf-badge-strong" style="width:42px;height:42px;justify-content:center;border-radius:10px"><i class="fas fa-lock"></i></span>
+                <span><b class="d-block">{% translate "Change password" %}</b>
+                    <small>{% translate "The new password applies to all your accounts: DCC, MGP and SIG." %}</small></span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-7">
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-project-diagram"></i>{% translate "My projects" %}<span class="pf-count">{{ d.projects|length }}</span></h2>
+        <div class="pf-card-body">
+            {% if d.projects %}<div class="pf-projects">
+                {% for project in d.projects %}<div class="pf-project">
+                    <h3>{{ project.name }}</h3>
+                    {% if project.parent %}<p><i class="fas fa-level-up-alt mr-1"></i>{{ project.parent }}</p>{% endif %}
+                    {% if project.description %}<p>{{ project.description|truncatechars:140 }}</p>{% endif %}
+                    {% for role in project.roles %}<span class="pf-badge pf-badge-strong">{{ role }}</span>{% endfor %}
+                    {% if project.cycles %}<div class="mt-2"><small class="d-block mb-1"><i class="fas fa-sync-alt mr-1"></i>{% translate "Cycles" %}</small>
+                        {% for cycle in project.cycles %}<span class="pf-badge pf-badge-gray">{{ cycle }}</span>{% endfor %}</div>{% endif %}
+                </div>{% endfor %}
+            </div>{% else %}<div class="pf-empty"><i class="far fa-folder-open"></i>{% translate "You are not assigned to any project yet." %}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-map-marker-alt"></i>{% translate "Area of intervention" %}</h2>
+        <div class="pf-card-body">
+            {% if d.zone and d.zone.labels %}
+                {% for label in d.zone.labels %}<span class="pf-badge"><i class="fas fa-map-pin"></i>{{ label }}</span>{% endfor %}
+                {% if d.zone.additional %}<div class="mt-2"><small class="d-block mb-1">{% translate "Villages" %}</small>
+                    {% for label in d.zone.additional %}<span class="pf-badge pf-badge-gray">{{ label }}</span>{% endfor %}</div>{% endif %}
+                {% if d.zone.villages %}<div class="mt-2"><i class="fas fa-home mr-1"></i>{% blocktranslate count counter=d.zone.villages %}{{ counter }} village{% plural %}{{ counter }} villages{% endblocktranslate %}</div>{% endif %}
+            {% else %}<div class="pf-empty"><i class="fas fa-map"></i>{% translate "No locality assigned." %}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="pf-card">
+        <h2 class="pf-card-title"><i class="fas fa-user-clock"></i>{% translate "Account" %}</h2>
+        <div class="pf-card-body"><ul class="pf-info">
+            <li><span class="pf-key"><i class="far fa-calendar-plus"></i>{% translate "Member since" %}</span><span class="pf-value">{{ user_obj.date_joined|date:"d/m/Y" }}</span></li>
+            <li><span class="pf-key"><i class="fas fa-sign-in-alt"></i>{% translate "Last login" %}</span><span class="pf-value">{{ user_obj.last_login|date:"d/m/Y H:i"|default:"-" }}</span></li>
+            <li><span class="pf-key"><i class="fas fa-toggle-on"></i>{% translate "Status" %}</span><span class="pf-value"><span class="pf-badge pf-badge-strong"><i class="fas fa-check"></i>{% translate "Active" %}</span></span></li>
+            {% if d.facilitator %}<li><span class="pf-key"><i class="fas fa-mobile-alt"></i>{% translate "Mobile mode" %}</span>
+                <span class="pf-value">{% if d.facilitator.training_mode %}{% translate "Test mode" %}{% else %}{% translate "Production" %}{% endif %}</span></li>{% endif %}
+        </ul></div>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="modal-password" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+        <form method="post" action="{% url 'profile_change_password' %}">{% csrf_token %}
+            {% get_current_language as CURRENT_LANGUAGE %}<input type="hidden" name="language" value="{{ CURRENT_LANGUAGE }}">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-key mr-1"></i>{% translate "Change password" %}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{% translate 'Close' %}"><span aria-hidden="true">&times;</span></button></div>
+            <div class="modal-body">
+                <div class="alert alert-info py-2 small">{% translate "Note: If you have accounts on the CDD, GRM and/or MIS platforms, their passwords will also be changed." %}</div>
+                {% for error in password_form.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+                {% for field in password_form %}
+                <div class="form-group mb-2">
+                    <label class="small font-weight-bold mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <input type="password" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-control" required
+                           autocomplete="{% if field.name == 'current_password' %}current-password{% else %}new-password{% endif %}" {% if field.field.max_length %}maxlength="{{ field.field.max_length }}"{% endif %}>
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% translate "Cancel" %}</button>
+                <button class="btn btn-primary"><i class="fas fa-save mr-1"></i>{% translate "Save" %}</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+{% if open_password %}<script>$(function () { $('#modal-password').modal('show'); });</script>{% endif %}
+{% endblock %}

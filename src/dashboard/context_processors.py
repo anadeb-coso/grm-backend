@@ -10,4 +10,6 @@ def settings_vars(request):
         "CDD_URL_BASE": settings.CDD_URL_BASE,
         "MIS_URL_BASE": settings.MIS_URL_BASE,
         "GRM_URL_BASE": settings.GRM_URL_BASE,
+
+        "VERSION_CUSTOM": settings.VERSION_CUSTOM,
     }

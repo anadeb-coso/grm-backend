@@ -16,7 +16,7 @@ from budgeting.models import BpProject, BudgetAllocationEntry, Phase, Task
 from issue.models import (
     Adl, Attachment, Comment, EscalationLevel, EscalationReason, Issue, IssueAgeGroup,
     IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueNotification,
-    IssueStatus, IssueStatusStory, IssueType, Reason,
+    IssueStatus, IssueStatusStory, IssueType, ProcessingDelay, Reason,
 )
 from issue.notifications import (
     apply_notification_read_push, pull_visibility_filters as notification_pull_visibility_filters,
@@ -37,7 +37,7 @@ from sync.serializers import (
     EscalationReasonSyncSerializer, IssueAgeGroupSerializer, IssueCategorySerializer,
     IssueCitizenGroup1Serializer, IssueCitizenGroup2Serializer, IssueDepartmentSerializer,
     IssueNotificationSyncSerializer, IssueStatusStorySyncSerializer, IssueStatusSerializer, IssueSyncSerializer,
-    IssueTypeSerializer, PhaseSyncSerializer, ReasonSyncSerializer, TaskSyncSerializer,
+    IssueTypeSerializer, PhaseSyncSerializer, ProcessingDelaySerializer, ReasonSyncSerializer, TaskSyncSerializer,
 )
 
 from dashboard.tasks import (
@@ -75,6 +75,8 @@ SYNC_READONLY_MODELS = {
     'issue_citizen_groups_1': (IssueCitizenGroup1, IssueCitizenGroup1Serializer),
     'issue_citizen_groups_2': (IssueCitizenGroup2, IssueCitizenGroup2Serializer),
     'adls': (Adl, AdlSerializer),
+    # Délais de traitement par niveau (calcul local des plaintes en retard, issue/deadlines.py).
+    'processing_delays': (ProcessingDelay, ProcessingDelaySerializer),
     'attachments': (Attachment, AttachmentPullSerializer),
     # Forfait internet CVGP : campagnes diffusées à tous, lignes (bénéficiaires) filtrées par
     # utilisateur au pull (cf. `internet_credits.services.pull_visibility_filters`).

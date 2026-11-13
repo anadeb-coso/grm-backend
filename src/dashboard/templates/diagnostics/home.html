@@ -86,6 +86,21 @@
             background-color: #fff;
             box-shadow: 0 0 0 3px rgba(36, 195, 139, .12);
         }
+        /* Filtres à choix multiple (MultipleDiagnosticsSearchForm) */
+        .issues-filter .select2-container--default .select2-selection--multiple {
+            min-height: 40px;
+            border-radius: 9px;
+            border: 1px solid var(--grm-line);
+            background-color: var(--grm-bg-soft);
+            font-size: 13px;
+        }
+        .issues-filter .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background: rgba(36, 195, 139, .12);
+            border: 1px solid rgba(36, 195, 139, .35);
+            color: var(--grm-ink);
+            border-radius: 999px;
+            margin-top: 6px;
+        }
         .issues-filter .input-group-text {
             border-radius: 9px 0 0 9px;
             border: 1px solid var(--grm-line);
@@ -344,13 +359,21 @@
                         </div>
                         <div class="col-lg-4 col-md-6 issues-filter border-left">
                             {% comment %} {% bootstrap_field form.type layout='horizontal' show_label=False %} {% endcomment %}
-                            {% bootstrap_field form.category layout='horizontal' show_label=False %}
-                            {% bootstrap_field form.wave layout='horizontal' show_label=False %}
+                            {% comment %} Filtres à choix multiple (MultipleDiagnosticsSearchForm, ids id_multi-*). {% endcomment %}
+                            {% bootstrap_field multi_form.category layout='horizontal' show_label=False %}
+                            {% bootstrap_field multi_form.wave layout='horizontal' show_label=False %}
                         </div>
                         <div class="col-lg-4 col-md-12 regions-filter border-left">
                             {% bootstrap_field form.administrative_region layout='horizontal' %}
                             {% bootstrap_field form.administrative_level_type layout='horizontal' %}
                         </div>
+                    </div>
+                    {% comment %} Anciens champs à choix unique (SearchIssueForm), masqués : gardés dans
+                       la page pour les scripts qui les liraient encore ; hors de .issues-filter,
+                       ils ne déclenchent pas de rechargement. {% endcomment %}
+                    <div class="d-none old-single-filters" aria-hidden="true">
+                        {% bootstrap_field form.category layout='horizontal' show_label=False %}
+                        {% bootstrap_field form.wave layout='horizontal' show_label=False %}
                     </div>
                     <div class="diag-filter-foot">
                         <span class="diag-total-chip">
@@ -536,6 +559,95 @@
                     </div>
                     
                 </div>
+                <div class="row">
+                    <div class="col-lg-6" style="margin: auto !important;">
+                        <div class="card">
+                            <div class="card-header border-0">
+                                <h6 class="diag-section-title"><i class="fas fa-users"></i> {% translate 'Complaints by actor' %}</h6>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table id="table-actor-stats" class="table">
+                                    <thead class="primary">
+                                    <tr>
+                                        <th>{% translate 'Actor' %}</th>
+                                        <th>{{ number }}</th>
+                                        <th>{{ percentage }}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="actor-stats">
+                                    </tbody>
+                                </table>
+                                <small class="text-muted">
+                                    {% translate 'A complaint can be counted in several lines (e.g. a young woman).' %}
+                                    {% translate 'Gender not specified' %} : <span id="actor-gender-unknown">-</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6" style="margin: auto !important;">
+                        <div class="card">
+                            <div class="card-header border-0">
+                                <h6 class="diag-section-title"><i class="fas fa-level-up-alt"></i> {% translate 'Complaints escalated to a higher level' %}</h6>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table id="table-escalation-stats" class="table">
+                                    <thead class="primary">
+                                    <tr>
+                                        <th>{% translate 'Highest level reached' %}</th>
+                                        <th>{{ number }}</th>
+                                        <th>{{ percentage }}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="escalation-stats">
+                                    </tbody>
+                                    <tfoot>
+                                    <tr>
+                                        <th class="text-left">{% translate 'Total escalated' %}</th>
+                                        <th id="escalation-total">-</th>
+                                        <th id="escalation-total-percentage">-</th>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header border-0">
+                                <h6 class="diag-section-title"><i class="fas fa-stopwatch"></i> {% translate 'Resolved complaints and processing delays by level' %}</h6>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table id="table-deadline-stats" class="table">
+                                    <thead class="primary">
+                                    <tr>
+                                        <th>{% translate 'Level' %}</th>
+                                        <th>{% translate 'Maximum delay' %}</th>
+                                        <th>{% translate 'Complaints at this level' %}</th>
+                                        <th>{% translate 'Resolved' %}</th>
+                                        <th>{% translate 'Resolved within the delay' %}</th>
+                                        <th>{% translate 'Resolved late' %}</th>
+                                        <th>{% translate 'Delay or date unknown' %}</th>
+                                        <th>{% translate '% within the delay' %}</th>
+                                        <th>{% translate 'In progress and late' %}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="deadline-stats">
+                                    </tbody>
+                                    <tfoot id="deadline-stats-total">
+                                    </tfoot>
+                                </table>
+                                <small class="text-muted">
+                                    {% translate 'Level of a complaint: highest level reached by escalation (Village otherwise). The delay starts at the exact date of receipt (Village) or at the actual date of the escalation (higher levels).' %}
+                                    {% if user.is_superuser %}
+                                        <a href="{% url 'dashboard:diagnostics:processing_delays' %}">{% translate 'Edit the delays' %}</a>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="overlay z-index1000" id="statistics-spin">
                     <i class="fas fa-sync-alt fa-spin"></i>
                 </div>
@@ -591,6 +703,15 @@
         $("#id_administrative_level_type").select2({
             allowClear: false
         });
+        // Filtres à choix multiple (MultipleDiagnosticsSearchForm).
+        $("#id_multi-category").select2({
+            placeholder: "{% translate 'Category' %}",
+            allowClear: true, width: '100%', closeOnSelect: false
+        });
+        $("#id_multi-wave").select2({
+            placeholder: "{% translate 'Wave' %}",
+            allowClear: true, width: '100%', closeOnSelect: false
+        });
 
         $('b[role="presentation"]').hide();
         $('.select2-selection__arrow').append(
@@ -625,8 +746,16 @@
         let statistics_spin = $('#statistics-spin');
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
-        let category = $('#id_category');
-        let wave = $('#id_wave');
+        // Filtres à choix multiple (MultipleDiagnosticsSearchForm) ; les anciens #id_category /
+        // #id_wave sont masqués.
+        let category = $('#id_multi-category');
+        let wave = $('#id_multi-wave');
+        // Valeur envoyée au serveur : valeurs sélectionnées séparées par des virgules (« 1,3 »),
+        // lues par dashboard.grm.functions.get_multiple_values.
+        let multiVal = function ($el) {
+            let v = $el.val();
+            return Array.isArray(v) ? v.join(',') : (v || '');
+        };
         {% comment %} let type = $('#id_type'); {% endcomment %}
         let administrative_level_type = $('#id_administrative_level_type');
         let current_region_id;
@@ -868,8 +997,8 @@
                 data: {
                     start_date: start_date.val(),
                     end_date: end_date.val(),
-                    category: category.val(),
-                    wave: wave.val(),
+                    category: multiVal(category),
+                    wave: multiVal(wave),
                     {% comment %} type: type.val(), {% endcomment %}
                     region: current_region_id,
                     administrative_level_type: administrative_level_type.val(),
@@ -886,6 +1015,47 @@
                     destroyStatsDataTable('table-category-stats');
 
                     $('#id_total_issues').text(data.total_issues);
+
+                    // Plaintes par acteur : ordre fixe (femmes, hommes, jeunes, réfugiés/PDI), pas de tri.
+                    let actor_html = '';
+                    $.each(['women', 'men', 'youth', 'refugees'], function (i, key) {
+                        const line = (data.actor_stats || {})[key];
+                        if (line) {
+                            actor_html += `<tr><td align="left">${line.name}</td><td>${line.issues}</td><td>${line.percentage}%</td></tr>`;
+                        }
+                    });
+                    $('#actor-stats').html(actor_html);
+                    $('#actor-gender-unknown').text(data.gender_unknown ?? '-');
+
+                    // Délais de traitement par niveau.
+                    const deadline = data.deadline_stats || {levels: [], total: null};
+                    const delayLabel = (row) => row.delay_days
+                        ? `${row.delay_days} ${row.working_days ? '{% translate "working days" %}' : '{% translate "days" %}'}`
+                        : '<span class="text-muted">{% translate "Not defined" %}</span>';
+                    const pct = (value) => value === null || value === undefined ? '-' : value + '%';
+                    const deadlineRow = (row, tag) => `<tr>
+                            <${tag} class="text-left">${row.name}</${tag}>
+                            <${tag}>${row.level === 'total' ? '' : delayLabel(row)}</${tag}>
+                            <${tag}>${row.issues}</${tag}>
+                            <${tag}>${row.resolved}</${tag}>
+                            <${tag}>${row.resolved_in_time}</${tag}>
+                            <${tag}>${row.resolved_late}</${tag}>
+                            <${tag}>${row.resolved_unknown}</${tag}>
+                            <${tag}>${pct(row.in_time_percentage)}</${tag}>
+                            <${tag} class="${row.overdue ? 'text-danger' : ''}">${row.overdue}</${tag}>
+                        </tr>`;
+                    $('#deadline-stats').html(deadline.levels.map((row) => deadlineRow(row, 'td')).join(''));
+                    $('#deadline-stats-total').html(deadline.total ? deadlineRow(deadline.total, 'th') : '');
+
+                    // Plaintes escaladées : répartition par instance la plus haute atteinte + total.
+                    const escalation = data.escalation_stats || {total: 0, percentage: 0, by_level: []};
+                    let escalation_html = '';
+                    $.each(escalation.by_level, function (i, line) {
+                        escalation_html += `<tr><td align="left">${line.name}</td><td>${line.issues}</td><td>${line.percentage}%</td></tr>`;
+                    });
+                    $('#escalation-stats').html(escalation_html);
+                    $('#escalation-total').text(escalation.total);
+                    $('#escalation-total-percentage').text(escalation.percentage + '%');
 
                     let region_stats = data.region_stats;
                     let region_stats_wave = data.region_stats_wave;
@@ -1008,14 +1178,23 @@
 
         function changeRegionTrigger(url, placeholder) {
             $(document).on("change", ".region", function () {
+                let $group = $(this).closest('.form-group');
+                // Les niveaux inférieurs appartiennent au choix précédent : on les retire tout de
+                // suite. Sinon, en changeant de région après être descendu jusqu'au canton,
+                // l'ancien canton restait dans la page et redevenait le filtre.
+                $group.nextAll('.dynamic-select').remove();
+
+                let previous_region_id = current_region_id;
                 let current_input_value = $(this).val();
                 if (current_input_value) {
                     current_region_id = current_input_value;
                 } else {
-                    current_region_id = $("select.region").eq(-2).val();
+                    // Niveau vidé : on filtre sur le niveau juste au-dessus (aucun = pas de filtre).
+                    current_region_id = $group.prevAll('.form-group').has('select.region').first()
+                        .find('select.region').val() || null;
                 }
                 loadNextLevelRegions($(this), url, placeholder);
-                loadStatistics();
+                if (current_region_id !== previous_region_id) loadStatistics();
             });
         }
 
@@ -1240,8 +1419,8 @@
                     data: {
                         start_date: (typeof start_date !== 'undefined' && start_date.val) ? start_date.val() : '',
                         end_date: (typeof end_date !== 'undefined' && end_date.val) ? end_date.val() : '',
-                        category: (typeof category !== 'undefined' && category.val) ? category.val() : '',
-                        wave: (typeof wave !== 'undefined' && wave.val) ? wave.val() : '',
+                        category: (typeof category !== 'undefined' && category.val) ? multiVal(category) : '',
+                        wave: (typeof wave !== 'undefined' && wave.val) ? multiVal(wave) : '',
                         region: (typeof current_region_id !== 'undefined') ? current_region_id : undefined
                     },
                     success: function (data) {

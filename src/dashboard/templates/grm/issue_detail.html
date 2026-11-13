@@ -927,6 +927,7 @@
                     data: {
                         "comment": comment_reason.val(),
                         issue_password_reason: $('#id_issue_password_reason').val(),
+                        investigation_date: $('#id_investigation_date').val(),
                     },
                     success: function (response) {
                         showPopupMessage(response.msg);

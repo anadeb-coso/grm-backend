@@ -26,8 +26,9 @@ class TestHomeTemplateView(DashboardTestCase):
     def test_context_data(self):
         # Requêtes sur la base `default` uniquement (création de l'utilisateur de test, session,
         # contrôles de groupe du menu/en-tête : nombre fixe, indépendant du volume de données).
-        # L'ancienne valeur (18) datait de l'époque CouchDB.
-        with self.assertNumQueries(59):
+        # L'ancienne valeur (18) datait de l'époque CouchDB. +2 (59 -> 61) : catégories et vagues
+        # du formulaire de filtres à choix multiple (MultipleDiagnosticsSearchForm).
+        with self.assertNumQueries(61):
             response = self.get(self.url)
         context_data = response.context_data
 

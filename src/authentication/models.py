@@ -345,12 +345,10 @@ def get_assignee_to_escalate(department_id, administrative_id):
     if parent:
 
         administrative_id = parent['administrative_id']
-        parent_obj = mis_objects_call.filter_objects(AdministrativeLevel, id=administrative_id).first()
 
-        if parent['administrative_level'] == 'Commune' or \
-            (parent['administrative_level'] == 'Region' and parent_obj and parent_obj.name.upper() in ('KARA', 'CENTRALE')) or \
-            (parent['administrative_level'] == 'Prefecture' and parent_obj and parent_obj.parent and parent_obj.parent.name.upper() == 'SAVANES'): #Specially for COSO TOGO
-
+        # Chaîne de remontée Village -> Canton -> Commune -> National (cf. ESCALATION_CHAIN plus
+        # bas) : Préfecture et Région sont sautées.
+        if parent['administrative_level'] in ('Prefecture', 'Region'):
             return get_assignee_to_escalate(department_id, administrative_id)
 
         else:
@@ -377,36 +375,52 @@ def get_assignee_to_escalate(department_id, administrative_id):
                 }
     return None, None
 
+# Chaîne de remontée des plaintes : Village -> Canton -> Commune -> National. Une plainte déjà
+# à un autre niveau (Préfecture, Région : anciennes règles) y reste, et sa prochaine remontée va
+# au niveau supérieur de cette chaîne, c.-à-d. National. Même règle côté mobile
+# (grm-frontend/src/screens/Home/IssueActions/containers/Content.js::get_next_administrative_level).
+ESCALATION_CHAIN = ('Village', 'Canton', 'Commune', 'Country')
+ESCALATION_RANK = {'Village': 1, 'Canton': 2, 'Commune': 3, 'Prefecture': 4, 'Region': 5, 'Country': 6}
+DEFAULT_COUNTRY_LEVEL = {"administrative_id": "1", "name": "TOGO", "administrative_level": "Country"}
+
+
 def get_adl_to_escalate(administrative_id):
-    """Remplace l'ancienne version CouchDB (paramètre `adl_db` retiré, plus nécessaire)."""
-    parent = get_parent_administrative_level_using_mis(administrative_id)
-    current_adl = mis_objects_call.filter_objects(AdministrativeLevel, id=administrative_id).first()
-    if parent:
+    """Niveau vers lequel remonter une plainte qui se trouve au niveau `administrative_id`
+    (village, ou dernier niveau d'escalade atteint) : premier ancêtre Canton ou Commune, sinon
+    National. Retourne None si la plainte est déjà au niveau National."""
+    current = mis_objects_call.filter_objects(AdministrativeLevel, id=administrative_id).first()
+    if not current or current.type == 'Country':
+        return None
 
-        administrative_id = parent['administrative_id']
-        parent_obj = mis_objects_call.filter_objects(AdministrativeLevel, id=administrative_id).first()
-        current_adl = parent_obj
-
-        if parent['administrative_level'] == 'Commune' or \
-            (parent['administrative_level'] == 'Region' and parent_obj and parent_obj.name.upper() in ('KARA', 'CENTRALE')) or \
-            (parent['administrative_level'] == 'Prefecture' and parent_obj and parent_obj.parent and parent_obj.parent.name.upper() == 'SAVANES'): #Specially for COSO TOGO
-
-            return get_adl_to_escalate(administrative_id)
-
-        else:
+    node_id = administrative_id
+    while True:
+        parent = get_parent_administrative_level_using_mis(node_id)
+        if not parent:
+            return dict(DEFAULT_COUNTRY_LEVEL)
+        if parent['administrative_level'] in ('Canton', 'Commune', 'Country'):
             return {
                 "administrative_id": parent['administrative_id'],
                 "name": parent['name'],
-                "administrative_level": parent['administrative_level']
+                "administrative_level": parent['administrative_level'],
             }
-        
-    if not parent and current_adl.type == 'Region': #Specially for COSO TOGO
-        return {
-            "administrative_id": "1",
-            "name": "TOGO",
-            "administrative_level": "Country"
-        }
+        node_id = parent['administrative_id']  # Préfecture / Région : sautées
 
+
+def get_next_escalation_level(issue):
+    """Niveau de la prochaine remontée d'une plainte, à partir du niveau le PLUS HAUT déjà atteint
+    (pas du plus récent : les niveaux migrés de CouchDB n'ont pas un ordre de création fiable)."""
+    levels = list(issue.escalation_levels.filter(is_deleted=False))
+    if not levels:
+        return get_adl_to_escalate(issue.administrative_region_id) if issue.administrative_region_id else None
+
+    highest = max(levels, key=lambda lvl: ESCALATION_RANK.get((lvl.administrative_level or '').capitalize(), 0))
+    level = (highest.administrative_level or '').capitalize()
+    if level == 'Country':
+        return None
+    if highest.administrative_id:
+        return get_adl_to_escalate(highest.administrative_id)
+    if level in ('Commune', 'Prefecture', 'Region'):
+        return dict(DEFAULT_COUNTRY_LEVEL)
     return None
 
 

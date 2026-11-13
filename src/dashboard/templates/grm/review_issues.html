@@ -74,6 +74,21 @@
             color: var(--grm-ink);
         }
         .issues-filter .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px; }
+        /* Filtres à choix multiple (MultipleSearchIssueForm) */
+        .issues-filter .select2-container--default .select2-selection--multiple {
+            min-height: 40px;
+            border-radius: 9px;
+            border: 1px solid var(--grm-line);
+            background-color: var(--grm-bg-soft);
+            font-size: 13px;
+        }
+        .issues-filter .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background: rgba(36, 195, 139, .12);
+            border: 1px solid rgba(36, 195, 139, .35);
+            color: var(--grm-ink);
+            border-radius: 999px;
+            margin-top: 6px;
+        }
         .issues-filter .form-control:focus {
             border-color: var(--grm-green);
             background-color: #fff;
@@ -200,22 +215,36 @@
                             {% bootstrap_field form.end_date %}
                         </div>
 
+                        {% comment %} Filtres à choix multiple (MultipleSearchIssueForm, ids id_multi-*). {% endcomment %}
                         <div class="col-lg-3 col-md-6 issues-filter">
                             {% bootstrap_field form.code %}
-                            {% bootstrap_field form.status %}
-                            {% if publish_option %}{% bootstrap_field form.publish %}{% endif %}
+                            {% bootstrap_field multi_form.status %}
+                            {% if publish_option %}{% bootstrap_field multi_form.publish %}{% endif %}
                         </div>
 
                         <div class="col-lg-3 col-md-6 issues-filter">
-                            {% bootstrap_field form.category %}
-                            {% bootstrap_field form.other %}
-                            {% bootstrap_field form.wave %}
+                            {% bootstrap_field multi_form.category %}
+                            {% bootstrap_field multi_form.other %}
+                            {% bootstrap_field multi_form.wave %}
                         </div>
 
                         <div class="col-lg-3 col-md-6 issues-filter">
-                            {% bootstrap_field form.assigned_to %}
-                            {% bootstrap_field form.reported_by %}
+                            {% bootstrap_field multi_form.assigned_to %}
+                            {% bootstrap_field multi_form.reported_by %}
                         </div>
+                    </div>
+
+                    {% comment %} Anciens champs à choix unique (SearchIssueForm), masqués : gardés dans
+                       la page pour les scripts qui les liraient encore ; hors de .issues-filter,
+                       ils ne déclenchent ni rechargement ni pastille. {% endcomment %}
+                    <div class="d-none old-single-filters" aria-hidden="true">
+                        {% bootstrap_field form.status %}
+                        {% if publish_option %}{% bootstrap_field form.publish %}{% endif %}
+                        {% bootstrap_field form.category %}
+                        {% bootstrap_field form.other %}
+                        {% bootstrap_field form.wave %}
+                        {% bootstrap_field form.assigned_to %}
+                        {% bootstrap_field form.reported_by %}
                     </div>
 
                     <div class="row">
@@ -286,15 +315,24 @@
         let start_date = $('#id_start_date');
         let end_date = $('#id_end_date');
         let code = $('#id_code');
-        let assigned_to = $('#id_assigned_to');
-        let category = $('#id_category');
+        // Filtres à choix multiple (MultipleSearchIssueForm) ; les anciens #id_status... sont masqués.
+        let assigned_to = $('#id_multi-assigned_to');
+        let category = $('#id_multi-category');
         let type = $('#id_type');
-        let status = $('#id_status');
-        let other = $('#id_other');
+        let status = $('#id_multi-status');
+        let other = $('#id_multi-other');
         let administrative_region = $('#id_administrative_region');
-        let reported_by = $('#id_reported_by');
-        let wave = $('#id_wave');
-        {% if publish_option %}let publish = $('#id_publish');{% endif %}
+        let reported_by = $('#id_multi-reported_by');
+        let wave = $('#id_multi-wave');
+        {% if publish_option %}let publish = $('#id_multi-publish');{% endif %}
+
+        // Valeur envoyée au serveur : les valeurs sélectionnées séparées par des virgules
+        // (« 1,3 »), lues par dashboard.grm.functions.get_multiple_values. `var` : aussi utilisé
+        // par le script injecté de grm/issue_list.html.
+        var multiVal = function ($el) {
+            let v = $el.val();
+            return Array.isArray(v) ? v.join(',') : (v || '');
+        };
         // `var` (pas `let`) : lu par le script injecté de grm/issue_list.html (jQuery.globalEval
         // s'exécute en portée globale et ne voit pas les `let` de portée script) pour construire
         // le paramètre `region` de l'ajax DataTables serverSide.
@@ -307,8 +345,8 @@
 
         /* ---------- Active filter chips ---------- */
         function selectText($el) {
-            let $opt = $el.find('option:selected');
-            return $opt.length ? $.trim($opt.text()) : '';
+            return $el.find('option:selected').map(function () { return $.trim($(this).text()); })
+                .get().filter(function (t) { return t; }).join(', ');
         }
 
         function renderActiveFilters() {
@@ -381,15 +419,15 @@
                     start_date: start_date.val(),
                     end_date: end_date.val(),
                     code: code.val(),
-                    assigned_to: assigned_to.val(),
-                    category: category.val(),
+                    assigned_to: multiVal(assigned_to),
+                    category: multiVal(category),
                     type: type.val(),
-                    status: status.val(),
-                    other: other.val(),
+                    status: multiVal(status),
+                    other: multiVal(other),
                     region: current_region_id,
-                    {% if publish_option %}publish: publish.val(),{% endif %}
-                    reported_by: reported_by.val(),
-                    wave: wave.val(),
+                    {% if publish_option %}publish: multiVal(publish),{% endif %}
+                    reported_by: multiVal(reported_by),
+                    wave: multiVal(wave),
                 },
                 success: function (response) {
                     issues.html(response);
@@ -457,14 +495,23 @@
 
         function changeRegionTrigger(url, placeholder) {
             $(document).on("change", ".region", function () {
+                let $group = $(this).closest('.form-group');
+                // Les niveaux inférieurs appartiennent au choix précédent : on les retire tout de
+                // suite. Sinon, en changeant de région après être descendu jusqu'au canton,
+                // l'ancien canton restait dans la page et redevenait le filtre.
+                $group.nextAll('.dynamic-select').remove();
+
+                let previous_region_id = current_region_id;
                 let current_input_value = $(this).val();
                 if (current_input_value) {
                     current_region_id = current_input_value;
                 } else {
-                    current_region_id = $("select.region").eq(-2).val();
+                    // Niveau vidé : on filtre sur le niveau juste au-dessus (aucun = pas de filtre).
+                    current_region_id = $group.prevAll('.form-group').has('select.region').first()
+                        .find('select.region').val() || null;
                 }
                 loadNextLevelRegions($(this), url, placeholder);
-                if(current_region_id) loadIssues();
+                if (current_region_id !== previous_region_id) loadIssues();
             });
         }
 
@@ -493,15 +540,15 @@
                     start_date: start_date.val(),
                     end_date: end_date.val(),
                     code: code.val(),
-                    assigned_to: assigned_to.val(),
-                    category: category.val(),
+                    assigned_to: multiVal(assigned_to),
+                    category: multiVal(category),
                     type: type.val(),
-                    status: status.val(),
-                    other: other.val(),
+                    status: multiVal(status),
+                    other: multiVal(other),
                     region: current_region_id,
-                    {% if publish_option %}publish: publish.val(),{% endif %}
-                    reported_by: reported_by.val(),
-                    wave: wave.val(),
+                    {% if publish_option %}publish: multiVal(publish),{% endif %}
+                    reported_by: multiVal(reported_by),
+                    wave: multiVal(wave),
                 }
 
                 var url = "{% url 'dashboard:grm:file:export_issues_excel' %}"; // L'URL de téléchargement
@@ -510,10 +557,21 @@
                   url: url,
                   type: 'GET',
                   data: data,
-                  success: function(response) {
-                    let path = response.replaceAll('/', '___').replaceAll('\\', '___');
-                    let download_file_view_url = "{% url 'download_file_view' 'path' 'content_type' %}";
-                    window.location.href = download_file_view_url.replace('path', path).replace('content_type', 'None');
+                  // Le serveur renvoie directement le fichier .xlsx (plus de chemin à télécharger ensuite).
+                  xhrFields: { responseType: 'blob' },
+                  success: function(blob, textStatus, xhr) {
+                    let file_name = 'complaints.xlsx';
+                    let disposition = xhr.getResponseHeader('Content-Disposition') || '';
+                    let match = disposition.match(/filename="?([^";]+)"?/);
+                    if (match) file_name = match[1];
+                    let blob_url = window.URL.createObjectURL(blob);
+                    let link = document.createElement('a');
+                    link.href = blob_url;
+                    link.download = file_name;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(function() { window.URL.revokeObjectURL(blob_url); }, 1000);
 
                     $("#download-message").hide();
                     $("#download-complete-message").show();
@@ -525,6 +583,7 @@
                       }, 5000);
                   },
                   error: function(xhr, status, error) {
+                    $("#download-message").hide();
                     alert("Erreur lors du téléchargement du fichier.");
                   }
                 });
@@ -579,6 +638,19 @@
             allowClear: true,
         });
         {% endif %}
+
+        // Filtres à choix multiple (MultipleSearchIssueForm).
+        $.each({
+            '#id_multi-assigned_to': "{% translate 'Assigned to' %}",
+            '#id_multi-category': "{% translate 'Category' %}",
+            '#id_multi-status': "{% translate 'Status' %}",
+            '#id_multi-other': "{% translate 'Escalated' %}",
+            '#id_multi-reported_by': "{% translate 'Reported by' %}",
+            '#id_multi-wave': "{% translate 'Wave' %}",
+            '#id_multi-publish': "{% translate 'Publish' %}",
+        }, function (selector, placeholder) {
+            $(selector).select2({placeholder: placeholder, allowClear: true, width: '100%', closeOnSelect: false});
+        });
 
         $('b[role="presentation"]').hide();
         $('.select2-selection__arrow').append(

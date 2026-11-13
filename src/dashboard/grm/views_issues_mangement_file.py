@@ -258,10 +258,14 @@ class IssuesCSVView(PageMixin, LoginRequiredMixin, generic.TemplateView):
     ]
 
     def get(self, request, *args, **kwargs):
-
-        file_path = export_issues(self.request)
-
-        if not file_path:
-            return redirect('dashboard:grm:review_issues')
-        else:
-            return HttpResponse(file_path)
+        # Fichier renvoyé directement (plus d'écriture dans media/ puis 2e requête vers
+        # download_file_view : en production, cette 2e requête pouvait arriver sur une autre
+        # instance EB que celle qui avait écrit le fichier).
+        content = export_issues(self.request)
+        file_name = f'complaints_{timezone.localtime().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        response = HttpResponse(
+            content,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        return response

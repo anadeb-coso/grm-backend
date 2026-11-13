@@ -1279,7 +1279,6 @@ msgstr "Région"
 #: .\dashboard\templates\diagnostics\home.html:30
 #: .\dashboard\templates\diagnostics\home.html:304
 #: .\dashboard\templates\grm\issue_list.html:153
-#, fuzzy
 msgid "Prefecture"
 msgstr "Préfecture"
 
@@ -2963,3 +2962,173 @@ msgid "%(counter)s village"
 msgid_plural "%(counter)s villages"
 msgstr[0] "%(counter)s village"
 msgstr[1] "%(counter)s villages"
+
+msgid "Actual date of resolution in the field"
+msgstr "Date réelle de la résolution sur le terrain"
+
+msgid "The date of resolution cannot be in the future."
+msgstr "La date de résolution ne peut pas être dans le futur."
+
+msgid "Complaints by actor"
+msgstr "Plaintes par acteur"
+
+msgid "Actor"
+msgstr "Acteur"
+
+msgid "Women"
+msgstr "Femmes"
+
+msgid "Men"
+msgstr "Hommes"
+
+msgid "Youth (under 35)"
+msgstr "Jeunes (moins de 35 ans)"
+
+msgid "A complaint can be counted in several lines (e.g. a young woman)."
+msgstr "Une plainte peut compter dans plusieurs lignes (ex. une jeune femme)."
+
+msgid "Gender not specified"
+msgstr "Sexe non renseigné"
+
+msgid "Is the complainant a refugee / IDP?"
+msgstr "Le plaignant est-il un réfugié / PDI ?"
+
+msgid "Refugee / IDP"
+msgstr "Réfugié / PDI"
+
+msgid "Refugees / IDPs"
+msgstr "Réfugiés / PDI"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Complaints escalated to a higher level"
+msgstr "Plaintes escaladées vers une instance supérieure"
+
+msgid "Highest level reached"
+msgstr "Instance la plus haute atteinte"
+
+msgid "Total escalated"
+msgstr "Total escaladées"
+
+msgid "National"
+msgstr "National"
+
+msgid "Not specified"
+msgstr "Non renseigné"
+
+msgid "level"
+msgstr "niveau"
+
+msgid "committee"
+msgstr "comité"
+
+msgid "maximum delay (days)"
+msgstr "délai maximal (jours)"
+
+msgid "working days"
+msgstr "jours ouvrables"
+
+msgid "days"
+msgstr "jours"
+
+msgid "Processing delays"
+msgstr "Délais de traitement"
+
+msgid "The processing delays have been saved."
+msgstr "Les délais de traitement ont été enregistrés."
+
+msgid "Maximum processing delay of a complaint at each level. Village level: counted from the exact date of receipt of the complaint. Higher levels: counted from the actual date of the escalation to that level. Leave the delay empty to not follow a level."
+msgstr "Délai maximal de traitement d'une plainte à chaque niveau. Niveau Village : compté à partir de la date exacte de réception de la plainte. Niveaux supérieurs : comptés à partir de la date réelle de l'escalade vers ce niveau. Laisser le délai vide pour ne pas suivre un niveau."
+
+msgid "Committee"
+msgstr "Comité"
+
+msgid "Maximum delay (days)"
+msgstr "Délai maximal (jours)"
+
+msgid "Working days"
+msgstr "Jours ouvrables"
+
+msgid "Monday to Friday (public holidays not counted)"
+msgstr "Du lundi au vendredi (jours fériés non pris en compte)"
+
+msgid "Resolved complaints and processing delays by level"
+msgstr "Plaintes résolues et délais de traitement par niveau"
+
+msgid "Maximum delay"
+msgstr "Délai maximal"
+
+msgid "Complaints at this level"
+msgstr "Plaintes à ce niveau"
+
+msgid "Resolved within the delay"
+msgstr "Résolues dans les délais"
+
+msgid "Resolved late"
+msgstr "Résolues hors délai"
+
+msgid "Delay or date unknown"
+msgstr "Délai ou date inconnu"
+
+msgid "% within the delay"
+msgstr "% dans les délais"
+
+msgid "In progress and late"
+msgstr "En cours et en retard"
+
+msgid "Level of a complaint: highest level reached by escalation (Village otherwise). The delay starts at the exact date of receipt (Village) or at the actual date of the escalation (higher levels)."
+msgstr "Niveau d'une plainte : niveau le plus haut atteint par escalade (Village sinon). Le délai part de la date exacte de réception (Village) ou de la date réelle de l'escalade (niveaux supérieurs)."
+
+msgid "Edit the delays"
+msgstr "Modifier les délais"
+
+msgid "Actual date of the escalation"
+msgstr "Date réelle de l'escalade"
+
+msgid "The date cannot be in the future."
+msgstr "La date ne peut pas être dans le futur."
+
+msgid "Exact date of receipt of the complaint"
+msgstr "Date exacte de réception de la plainte"
+
+msgid "Start of the processing delay at village level"
+msgstr "Départ du délai de traitement au niveau Village"
+
+msgid "Overdue issues"
+msgstr "Plaintes en retard"
+
+msgid "All villages"
+msgstr "Tous les villages"
+
+msgid "No overdue issues"
+msgstr "Aucune plainte en retard"
+
+msgid "Start of the delay"
+msgstr "Départ du délai"
+
+msgid "Deadline"
+msgstr "Échéance"
+
+msgid "Days late"
+msgstr "Jours de retard"
+
+msgid "%(counter)s overdue"
+msgid_plural "%(counter)s overdue"
+msgstr[0] "%(counter)s en retard"
+msgstr[1] "%(counter)s en retard"
+
+msgid "Exact date of the investigation"
+msgstr "Date exacte de l'investigation"
+
+msgid "Exact date of acceptance / reopening"
+msgstr "Date exacte d'acceptation / de réouverture"
+
+msgid "Exact date"
+msgstr "Date exacte"
+
+msgid "The information has not been registered."
+msgstr "L'information n'a pas été enregistrée."

@@ -78,6 +78,15 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if user.is_superuser %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:diagnostics:processing_delays' %}"
+                       class="nav-link {% if active_level1 == 'processing_delays' %}active{% endif %}">
+                        <i class="nav-icon fas fa-stopwatch"></i>
+                        <p>{% translate "Processing delays" %}</p>
+                    </a>
+                </li>
+                {% endif %}
                 {% if user.is_superuser or user|has_group:"Admin" %}
                 <li class="nav-item">
                     <a href="{% url 'dashboard:user_tracking:home' %}"

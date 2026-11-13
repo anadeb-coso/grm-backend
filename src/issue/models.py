@@ -183,6 +183,11 @@ class Issue(TimestampedSyncModel):
     citizen_group_1 = models.CharField(max_length=255, blank=True, null=True)
     citizen_group_2 = models.CharField(max_length=255, blank=True, null=True)
     citizen_or_group = models.CharField(max_length=50, blank=True, null=True)
+    # Sexe du plaignant : 'Male'/'Female'/'Other'/'Rather not say' (web, cf. dashboard/grm/
+    # GENDER_CHOICES) ou 'male'/'female' (mobile). Comparer sans tenir compte de la casse.
+    gender = models.CharField(max_length=30, blank=True, null=True)
+    # Le plaignant est-il un réfugié / une personne déplacée interne (PDI) ? None = non renseigné.
+    refugee_or_idp = models.BooleanField(null=True, blank=True)
 
     source = models.CharField(max_length=20, default='mobile')
     publish = models.BooleanField(default=False)
@@ -194,8 +199,16 @@ class Issue(TimestampedSyncModel):
 
     created_date = models.DateTimeField()
     intake_date = models.DateTimeField()
+    # Date EXACTE de réception de la plainte (saisie par l'utilisateur ; peut précéder
+    # `intake_date`, date d'enregistrement dans l'application). Point de départ du délai de
+    # traitement au niveau Village (cf. issue/deadlines.py). Vide → `intake_date` est utilisée.
+    received_date = models.DateTimeField(blank=True, null=True)
     issue_date = models.DateTimeField()
+    # Date à laquelle la résolution a été ENREGISTRÉE dans l'application (horodatage automatique).
     resolution_date = models.DateTimeField(blank=True, null=True)
+    # Date RÉELLE de la résolution sur le terrain, saisie par l'utilisateur lors de la mention de
+    # la résolution (peut être antérieure à `resolution_date` si la saisie se fait plus tard).
+    resolution_real_issue_date = models.DateTimeField(blank=True, null=True)
     reject_date = models.DateTimeField(blank=True, null=True)
     research_result = models.TextField(blank=True, null=True)
     # Description anonymisée/chiffrée observée sur certains documents CouchDB legacy
@@ -288,6 +301,40 @@ class Issue(TimestampedSyncModel):
 
     def last_escalation_reason(self):
         return self.escalation_reasons.filter(is_deleted=False).order_by('-created_at').first()
+
+
+class ProcessingDelay(TimestampedSyncModel):
+    """Délai maximal de traitement d'une plainte à un niveau (comité) donné, paramétrable depuis
+    le dashboard web (/diagnostics/processing-delays/). Un délai vide = pas de délai suivi à ce
+    niveau. Synchronisé en lecture seule vers le mobile (calcul local des plaintes en retard)."""
+    LEVEL_VILLAGE = 'Village'
+    LEVEL_CANTON = 'Canton'
+    LEVEL_COMMUNE = 'Commune'
+    LEVEL_PREFECTURE = 'Prefecture'
+    LEVEL_REGION = 'Region'
+    LEVEL_COUNTRY = 'Country'
+    # Du plus bas au plus haut. Mêmes valeurs que `EscalationLevel.administrative_level`.
+    LEVEL_ORDER = (LEVEL_VILLAGE, LEVEL_CANTON, LEVEL_COMMUNE, LEVEL_PREFECTURE, LEVEL_REGION, LEVEL_COUNTRY)
+    LEVEL_CHOICES = [
+        (LEVEL_VILLAGE, _('Village')),
+        (LEVEL_CANTON, _('Canton')),
+        (LEVEL_COMMUNE, _('Commune')),
+        (LEVEL_PREFECTURE, _('Prefecture')),
+        (LEVEL_REGION, _('Region')),
+        (LEVEL_COUNTRY, _('National')),
+    ]
+
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, unique=True, verbose_name=_('level'))
+    committee_name = models.CharField(max_length=255, blank=True, default='', verbose_name=_('committee'))
+    delay_days = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('maximum delay (days)'))
+    # Vrai : jours ouvrables (lundi → vendredi, jours fériés non pris en compte) ; faux : calendaires.
+    working_days = models.BooleanField(default=True, verbose_name=_('working days'))
+
+    class Meta:
+        ordering = ['level']
+
+    def __str__(self):
+        return f'{self.level}: {self.delay_days}'
 
 
 class Comment(TimestampedSyncModel):
@@ -425,6 +472,9 @@ class IssueStatusStory(TimestampedSyncModel):
     user_full_name = models.CharField(max_length=255, blank=True, null=True)
     comment = models.TextField(blank=True, null=True)
     datetime = models.DateTimeField()
+    # Date RÉELLE de l'action sur le terrain (acceptation / réouverture, étape d'investigation),
+    # saisie par l'utilisateur ; `datetime` reste la date d'enregistrement dans l'application.
+    action_date = models.DateTimeField(blank=True, null=True)
 
     # Anti-doublon de la notification email envoyée par
     # dashboard/tasks.py::send_issue_status_notifications (ouverture/acceptation, investigation/
@@ -471,6 +521,9 @@ class Reason(TimestampedSyncModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     user_name = models.CharField(max_length=255, blank=True, null=True)
     due_at = models.DateTimeField(blank=True, null=True)
+    # Date RÉELLE de l'étape d'investigation sur le terrain, saisie par l'utilisateur ; `due_at`
+    # reste la date d'enregistrement dans l'application.
+    action_date = models.DateTimeField(blank=True, null=True)
     attachment = models.ForeignKey(
         Attachment, null=True, blank=True, on_delete=models.SET_NULL, related_name='reasons',
     )
@@ -500,3 +553,7 @@ class EscalationLevel(TimestampedSyncModel):
     administrative_id = models.IntegerField(null=True, blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     due_at = models.DateTimeField()
+    # Date RÉELLE de l'escalade vers ce niveau, saisie par l'utilisateur lors de l'escalade.
+    # Point de départ du délai de traitement de ce niveau (issue/deadlines.py). Vide (anciennes
+    # escalades) → `due_at`, date d'enregistrement de l'escalade.
+    escalation_date = models.DateTimeField(blank=True, null=True)

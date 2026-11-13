@@ -51,6 +51,11 @@
                             <div class="text-regular-family">
                                 {{ reason.due_at|string_to_date|date:'j-F-Y' }}
                             </div>
+                            {% if reason.action_date %}
+                                <div class="text-regular-family fs12 text-muted">
+                                    {% translate "Exact date" %} : {{ reason.action_date|date:'j-F-Y' }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="col-6 text-right lh15 mt-3 text-regular-family">
                             {% get_hour reason.due_at %}

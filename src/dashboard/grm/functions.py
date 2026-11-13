@@ -3,6 +3,9 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 from django.conf import settings
 import pandas as pd
+from io import BytesIO
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+from django.utils import timezone
 import os
 from sys import platform
 
@@ -33,6 +36,40 @@ ISSUE_PREFETCH_RELATED = (
 )
 
 
+def get_multiple_values(query_dict, name):
+    """Valeurs d'un filtre à choix multiple : `name=1,3`, `name=1&name=3` ou `name[]=1&name[]=3`
+    (sérialisation jQuery des tableaux). Une seule valeur (`name=1`) reste acceptée, comme avant."""
+    values = []
+    for raw in query_dict.getlist(name) + query_dict.getlist(f'{name}[]'):
+        for value in str(raw).split(','):
+            value = value.strip()
+            if value and value not in values:
+                values.append(value)
+    return values
+
+
+def int_values(values):
+    """Les valeurs entières d'une liste (ids) ; les autres sont ignorées."""
+    return [int(v) for v in values if str(v).strip().isdigit()]
+
+
+def get_waves(query_dict):
+    """Vagues sélectionnées (paramètre `wave`, une ou plusieurs)."""
+    ids = int_values(get_multiple_values(query_dict, 'wave'))
+    return list(Wave.objects.filter(id__in=ids).order_by('id')) if ids else []
+
+
+def waves_administrative_ids(waves):
+    """Union (sans doublon, ordre conservé) des `administrative_ids` des vagues."""
+    result, seen = [], set()
+    for wave_object in waves:
+        for elt in wave_object.administrative_ids or []:
+            if str(elt) not in seen:
+                seen.add(str(elt))
+                result.append(elt)
+    return result
+
+
 def build_issue_queryset(request):
     """Équivalent Postgres du sélecteur Mango CouchDB historique construit par l'ancienne
     `export_issues` (toujours plus bas dans ce fichier, non encore migrée) : même logique de
@@ -52,28 +89,35 @@ def build_issue_queryset(request):
     start_date = get.get('start_date')
     end_date = get.get('end_date')
     code = get.get('code')
-    assigned_to = get.get('assigned_to')
-    category = get.get('category')
-    issue_status = get.get('status')
-    other = get.get('other')
+    # Filtres à choix multiple (MultipleSearchIssueForm) : une ou plusieurs valeurs.
+    assigned_to = int_values(get_multiple_values(get, 'assigned_to'))
+    category = int_values(get_multiple_values(get, 'category'))
+    issue_status = int_values(get_multiple_values(get, 'status'))
+    other = get_multiple_values(get, 'other')
     region = get.get('region')
-    reported_by = get.get('reported_by')
-    publish = get.get('publish')
-    wave = get.get('wave')
+    reported_by = int_values(get_multiple_values(get, 'reported_by'))
+    publish = {v for v in get_multiple_values(get, 'publish') if v in ('True', 'False')}
+    waves = get_waves(get)
     user = request.user
 
     queryset = Issue.objects.select_related(*ISSUE_SELECT_RELATED).prefetch_related(*ISSUE_PREFETCH_RELATED).filter(
         confirmed=True, is_deleted=False, auto_increment_id__isnull=False,
     )
 
-    wave_object = None
-    wave_administrative_ids = []
-    if wave:
-        wave_object = Wave.objects.filter(id=wave).first()
-        if wave_object:
-            wave_administrative_ids = wave_object.administrative_ids
-            wave_administrative_ids_int = [int(elt) for elt in wave_administrative_ids if str(elt).isdigit()]
-            queryset = queryset.filter(administrative_region_id__in=wave_administrative_ids_int)
+    # Vague(s) : villages de la vague ET période de la vague ; plusieurs vagues = l'une OU
+    # l'autre. Avec une seule vague, même résultat qu'avant (les dates saisies, filtrées plus bas,
+    # restent bornées par celles de la vague).
+    wave_administrative_ids = waves_administrative_ids(waves)
+    if waves:
+        waves_q = Q()
+        for wave_object in waves:
+            wave_q = Q(administrative_region_id__in=int_values(wave_object.administrative_ids))
+            if wave_object.begin:
+                wave_q &= Q(intake_date__gte=wave_object.begin)
+            if wave_object.end:
+                wave_q &= Q(intake_date__lt=wave_object.end + timedelta(days=1))
+            waves_q |= wave_q
+        queryset = queryset.filter(waves_q)
 
     if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
         pass
@@ -100,40 +144,29 @@ def build_issue_queryset(request):
         # pouvoir les traiter sur le web comme sur le mobile.
         queryset = queryset.filter(Q(publish=True) | Q(assignee_id=user.id))
 
-    if start_date or wave_object:
-        if start_date:
-            start_date_dt = datetime.strptime(start_date, '%d/%m/%Y').date()
-            if wave_object and wave_object.begin and start_date_dt < wave_object.begin:
-                start_date_dt = wave_object.begin
-        else:
-            start_date_dt = wave_object.begin
-        queryset = queryset.filter(intake_date__gte=start_date_dt)
-
-    if end_date or (wave_object and wave_object.end):
-        if end_date:
-            end_date_dt = datetime.strptime(end_date, '%d/%m/%Y').date() + timedelta(days=1)
-            if wave_object and wave_object.end and end_date_dt > wave_object.end + timedelta(days=1):
-                end_date_dt = wave_object.end + timedelta(days=1)
-        else:
-            end_date_dt = wave_object.end + timedelta(days=1)
-        queryset = queryset.filter(intake_date__lt=end_date_dt)
+    if start_date:
+        queryset = queryset.filter(intake_date__gte=datetime.strptime(start_date, '%d/%m/%Y').date())
+    if end_date:
+        queryset = queryset.filter(
+            intake_date__lt=datetime.strptime(end_date, '%d/%m/%Y').date() + timedelta(days=1)
+        )
 
     if code:
         queryset = queryset.filter(
             Q(internal_code__icontains=code) | Q(tracking_code__icontains=code) | Q(description__icontains=code)
         )
     if assigned_to:
-        queryset = queryset.filter(assignee_id=int(assigned_to))
+        queryset = queryset.filter(assignee_id__in=assigned_to)
     if category:
-        queryset = queryset.filter(category__legacy_id=int(category))
+        queryset = queryset.filter(category__legacy_id__in=category)
     if issue_status:
-        queryset = queryset.filter(status__legacy_id=int(issue_status))
-    if other == 'Escalate':
+        queryset = queryset.filter(status__legacy_id__in=issue_status)
+    if 'Escalate' in other:
         queryset = queryset.filter(escalation_reasons__isnull=False).distinct()
     if reported_by:
-        queryset = queryset.filter(reporter_id=int(reported_by))
-    if publish in ('True', 'False'):
-        queryset = queryset.filter(publish=(publish == 'True'))
+        queryset = queryset.filter(reporter_id__in=reported_by)
+    if len(publish) == 1:  # « Publiée » et « Non publiée » ensemble = pas de filtre
+        queryset = queryset.filter(publish=('True' in publish))
 
     if region:
         filter_regions = get_administrative_level_descendants_using_mis(None, region, [], user) + [str(region)]
@@ -166,6 +199,7 @@ def get_notifications_bell_summary(request):
     from django.db.models.functions import Coalesce, Greatest
     from django.utils import timezone
 
+    from issue.deadlines import overdue_by_village, overdue_issues
     from issue.models import IssueNotification, IssueReadState, IssueStatusStory, NotificationBaseline
     from issue.notifications import bell_cache_key
 
@@ -203,6 +237,10 @@ def get_notifications_bell_summary(request):
     )
     can_publish = user.groups.filter(name__in=PUBLISHER_GROUPS).exists()
 
+    # Plaintes en retard (délai de traitement du niveau dépassé), regroupées par village.
+    late, late_infos = overdue_issues(perimeter)
+    late_villages = overdue_by_village([issue for issue, _info in late], late_infos)
+
     summary = {
         'unread_count': unread.count(),
         'unread_issues': list(
@@ -218,8 +256,14 @@ def get_notifications_bell_summary(request):
         'not_started_count': counts['not_started'],
         'in_progress_count': counts['in_progress'],
         'unresolved_count': counts['unresolved'],
+        'overdue_count': len(late),
+        'overdue_villages': late_villages[:BELL_LIST_SIZE],
+        'overdue_villages_count': len(late_villages),
     }
-    summary['badge_count'] = summary['unread_count'] + summary['commented_count'] + summary['unpublished_count']
+    summary['badge_count'] = (
+        summary['unread_count'] + summary['commented_count'] + summary['unpublished_count']
+        + summary['overdue_villages_count']
+    )
     cache.set(bell_cache_key(user.id), summary, BELL_CACHE_SECONDS)
     return summary
 
@@ -546,139 +590,30 @@ def filter_adminstrative_level_by_name(ad_name, canton_str: str):
 
 
 
+def _excel_cell(value):
+    """Valeur d'une cellule Excel : openpyxl refuse les UUID, les datetimes avec fuseau et les
+    caractères de contrôle (IllegalCharacterError) — présents dans des descriptions saisies sur le
+    mobile ou reprises de CouchDB."""
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    if isinstance(value, datetime):
+        if timezone.is_aware(value):
+            value = timezone.localtime(value, timezone.utc).replace(tzinfo=None)
+        return value
+    return ILLEGAL_CHARACTERS_RE.sub('', str(value))
+
+
 def export_issues(request):
-    grm_db = get_db(COUCHDB_GRM_DATABASE)
-    adl_db = get_db(COUCHDB_DATABASE_ADMINISTRATIVE_LEVEL)
-    index = int(request.GET.get('index'))
-    offset = int(request.GET.get('offset'))
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    code = request.GET.get('code')
-    assigned_to = request.GET.get('assigned_to')
-    category = request.GET.get('category')
-    status = request.GET.get('status')
-    other = request.GET.get('other')
-    region = request.GET.get('region')
-    reported_by = request.GET.get('reported_by')
-    publish = request.GET.get('publish')
-    wave = request.GET.get('wave')
-    user = request.user
+    """Export Excel (bouton « Télécharger toute la base de données ») des issues visibles par
+    l'utilisateur, avec les filtres de la page : mêmes règles que le tableau
+    (`build_issue_queryset`) et mêmes colonnes que l'ancien export CouchDB (document legacy
+    `issue_to_legacy_dict` aplati : `category_name`, `comments_0_comment`...).
 
-    selector = {
-        "type": "issue",
-        "confirmed": True,
-        "auto_increment_id": {"$ne": ""},
-        "created_date": {"$exists": True},
-    }
-    
-    wave_administrative_ids = []
-    if wave:
-        wave_object = Wave.objects.filter(id=wave).first()
-        if wave_object:
-            wave_administrative_ids = wave_object.administrative_ids
-            selector["administrative_region.administrative_id"] = {
-                "$in": wave_administrative_ids + [int(elt) for elt in wave_administrative_ids if isinstance(elt, str) and elt.isdigit() and int(elt) not in wave_administrative_ids]
-            }
+    Retourne le contenu du fichier .xlsx (bytes), envoyé directement dans la réponse : pas de
+    fichier sur le disque de l'instance (non partagé entre instances EB)."""
+    from dashboard.grm.serializers import issue_to_legacy_dict
 
-    if user.groups.filter(name__in=["Admin", "ViewerOfAllIssues"]).exists():
-        # selector = {
-        #     "type": "issue",
-        #     "confirmed": True,
-        #     "auto_increment_id": {"$ne": ""},
-        #     "created_date": {"$exists": True},
-        # }
-        pass
-    else:
-        # selector = {
-        #     "type": "issue",
-        #     "confirmed": True,
-        #     "auto_increment_id": {"$ne": ""},
-        #     "created_date": {"$exists": True},
-        # }
-        
-        if hasattr(user, 'governmentworker') and user.governmentworker.administrative_id != "1":
-            parent_ids = user.governmentworker.all_administrative_ids
-            
-            descendants = []
-            for p_id in parent_ids:
-                descendants += get_administrative_level_descendants_using_mis(adl_db, p_id, [], request.user)
-            allowed_regions = descendants + parent_ids
-            
-            if wave_administrative_ids:
-                allowed_regions = list(set(allowed_regions) & set(wave_administrative_ids))
-
-
-            selector["$or"] = [
-                {"assignee.id": user.id},
-                {"$and": [
-                    {"category.assigned_department": user.governmentworker.department},
-                    {"administrative_region.administrative_id": {"$in": allowed_regions + [int(elt) for elt in allowed_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in allowed_regions]}},
-                ]}
-            ]
-        else:
-            # selector = {
-            #     "type": "issue",
-            #     "publish": True,
-            #     "confirmed": True,
-            #     "auto_increment_id": {"$ne": ""},
-            # }
-            selector["publish"] = True
-
-    if start_date or wave_administrative_ids: #"2026-05-05T20:19:24.616Z"
-        if start_date:
-            start_date = datetime.strptime(start_date, '%d/%m/%Y').strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            if wave_administrative_ids:
-                wave_begin_date = wave_object.begin.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                if start_date < wave_begin_date:
-                    start_date = wave_begin_date
-        elif wave_administrative_ids:
-            start_date = wave_object.begin.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        selector["intake_date"] = {"$gte": start_date}
-    if end_date or (wave_administrative_ids and wave_object.end):
-        if end_date:
-            end_date = datetime.strptime(end_date, '%d/%m/%Y').strftime('%Y-%m-%dT%23:59:59.999999Z') #(datetime.strptime(end_date, '%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            if wave_administrative_ids and end_date:
-                wave_end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
-                if end_date > wave_end_date:
-                    end_date = wave_end_date
-        elif wave_administrative_ids and wave_object.end:
-            end_date = wave_object.end.strftime('%Y-%m-%dT%23:59:59.999999Z')
-            
-        if "intake_date" not in selector:
-            selector["intake_date"] = {"$lte": end_date}
-        else:
-            selector["intake_date"]["$lte"] = end_date
-
-
-    if code:
-        code_filter = {"$regex": f"(?i){code}"} #{"$regex": f"^{code}"}
-        selector['$or'] = [{"internal_code": code_filter}, {"tracking_code": code_filter},
-                            {"description": code_filter}]
-    if assigned_to:
-        selector["assignee.id"] = int(assigned_to)
-    if category:
-        selector["category.id"] = int(category)
-        
-    if status:
-        selector["status.id"] = int(status)
-    if other:
-        if other == "Escalate":
-            selector["escalation_reasons"] = {"$exists": True}
-    if reported_by:
-        selector["reporter.id"] = int(reported_by)
-    if publish in ('True', 'False'):
-        selector["publish"] = True if publish == 'True' else False
-
-    if region:
-        filter_regions = get_administrative_level_descendants_using_mis(adl_db, region, [], request.user) + [region]
-        if wave_administrative_ids:
-            filter_regions = list(set(filter_regions) & set(wave_administrative_ids))
-        selector["administrative_region.administrative_id"] = {
-            "$in": filter_regions + [int(elt) for elt in filter_regions if isinstance(elt, str) and elt.isdigit() and int(elt) not in filter_regions]
-        }
-
-    issues = grm_db.get_query_result(selector, sort=[{'created_date': 'desc'}])
-    data = []
+    queryset, _ = build_issue_queryset(request)
 
     def append_data_to_dict(flat_doc: dict, dict_item: tuple):
         if type(dict_item[1]) in (dict, list):
@@ -689,52 +624,20 @@ def export_issues(request):
                 for i in range(len(dict_item[1])):
                     append_data_to_dict(flat_doc, (f"{dict_item[0]}_{i}", dict_item[1][i]))
         else:
-            flat_doc[dict_item[0]] = dict_item[1]
+            flat_doc[dict_item[0]] = _excel_cell(dict_item[1])
 
-    for row in issues:
-        # doc = row.get('doc', {})
-        # flat_doc = {
-        #     'ID': doc.get('_id', ''),
-        #     'ID': doc.get('auto_increment_id', ''),
-        #     'Code interne': doc.get('internal_code', ''),
-        #     'Code de suivi': doc.get('tracking_code', ''),
-        #     'Description': doc.get('description', ''),
-        #     'Statut': doc.get('status', {}).get('name', ''),
-        #     'Date de création': doc.get('created_date', ''),
-        #     'Date de résolution': doc.get('resolution_date', ''),
-        # }
-        
-        # # Concaténer les commentaires dans un champ
-        # comments = doc.get('comments', [])
-        # flat_doc['Commentaires'] = " | ".join([c.get('comment', '') for c in comments])
-        
-        # data.append(flat_doc)
-        flat_doc = {}
-        for k, v in row.items():
-            append_data_to_dict(flat_doc, (k, v))
+    # Par paquets de 500, chacun chargé avec son prefetch (≈ 10 requêtes par paquet, pas par
+    # issue). Pas `queryset.iterator()` : avant Django 4.1, il ignore `prefetch_related`.
+    data = []
+    chunk_size = 500
+    pks = list(queryset.values_list('pk', flat=True))
+    for start in range(0, len(pks), chunk_size):
+        for issue in queryset.filter(pk__in=pks[start:start + chunk_size]):
+            flat_doc = {}
+            for k, v in issue_to_legacy_dict(issue, prefetched=True).items():
+                append_data_to_dict(flat_doc, (k, v))
+            data.append(flat_doc)
 
-        data.append(flat_doc)
-
-    df = pd.DataFrame(data)
-
-
-    if not os.path.exists("media/grm"):
-            os.makedirs("media/grm")
-    file_path = f'grm/complaints_{str(datetime.today().replace(microsecond=0)).replace("-", "").replace(":", "").replace(" ", "_")}.xlsx'
-
-    df = df.to_excel("media/"+file_path, sheet_name='Plaintes', index=False)
-
-    # with pd.ExcelWriter("media/"+file_path) as writer:
-    #     df.to_excel(writer, sheet_name='Planning Situation', index=False)
-        
-        # for k, v in datas_dict_planning.items():
-        #     if k != 'Précédentes':
-        #         pd.DataFrame(
-        #             v
-        #         ).to_excel(writer, sheet_name=k, index=False)
-        
-    if platform == "win32":
-        # windows
-        return file_path.replace("/", "\\\\")
-    else:
-        return file_path
+    buffer = BytesIO()
+    pd.DataFrame(data).to_excel(buffer, sheet_name='Plaintes', index=False)
+    return buffer.getvalue()

@@ -141,6 +141,7 @@ class Command(BaseCommand):
                 citizen_group_1=doc.get('citizen_group_1'),
                 citizen_group_2=doc.get('citizen_group_2'),
                 citizen_or_group=doc.get('citizen_or_group'),
+                gender=doc.get('gender') or None,
                 source=doc.get('source') or 'mobile',
                 publish=doc.get('publish', False),
                 publish_date=_dt(doc.get('publish_date')),

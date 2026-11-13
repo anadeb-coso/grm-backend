@@ -60,8 +60,22 @@ def _citizen_type_int(value):
 _ESCALATION_LEVEL_RANK = {'Village': 1, 'Canton': 2, 'Commune': 3, 'Prefecture': 4, 'Region': 5, 'Country': 6}
 
 
-def _current_escalation_level(issue):
-    levels = list(issue.escalation_levels.filter(is_deleted=False))
+def _live_children(issue, name, prefetched):
+    """Enfants non supprimés de `issue.<name>`, du plus récent au plus ancien.
+
+    `prefetched=True` : lus dans le cache `prefetch_related` (filtre/tri en Python, aucune requête)
+    — réservé aux traitements en masse en lecture seule (export Excel), où l'instance vient d'être
+    chargée. Par défaut, requête fraîche : `LegacyIssueDoc` relit l'issue juste après un `add_*`,
+    un cache de prefetch y serait périmé."""
+    if prefetched:
+        rows = [r for r in getattr(issue, name).all() if not r.is_deleted]
+        rows.sort(key=lambda r: r.created_at, reverse=True)
+        return rows
+    return list(getattr(issue, name).filter(is_deleted=False).order_by('-created_at'))
+
+
+def _current_escalation_level(issue, prefetched=False):
+    levels = _live_children(issue, 'escalation_levels', prefetched)
     if not levels:
         return None
     return max(levels, key=lambda lvl: (_ESCALATION_LEVEL_RANK.get(lvl.administrative_level, 0), lvl.created_at))
@@ -91,6 +105,7 @@ def _reason_to_legacy(reason):
         'user_name': reason.user_name,
         'name': reason.user_name,
         'due_at': reason.due_at,
+        'action_date': reason.action_date,
         'type': 'comment' if reason.subject == 'comment' else 'file',
     }
     if reason.attachment_id:
@@ -98,10 +113,14 @@ def _reason_to_legacy(reason):
     return data
 
 
-def issue_to_legacy_dict(issue):
+def issue_to_legacy_dict(issue, prefetched=False):
     """`issue` doit être préchargée avec `select_related('status', 'category', 'age_group',
     'issue_type')` et `prefetch_related('comments', 'reasons', 'escalation_reasons',
-    'escalation_levels', 'issue_status_stories', 'attachments')` (voir `IssueMixin.dispatch`)."""
+    'escalation_levels', 'issue_status_stories', 'attachments')` (voir `IssueMixin.dispatch`).
+
+    `prefetched=True` : les enfants sont lus dans ce cache de prefetch au lieu d'être relus en base
+    (voir `_live_children`) — pour l'export en masse (`dashboard.grm.functions.export_issues`), qui
+    sinon ferait une dizaine de requêtes par issue."""
     status = issue.status
     category = issue.category
     age_group = issue.age_group
@@ -112,8 +131,8 @@ def issue_to_legacy_dict(issue):
     # supprimé (depuis le mobile via push, ou depuis ce même dashboard) reste en base jusqu'à sa
     # purge différée (issue.tasks.cleanup_old_tombstones) et continuait donc, sans ce filtre, à
     # s'afficher indéfiniment ici malgré sa suppression.
-    reasons_qs = list(issue.reasons.filter(is_deleted=False).order_by('-created_at'))
-    reasons = [_reason_to_legacy(r) for r in reasons_qs]
+    reasons_qs = _live_children(issue, 'reasons', prefetched)
+    reasons =[_reason_to_legacy(r) for r in reasons_qs]
     resolution_files = [d for d in reasons if d.get('subject') == 'resolution']
     linked_attachment_ids = {r.attachment_id for r in reasons_qs if r.attachment_id}
 
@@ -125,9 +144,10 @@ def issue_to_legacy_dict(issue):
             'comment': c.comment,
             'due_at': _dt_str(c.due_at),
         }
-        for c in issue.comments.filter(is_deleted=False).order_by('-created_at')
+        for c in _live_children(issue, 'comments', prefetched)
     ]
 
+    escalation_reasons_qs = _live_children(issue, 'escalation_reasons', prefetched)
     escalation_reasons = [
         {
             'id': er.user_id,
@@ -139,9 +159,10 @@ def issue_to_legacy_dict(issue):
             'due_at': _dt_str(er.due_at),
             **({'attachment': _attachment_to_legacy(er.attachment)} if er.attachment_id else {}),
         }
-        for er in issue.escalation_reasons.filter(is_deleted=False).order_by('-created_at')
+        for er in escalation_reasons_qs
     ]
 
+    status_stories_qs = _live_children(issue, 'issue_status_stories', prefetched)
     issue_status_stories = [
         {
             'pk': str(s.pk),
@@ -153,11 +174,12 @@ def issue_to_legacy_dict(issue):
             },
             'comment': s.comment,
             'datetime': _dt_str(s.datetime),
+            'action_date': _dt_str(s.action_date),
         }
-        for s in issue.issue_status_stories.filter(is_deleted=False).order_by('-created_at')
+        for s in status_stories_qs
     ]
 
-    latest_escalation_level = _current_escalation_level(issue)
+    latest_escalation_level = _current_escalation_level(issue, prefetched)
     escalation_administrativelevels = []
     if latest_escalation_level:
         escalation_administrativelevels = [{
@@ -175,11 +197,19 @@ def issue_to_legacy_dict(issue):
 
     attachments = [
         _attachment_to_legacy(a)
-        for a in issue.attachments.filter(is_deleted=False).order_by('-created_at')
+        for a in _live_children(issue, 'attachments', prefetched)
         if a.pk not in linked_attachment_ids
     ]
 
-    last_unresolved_reason = issue.last_unresolved_reason()
+    if prefetched:
+        # Mêmes résultats que `Issue.last_unresolved_reason()` / `last_escalation_reason()`, sans
+        # requête : listes déjà filtrées (is_deleted) et triées du plus récent au plus ancien.
+        last_unresolved_reason = next(
+            (s for s in status_stories_qs if s.status_id and s.status.unresolved_status), None)
+        last_escalation_reason = escalation_reasons_qs[0] if escalation_reasons_qs else None
+    else:
+        last_unresolved_reason = issue.last_unresolved_reason()
+        last_escalation_reason = issue.last_escalation_reason()
     if last_unresolved_reason:
         unresolved_reason = {
             'id': last_unresolved_reason.pk,
@@ -193,7 +223,6 @@ def issue_to_legacy_dict(issue):
     else:
         unresolved_reason = None
 
-    last_escalation_reason = issue.last_escalation_reason()
     if last_escalation_reason:
         escalate_reason = {
             'id': last_escalation_reason.pk,
@@ -223,6 +252,8 @@ def issue_to_legacy_dict(issue):
         'citizen_group_1': {'id': None, 'name': issue.citizen_group_1} if issue.citizen_group_1 else '',
         'citizen_group_2': {'id': None, 'name': issue.citizen_group_2} if issue.citizen_group_2 else '',
         'citizen_or_group': issue.citizen_or_group,
+        'gender': issue.gender or '',
+        'refugee_or_idp': issue.refugee_or_idp,
         'citizen_age_group': {'id': age_group.legacy_id, 'name': age_group.name} if age_group else '',
         'source': issue.source,
         'publish': issue.publish,
@@ -233,8 +264,10 @@ def issue_to_legacy_dict(issue):
         'resolution_days': issue.resolution_days,
         'created_date': _dt_str(issue.created_date),
         'intake_date': _dt_str(issue.intake_date),
+        'received_date': _dt_str(issue.received_date),
         'issue_date': _dt_str(issue.issue_date),
         'resolution_date': _dt_str(issue.resolution_date),
+        'resolution_real_issue_date': _dt_str(issue.resolution_real_issue_date),
         'reject_date': _dt_str(issue.reject_date),
         'research_result': issue.research_result,
         'escalate_flag': issue.escalate_flag,
@@ -297,10 +330,10 @@ def _resolve_legacy_fk(model, value):
 # `Issue` sans transformation.
 _DIRECT_SCALAR_FIELDS = {
     'internal_code', 'tracking_code', 'auto_increment_id', 'description', 'original_description',
-    'confirmed', 'citizen', 'contact_medium', 'citizen_type', 'citizen_or_group', 'source',
+    'confirmed', 'citizen', 'contact_medium', 'citizen_type', 'citizen_or_group', 'gender', 'refugee_or_idp', 'source',
     'publish', 'publish_date', 'notification_send', 'ongoing_issue', 'event_recurrence',
-    'resolution_days', 'created_date', 'intake_date', 'issue_date', 'resolution_date',
-    'reject_date', 'research_result', 'escalate_flag', 'location_info', 'structure_in_charge',
+    'resolution_days', 'created_date', 'intake_date', 'received_date', 'issue_date', 'resolution_date',
+    'resolution_real_issue_date', 'reject_date', 'research_result', 'escalate_flag', 'location_info', 'structure_in_charge',
     'contact_information', 'commune',
 }
 
@@ -315,7 +348,7 @@ _IGNORED_ON_SAVE = {
     # add_reason) ; on perd seulement le pré-remplissage du formulaire si l'utilisateur rouvre la
     # modale sans avoir soumis — simplification documentée (CLAUDE.md, migration dashboard web).
     'open_reason', 'unresolved_reason', 'escalate_reason', 'reject_reason', '_comment',
-    'open_date', 'unresolved_date', 'escalate_date', 'unpublish_date', 'gender', 'created_by',
+    'open_date', 'unresolved_date', 'escalate_date', 'unpublish_date', 'created_by',
 }
 
 
@@ -423,7 +456,8 @@ class LegacyIssueDoc(dict):
         self.refresh()
         return record
 
-    def add_reason(self, subject='reason', comment=None, user=None, due_at=None, attachment=None):
+    def add_reason(self, subject='reason', comment=None, user=None, due_at=None, attachment=None,
+                   action_date=None):
         record = Reason.objects.create(
             issue=self.issue,
             subject=subject,
@@ -432,6 +466,7 @@ class LegacyIssueDoc(dict):
             user_name=user.name if user else None,
             due_at=due_at or timezone.now(),
             attachment=attachment,
+            action_date=action_date,
         )
         self.refresh()
         return record
@@ -448,18 +483,20 @@ class LegacyIssueDoc(dict):
         self.refresh()
         return record
 
-    def add_escalation_level(self, administrative_level, administrative_id=None, name=None, due_at=None):
+    def add_escalation_level(self, administrative_level, administrative_id=None, name=None, due_at=None,
+                             escalation_date=None):
         record = EscalationLevel.objects.create(
             issue=self.issue,
             administrative_level=administrative_level,
             administrative_id=administrative_id,
             name=name,
             due_at=due_at or timezone.now(),
+            escalation_date=escalation_date,
         )
         self.refresh()
         return record
 
-    def add_status_story(self, status_legacy_dict, comment, user=None):
+    def add_status_story(self, status_legacy_dict, comment, user=None, action_date=None):
         status = _resolve_legacy_fk(IssueStatus, status_legacy_dict)
         IssueStatusStory.objects.create(
             issue=self.issue,
@@ -468,6 +505,7 @@ class LegacyIssueDoc(dict):
             user_full_name=user.name if user else None,
             comment=comment,
             datetime=timezone.now(),
+            action_date=action_date,
         )
         self.refresh()
 

@@ -60,6 +60,7 @@
                                 </div>
                                 {% bootstrap_field form.citizen_age_group layout='horizontal' %}
                                 {% bootstrap_field form.gender layout='horizontal' %}
+                                {% bootstrap_field form.refugee_or_idp layout='horizontal' %}
                                 {% comment %} {% bootstrap_field form.citizen_group_1 layout='horizontal' %}
                                 {% bootstrap_field form.citizen_group_2 layout='horizontal' %} {% endcomment %}
                                 <div class="row">
@@ -82,6 +83,7 @@
                                         {% bootstrap_field form.issue_date show_label=False %}
                                     </div>
                                 </div>
+                                {% bootstrap_field form.received_date layout='horizontal' %}
                                 {% comment %} {% bootstrap_field form.issue_type layout='horizontal' %} {% endcomment %}
                                 {% bootstrap_field form.category layout='horizontal' %}
                                 {% bootstrap_field form.issue_password layout='horizontal' %}

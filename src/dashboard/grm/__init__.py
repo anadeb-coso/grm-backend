@@ -55,6 +55,14 @@ GENDER_CHOICES = [
 
 CHOICE_INDIVIDUAL = "Individual"
 CHOICE_GROUP = "Group"
+# Le plaignant est-il un réfugié / PDI ? (Issue.refugee_or_idp : True / False / None)
+CHOICE_YES = 'yes'
+CHOICE_NO = 'no'
+YES_NO_CHOICES = [
+    (CHOICE_YES, _('Yes')),
+    (CHOICE_NO, _('No')),
+]
+
 CITIZEN_OR_GROUP_CHOICES = [
     (CHOICE_INDIVIDUAL, _('Individual')),
     (CHOICE_GROUP, _('Group')),

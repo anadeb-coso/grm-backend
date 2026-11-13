@@ -1,0 +1,48 @@
+{% extends 'layouts/base.html' %}
+{% load i18n %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-stopwatch text-primary"></i> {{ title }}</h5>
+            </div>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <div class="card-body table-responsive">
+                    <p class="text-muted">
+                        {% translate "Maximum processing delay of a complaint at each level. Village level: counted from the exact date of receipt of the complaint. Higher levels: counted from the actual date of the escalation to that level. Leave the delay empty to not follow a level." %}
+                    </p>
+                    {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+                    <table class="table">
+                        <thead class="primary">
+                        <tr>
+                            <th>{% translate "Level" %}</th>
+                            <th>{% translate "Committee" %}</th>
+                            <th style="width: 160px;">{% translate "Maximum delay (days)" %}</th>
+                            <th>{% translate "Working days" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for form in formset %}
+                            <tr>
+                                <td class="align-middle"><b>{{ form.instance.get_level_display }}</b>{{ form.id }}</td>
+                                <td>{{ form.committee_name }}{{ form.committee_name.errors }}</td>
+                                <td>{{ form.delay_days }}{{ form.delay_days.errors }}</td>
+                                <td class="align-middle">
+                                    {{ form.working_days }}
+                                    <small class="text-muted">{% translate "Monday to Friday (public holidays not counted)" %}</small>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> {% translate "Save" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

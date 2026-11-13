@@ -18,15 +18,15 @@ from django.views import generic
 from cryptography.fernet import InvalidToken
 from django.contrib.auth.hashers import check_password
 
-from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee, get_adl_to_escalate
+from authentication.models import Cdata, GovernmentWorker, Pdata, anonymize_issue_data, get_assignee, get_next_escalation_level
 from dashboard.grm.forms import CheckPasswordForm
 from dashboard.forms.forms import FileForm
 from dashboard.grm import CHOICE_CONTACT
 from dashboard.grm.forms import (
-    IssueCommentForm, IssueDetailsForm, IssueRejectReasonForm, IssueResearchResultForm, MAX_LENGTH, NewIssueConfirmForm,
+    _aware_date, IssueCommentForm, IssueDetailsForm, IssueRejectReasonForm, IssueResearchResultForm, MAX_LENGTH, NewIssueConfirmForm,
     NewIssueContactForm, NewIssueDetailsForm, NewIssueLocationForm, NewIssuePersonForm, SearchIssueForm,
     IssueOpenStatusForm, IssueReasonCommentForm, IssueIssueEscalateForm, IssueSetUnresolvedForm,
-    IssueIssuePublishForm, IssueIssueUnpublishForm, IssueCategoryForm
+    IssueIssuePublishForm, IssueIssueUnpublishForm, IssueCategoryForm, MultipleSearchIssueForm
 )
 from dashboard.grm.serializers import LegacyIssueDoc
 from dashboard.mixins import AJAXRequestMixin, JSONResponseMixin, ModalFormMixin, PageMixin
@@ -45,7 +45,7 @@ from privacy.functions import get_last_category_password, get_all_privacy_passwo
 from issue.notifications import clean_emails, clean_user_ids, mark_issue_read, send_comment_notifications
 from issue.models import (
     Issue, IssueAgeGroup, IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment,
-    IssueStatus, IssueType, Wave,
+    IssueStatus, IssueType, ProcessingDelay, Wave,
 )
 from grm.call_objects_from_other_db import mis_objects_call
 from administrativelevels.models import AdministrativeLevel, CVD
@@ -469,6 +469,7 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
     def set_details_fields(self, data):
         self.doc['intake_date'] = data['intake_date']
         self.doc['issue_date'] = data['issue_date']
+        self.doc['received_date'] = _aware_date(data.get('received_date'))
 
         if int(data['category']) in (4, 7) and data.get("issue_password"):
             self.request.session["issue_password"] = data.get("issue_password")
@@ -535,6 +536,9 @@ class NewIssueMixin(LoginRequiredMixin, IssueFormMixin):
             self.doc['citizen_group_2'] = ""
 
         self.doc['citizen_or_group'] = data['citizen_or_group']
+        self.doc['gender'] = data.get('gender') or None
+        refugee_or_idp = data.get('refugee_or_idp')
+        self.doc['refugee_or_idp'] = {'yes': True, 'no': False}.get(refugee_or_idp)
 
     def set_location_fields(self, data):
         administrative_id = data['administrative_region_value']
@@ -740,6 +744,9 @@ class ReviewIssuesFormView(PageMixin, LoginRequiredMixin, generic.FormView):
         context['breadcrumb'] = False
 
         context['all_total_issues'] = Issue.objects.filter(confirmed=True, is_deleted=False).count()
+        # Filtres à choix multiple ; les champs de `form` (SearchIssueForm) restent dans la page,
+        # masqués (dates, code et localité sont toujours ceux de `form`).
+        context['multi_form'] = MultipleSearchIssueForm()
 
         if user.groups.filter().exists():
             context['publish_option'] = True
@@ -1123,14 +1130,27 @@ class AddCommentToIssueView(IssueMixin, AJAXRequestMixin, LoginRequiredMixin, JS
                     _ok = False
                 else:
                     comment = str(cryptography_fernet_encrypt(comment, issue_password))
+            if _ok and reason:
+                # Date réelle de l'étape d'investigation (champ du formulaire, aujourd'hui par
+                # défaut) : refusée si invalide ou dans le futur.
+                investigation_form = IssueReasonCommentForm(data={
+                    'reason': 'x', 'investigation_date': request.POST.get('investigation_date'),
+                })
+                if investigation_form.is_valid():
+                    investigation_date = _aware_date(investigation_form.cleaned_data['investigation_date'])
+                else:
+                    _ok = False
+                    msg = ' '.join(str(e) for e in investigation_form.errors.get('investigation_date', [])) \
+                        or _("The information has not been registered.")
+                    messages.add_message(self.request, messages.ERROR, msg, extra_tags='error')
             if _ok:
                 if reason:
                     try:
                         doc_status = IssueStatus.objects.filter(name=self.doc['status']['name']).first()
-                        self.doc.add_status_story({"id": doc_status.legacy_id, "name": doc_status.name}, comment, user=self.request.user)
+                        self.doc.add_status_story({"id": doc_status.legacy_id, "name": doc_status.name}, comment, user=self.request.user, action_date=investigation_date)
                     except:
                         pass
-                    self.doc.add_reason(subject='comment', comment=comment, user=request.user)
+                    self.doc.add_reason(subject='comment', comment=comment, user=request.user, action_date=investigation_date)
                 else:
                     record = self.doc.add_comment(
                         comment, user=request.user, is_user_comment=True,
@@ -1228,7 +1248,7 @@ class SubmitIssueOpenStatusView(AJAXRequestMixin, ModalFormMixin, LoginRequiredM
         self.doc['status'] = {"name": doc_status.name, "id": doc_status.legacy_id}
         self.doc.save()
 
-        self.doc.add_status_story({"id": doc_status.legacy_id, "name": doc_status.name}, (_("The issue was reopened") if self.doc.issue.issue_status_stories.exists() else _("The issue was accepted")) + (f' [{data["open_reason"]}]' if data["open_reason"] else ""), user=self.request.user)
+        self.doc.add_status_story({"id": doc_status.legacy_id, "name": doc_status.name}, (_("The issue was reopened") if self.doc.issue.issue_status_stories.exists() else _("The issue was accepted")) + (f' [{data["open_reason"]}]' if data["open_reason"] else ""), user=self.request.user, action_date=_aware_date(data['action_date']))
         self.doc.add_comment(data["open_reason"] if data["open_reason"] else (_("The issue was reopened") if self.doc.issue.issue_status_stories.exists() else _("The issue was accepted")), user=self.request.user)
         send_issue_status_notifications()
 
@@ -1272,6 +1292,9 @@ class SubmitIssueResearchResultFormView(AJAXRequestMixin, ModalFormMixin, LoginR
                 raise Http404
             self.doc['status'] = {"name": doc_status.name, "id": doc_status.legacy_id}
             self.doc['resolution_date'] = timezone.now()
+            self.doc['resolution_real_issue_date'] = timezone.make_aware(
+                datetime.combine(data['resolution_real_issue_date'], datetime.min.time())
+            )
             self.doc.save()
 
             self.doc.add_status_story({"id": doc_status.legacy_id, "name": doc_status.name}, _("The issue was resolved") + (f' [{_comment}]' if _comment else ""), user=self.request.user)
@@ -1375,22 +1398,18 @@ class SubmitIssueEscalateFormView(AJAXRequestMixin, ModalFormMixin, LoginRequire
             # Résout immédiatement le niveau administratif cible (l'ancien code CouchDB laissait
             # ce calcul à la tâche Celery asynchrone `escalate_issues` ; `get_adl_to_escalate`
             # (authentication/models.py, Phase 0) est une requête Postgres/mis peu coûteuse, donc
-            # plus besoin de différer ce travail). Part du dernier niveau d'escalade connu, sinon
+            # plus besoin de différer ce travail). Part du niveau d'escalade le plus haut atteint, sinon
             # de la région d'origine de l'issue.
-            current_level = self.doc.issue.escalation_levels.order_by('-created_at').first()
-            
-            base_administrative_id = (
-                current_level.administrative_id if current_level and current_level.administrative_id
-                else self.doc.issue.administrative_region_id
-            )
-            
-            escalate_to = get_adl_to_escalate(base_administrative_id) if base_administrative_id else None
-            
+            escalate_to = get_next_escalation_level(self.doc.issue)
+
             if escalate_to:
                 self.doc.add_escalation_level(
                     administrative_level=escalate_to['administrative_level'],
                     administrative_id=escalate_to['administrative_id'],
                     name=escalate_to['name'],
+                    escalation_date=timezone.make_aware(
+                        datetime.combine(data['escalation_date'], datetime.min.time())
+                    ),
                 )
             self.doc.save()
 
@@ -1511,6 +1530,34 @@ class SubmitIssueRejectReasonFormView(AJAXRequestMixin, ModalFormMixin, LoginReq
 
         context = {'msg': render(self.request, 'common/messages.html').content.decode("utf-8")}
         return self.render_to_json_response(context, safe=False)
+
+
+class OverdueIssuesView(PageMixin, LoginRequiredMixin, generic.TemplateView):
+    """Plaintes en retard (délai de traitement de leur niveau dépassé) du périmètre de
+    l'utilisateur, filtrables par village (`?village=<id>`, lien de la cloche de notifications)."""
+    template_name = 'grm/overdue_issues.html'
+    title = _('Overdue issues')
+    active_level1 = 'grm'
+
+    def get_context_data(self, **kwargs):
+        from dashboard.grm.functions import build_issue_queryset
+        from issue.deadlines import overdue_by_village, overdue_issues
+
+        context = super().get_context_data(**kwargs)
+        perimeter, _wave = build_issue_queryset(self.request)
+        late, infos = overdue_issues(perimeter)
+        context['villages'] = overdue_by_village([issue for issue, _info in late], infos)
+
+        village = self.request.GET.get('village')
+        if village:
+            late = [(issue, info) for issue, info in late if str(issue.administrative_region_id) == village]
+            context['village_name'] = next(
+                (v['village_name'] for v in context['villages'] if str(v['village_id']) == village), village,
+            )
+        context['selected_village'] = village
+        context['late'] = late
+        context['level_labels'] = dict(ProcessingDelay.LEVEL_CHOICES)
+        return context
 
 
 class NotificationsBellView(LoginRequiredMixin, generic.View):

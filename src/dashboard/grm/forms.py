@@ -1,5 +1,6 @@
 from django import forms
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.template.defaultfilters import filesizeformat
 
@@ -7,7 +8,7 @@ from authentication.models import get_government_worker_choices
 from dashboard.forms.widgets import RadioSelect
 from dashboard.grm import (
     CHOICE_CONTACT, CITIZEN_TYPE_CHOICES, CONTACT_CHOICES, GENDER_CHOICES, MEDIUM_CHOICES,
-    CITIZEN_OR_GROUP_CHOICES
+    CITIZEN_OR_GROUP_CHOICES, CHOICE_NO, CHOICE_YES, YES_NO_CHOICES,
 )
 from grm.utils import (
     get_administrative_region_choices_using_mis, get_administrative_regions_by_level_using_mis,
@@ -18,6 +19,32 @@ from issue.models import Wave
 
 MAX_LENGTH = 65000
 
+
+
+def _not_in_future(value):
+    if value and value > timezone.localdate():
+        raise forms.ValidationError(_('The date cannot be in the future.'))
+    return value
+
+
+def _exact_date_field(label):
+    """Date réelle d'une action (aujourd'hui par défaut, pas dans le futur)."""
+    return forms.DateField(
+        label=label,
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],
+    )
+
+
+def _init_exact_date_field(field):
+    field.initial = timezone.localdate().isoformat()
+    field.widget.attrs['max'] = timezone.localdate().isoformat()
+
+
+def _aware_date(value):
+    """date (formulaire) → datetime aware à minuit, pour un DateTimeField."""
+    from datetime import datetime
+    return timezone.make_aware(datetime.combine(value, datetime.min.time())) if value else None
 
 
 class CheckPasswordForm(forms.Form):
@@ -59,6 +86,9 @@ class NewIssuePersonForm(forms.Form):
                                           help_text=_('This is an optional field'))
     gender = forms.ChoiceField(label=_('Choose gender'), required=False, help_text=_('This is an optional field'),
                                choices=GENDER_CHOICES)
+    refugee_or_idp = forms.ChoiceField(label=_('Is the complainant a refugee / IDP?'), widget=RadioSelect,
+                                       required=False, choices=YES_NO_CHOICES,
+                                       help_text=_('This is an optional field'))
     citizen_group_1 = forms.ChoiceField(label=_('Religion, Nationality'), required=False,
                                         help_text=_('This is an optional field'))
     citizen_group_2 = forms.ChoiceField(label=_('Religion, Nationality'), required=False,
@@ -96,6 +126,9 @@ class NewIssuePersonForm(forms.Form):
         if 'gender' in document:
             self.fields['gender'].initial = document['gender']
 
+        if document.get('refugee_or_idp') is not None:
+            self.fields['refugee_or_idp'].initial = CHOICE_YES if document['refugee_or_idp'] else CHOICE_NO
+
         if 'citizen_group_1' in document and document['citizen_group_1']:
             self.fields['citizen_group_1'].initial = document['citizen_group_1']['id']
 
@@ -114,6 +147,12 @@ class NewIssueDetailsForm(forms.Form):
                                       help_text="Date when the issue was recorded on the GRM")
     issue_date = forms.DateTimeField(label=_('Date of issue'), input_formats=['%d/%m/%Y'],
                                      help_text="Date when the issue occurred")
+    received_date = forms.DateField(
+        label=_('Exact date of receipt of the complaint'),
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],
+        help_text=_('Start of the processing delay at village level'),
+    )
     category = forms.ChoiceField(label=_('Choose type of grievance'))
     description = forms.CharField(label=_('Briefly describe the issue'), max_length=2000, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Please describe the issue')}))
@@ -141,6 +180,9 @@ class NewIssueDetailsForm(forms.Form):
         self.fields['intake_date'].widget.attrs['data-target'] = '#intake_date'
         self.fields['issue_date'].widget.attrs['data-target'] = '#issue_date'
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view original description")+'</span>'
+        self.fields['received_date'].widget.attrs['max'] = timezone.localdate().isoformat()
+        received = document.get('received_date') if document else None
+        self.fields['received_date'].initial = str(received)[:10] if received else timezone.localdate().isoformat()
 
         if 'description' in document and document['description']:
             self.fields['description'].initial = document['description']
@@ -150,6 +192,10 @@ class NewIssueDetailsForm(forms.Form):
             self.fields['ongoing_issue'].initial = document['ongoing_issue']
         if 'event_recurrence' in document:
             self.fields['event_recurrence'].initial = document['event_recurrence']
+
+
+    def clean_received_date(self):
+        return _not_in_future(self.cleaned_data.get('received_date'))
 
 
 class NewIssueLocationForm(forms.Form):
@@ -293,16 +339,22 @@ class IssueCommentForm(forms.Form):
 class IssueReasonCommentForm(forms.Form):
     reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(
         attrs={'rows': '3', 'placeholder': _('Add decision')}))
+    investigation_date = _exact_date_field(_('Exact date of the investigation'))
     issue_password_reason = forms.CharField(label='', max_length=7, min_length=7, required=False,
                                             widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['issue_password_reason'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
+        _init_exact_date_field(self.fields['investigation_date'])
+
+    def clean_investigation_date(self):
+        return _not_in_future(self.cleaned_data.get('investigation_date'))
 
 
 class IssueOpenStatusForm(forms.Form):
     open_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}), required=False)
+    action_date = _exact_date_field(_('Exact date of acceptance / reopening'))
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial')
@@ -313,10 +365,19 @@ class IssueOpenStatusForm(forms.Form):
         # Postgres dédiée, le texte reste néanmoins conservé de façon permanente dans l'historique
         # de statut/commentaire).
         self.fields['open_reason'].initial = ''
+        _init_exact_date_field(self.fields['action_date'])
+
+    def clean_action_date(self):
+        return _not_in_future(self.cleaned_data.get('action_date'))
 
 
 class IssueResearchResultForm(forms.Form):
     research_result = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+    resolution_real_issue_date = forms.DateField(
+        label=_('Actual date of resolution in the field'),
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],
+    )
     file_pdf = forms.FileField(label=_('Attach PV of reconciliation'), help_text=_('Allowed file size less than or equal to 2 MB'), required=True)
     issue_password = forms.CharField(label='', max_length=7, min_length=7, required=False,
                                             widget=forms.PasswordInput(attrs={'placeholder': _('Password')}))
@@ -331,6 +392,13 @@ class IssueResearchResultForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
         self.fields['research_result'].initial = document['research_result'] if document and document.get('research_result') else ''
+        self.fields['resolution_real_issue_date'].widget.attrs['max'] = timezone.localdate().isoformat()
+
+    def clean_resolution_real_issue_date(self):
+        value = self.cleaned_data.get('resolution_real_issue_date')
+        if value and value > timezone.localdate():
+            raise forms.ValidationError(_('The date of resolution cannot be in the future.'))
+        return value
 
     def clean_file_pdf(self):
         max_upload_size = settings.MAX_UPLOAD_SIZE
@@ -353,6 +421,11 @@ class IssueSetUnresolvedForm(forms.Form):
 
 class IssueIssueEscalateForm(forms.Form):
     escalate_reason = forms.CharField(label='', max_length=MAX_LENGTH, widget=forms.Textarea(attrs={'rows': '3'}))
+    escalation_date = forms.DateField(
+        label=_('Actual date of the escalation'),
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],
+    )
     file_pdf = forms.FileField(label=_('Attach the complaint transfer file to the top level'),
                                help_text=_('Allowed file size less than or equal to 2 MB'), required=True)
     issue_password = forms.CharField(label='', max_length=7, min_length=7, required=False,
@@ -368,6 +441,11 @@ class IssueIssueEscalateForm(forms.Form):
         self.fields['issue_password'].help_text = '<span style="color:black;">'+_("Password used to view the add.")+'</span>'
         # cf. IssueOpenStatusForm : pas de pré-remplissage (simplification documentée).
         self.fields['escalate_reason'].initial = ''
+        self.fields['escalation_date'].widget.attrs['max'] = timezone.localdate().isoformat()
+        self.fields['escalation_date'].initial = timezone.localdate().isoformat()  # aujourd'hui par défaut
+
+    def clean_escalation_date(self):
+        return _not_in_future(self.cleaned_data.get('escalation_date'))
 
     def clean_file_pdf(self):
         max_upload_size = settings.MAX_UPLOAD_SIZE
@@ -423,3 +501,53 @@ class IssueCategoryForm(forms.Form):
 
         if 'category' in document and document['category']:
             self.fields['category'].initial = document['category']['id']
+
+
+# ---------------------------------------------------------------------------------------------
+# Filtres à sélection multiple de grm/review-issues et /diagnostics/.
+#
+# Nouveaux formulaires, distincts de `SearchIssueForm` (laissé tel quel : il peut être utilisé
+# ailleurs). Les pages les instancient avec `prefix='multi'` (ids `id_multi-status`...) et gardent
+# les champs de `SearchIssueForm` dans un bloc masqué. Les valeurs sélectionnées sont envoyées
+# séparées par des virgules (ex. `status=1,3`) et lues par
+# `dashboard.grm.functions.get_multiple_values` ; une seule valeur garde le comportement d'avant.
+# La localité (sélecteur en cascade, dynamicRegionSelector.js) reste à choix unique.
+# ---------------------------------------------------------------------------------------------
+
+def _multiple_select_widget():
+    return forms.SelectMultiple(attrs={'class': 'form-control multi-filter', 'multiple': 'multiple'})
+
+
+class MultipleSearchIssueForm(forms.Form):
+    """Filtres à choix multiple de grm/review-issues (`ReviewIssuesFormView`)."""
+    status = forms.MultipleChoiceField(label=_('Status'), required=False, widget=_multiple_select_widget())
+    publish = forms.MultipleChoiceField(label=_('Publish'), required=False, widget=_multiple_select_widget())
+    category = forms.MultipleChoiceField(label=_('Category'), required=False, widget=_multiple_select_widget())
+    other = forms.MultipleChoiceField(label=_('Escalated'), required=False, widget=_multiple_select_widget())
+    wave = forms.MultipleChoiceField(label=_('Wave'), required=False, widget=_multiple_select_widget())
+    assigned_to = forms.MultipleChoiceField(label=_('Assigned to'), required=False, widget=_multiple_select_widget())
+    reported_by = forms.MultipleChoiceField(label=_('Reported by'), required=False, widget=_multiple_select_widget())
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('prefix', 'multi')
+        super().__init__(*args, **kwargs)
+        workers = get_government_worker_choices(empty_choice=False)
+        self.fields['status'].choices = get_issue_status_choices(empty_choice=False)
+        self.fields['publish'].choices = [('True', _('Publish')), ('False', _('Unpublish'))]
+        self.fields['category'].choices = get_issue_category_choices(empty_choice=False)
+        self.fields['other'].choices = [('Escalate', _('Escalated'))]
+        self.fields['wave'].choices = [(w.id, w.description) for w in Wave.objects.all()]
+        self.fields['assigned_to'].choices = workers
+        self.fields['reported_by'].choices = workers
+
+
+class MultipleDiagnosticsSearchForm(forms.Form):
+    """Filtres à choix multiple de /diagnostics/ (`dashboard.diagnostics.views.HomeFormView`)."""
+    category = forms.MultipleChoiceField(label=_('Category'), required=False, widget=_multiple_select_widget())
+    wave = forms.MultipleChoiceField(label=_('Wave'), required=False, widget=_multiple_select_widget())
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('prefix', 'multi')
+        super().__init__(*args, **kwargs)
+        self.fields['category'].choices = get_issue_category_choices(empty_choice=False)
+        self.fields['wave'].choices = [(w.id, w.description) for w in Wave.objects.all()]

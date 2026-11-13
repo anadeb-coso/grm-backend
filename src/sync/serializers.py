@@ -7,7 +7,7 @@ from budgeting.models import BpProject, BudgetAllocationEntry, Phase, Task
 from issue.models import (
     Adl, Attachment, Comment, EscalationLevel, EscalationReason, Issue, IssueAgeGroup,
     IssueCategory, IssueCitizenGroup1, IssueCitizenGroup2, IssueDepartment, IssueNotification,
-    IssueStatus, IssueStatusStory, IssueType, Reason,
+    IssueStatus, IssueStatusStory, IssueType, ProcessingDelay, Reason,
 )
 
 # ---------------------------------------------------------------------------
@@ -166,6 +166,12 @@ class BudgetAllocationEntrySyncSerializer(serializers.ModelSerializer):
 # ---------------------------------------------------------------------------
 # Référentiels : lecture seule côté mobile (jamais de push), cf. CLAUDE.md §2.
 # ---------------------------------------------------------------------------
+
+
+class ProcessingDelaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcessingDelay
+        fields = '__all__'
 
 
 class IssueStatusSerializer(serializers.ModelSerializer):

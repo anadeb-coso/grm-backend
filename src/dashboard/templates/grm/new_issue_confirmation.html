@@ -102,6 +102,16 @@
                                         </div>
                                     </div>
                                 {% endif %}
+                                {% if doc.refugee_or_idp is not None %}
+                                    <div class="row mr-2 mb-2">
+                                        <label class="col-3 label-align">
+                                            {% translate "Refugee / IDP" %}:
+                                        </label>
+                                        <div class="col-9 text-regular-family">
+                                            {% if doc.refugee_or_idp %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
                                 {% if doc.citizen_group_1 %}
                                     <div class="row mr-2 mb-2">
                                         <div class="col-3 label-align">

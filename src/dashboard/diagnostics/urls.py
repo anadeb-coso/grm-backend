@@ -7,4 +7,5 @@ urlpatterns = [
     path('', views.HomeFormView.as_view(), name='home'),
     path('issues-statistics/', views.IssuesStatisticsView.as_view(), name='issues_statistics'),
     path('issues-map-data/', views.IssuesMapDataView.as_view(), name='issues_map_data'),
+    path('processing-delays/', views.ProcessingDelaysView.as_view(), name='processing_delays'),
 ]

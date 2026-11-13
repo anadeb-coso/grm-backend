@@ -387,17 +387,24 @@
             ajax: {
                 url: "{% url 'dashboard:grm:issue_list_datatable' %}",
                 data: function (d) {
+                    // Filtre à choix multiple (#id_multi-<nom>, valeurs séparées par des virgules)
+                    // s'il est dans la page, sinon l'ancien champ à choix unique (#id_<nom>).
+                    let filterVal = function (name) {
+                        let $multi = $('#id_multi-' + name);
+                        let v = $multi.length ? $multi.val() : $('#id_' + name).val();
+                        return Array.isArray(v) ? v.join(',') : (v || '');
+                    };
                     d.start_date  = $('#id_start_date').val()  || '';
                     d.end_date    = $('#id_end_date').val()    || '';
                     d.code        = $('#id_code').val()        || '';
-                    d.assigned_to = $('#id_assigned_to').val() || '';
-                    d.category    = $('#id_category').val()    || '';
+                    d.assigned_to = filterVal('assigned_to');
+                    d.category    = filterVal('category');
                     d.type        = $('#id_type').val()        || '';
-                    d.status      = $('#id_status').val()      || '';
-                    d.other       = $('#id_other').val()       || '';
-                    d.reported_by = $('#id_reported_by').val() || '';
-                    d.wave        = $('#id_wave').val()        || '';
-                    d.publish     = $('#id_publish').val()     || '';
+                    d.status      = filterVal('status');
+                    d.other       = filterVal('other');
+                    d.reported_by = filterVal('reported_by');
+                    d.wave        = filterVal('wave');
+                    d.publish     = filterVal('publish');
                     d.region      = (typeof current_region_id !== 'undefined' && current_region_id)
                         ? current_region_id
                         : ($('select.region').last().val() || '');
